@@ -2,7 +2,7 @@ wc -l `grep --include="m*" -rl "" lab0` 2>&1 | sort
 
 ls -lc `grep --include="m*" -srl "" lab0` | head -n 4
 
-# cat -n `grep --include="*6" -rl "" lab0` 2>&1 | sort -r
+# cat -n `grep --include="*e" -rl "" lab0` 2>&1 | sort -r
 
 ls -p lab0/mightyena8 | grep -v / | sort -r
 
