@@ -1,6 +1,5 @@
 package src.pokemons;
 
-import ru.ifmo.se.pokemon.Pokemon;
 import ru.ifmo.se.pokemon.Type;
 
 import src.moves.EnergyBall;
