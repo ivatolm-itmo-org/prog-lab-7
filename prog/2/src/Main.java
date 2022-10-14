@@ -4,6 +4,9 @@ import ru.ifmo.se.pokemon.Battle;
 
 import src.pokemons.*;
 
+import static src.Second.a;
+import static src.Second.A;
+
 public class Main {
     public static void main(String args[]) {
         Battle b = new Battle();
@@ -25,5 +28,8 @@ public class Main {
         b.addFoe(p6);
 
         b.go();
+
+        a = 123;
+        A();
     }
 }
