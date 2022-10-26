@@ -20,17 +20,16 @@ def task1(string):
         return "Не хайку."
 
 def task2(string):
-    matches = []
+    words = re.findall(r"[А-яёЁ]+", string)
 
-    words = re.findall(r"[А-яеЁ]+", string)
+    result = []
     for word in words:
-        vowels = re.findall(r"[ауоыэяюёие]", word)
-        if len(vowels) > 0 and len(vowels) == vowels.count(vowels[0]):
-            matches.append(word)
+        match = re.fullmatch(r"[^ауоыэяюёие]*([ауоыэяюёие])(\1|[^ауоыэяюёие])*", word)
+        if match:
+            result.append(match.group())
+    result.sort(key=len)
 
-    matches.sort(key=len)
-
-    return matches
+    return result
 
 def test(task, tests):
     print(f"Testing {task.__name__}:")
@@ -74,9 +73,14 @@ TESTS_TASK2 = [
      ["от", "друг", "через"])
 ]
 
-TESTS_TASK2 = [TESTS_TASK2[0]]
-
-#test(task0, TESTS_TASK0)
-#test(task1, TESTS_TASK1)
+test(task0, TESTS_TASK0)
+test(task1, TESTS_TASK1)
 test(task2, TESTS_TASK2)
+
+tasks = [task0, task1, task2]
+while True:
+    task_id = int(input())
+    test_str = input()
+
+    print(tasks[task_id](test_str))
 
