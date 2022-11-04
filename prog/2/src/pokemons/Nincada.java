@@ -5,7 +5,7 @@ import ru.ifmo.se.pokemon.Type;
 
 import src.moves.Harden;
 import src.moves.Scratch;
-import src.moves.X_Scissor;
+import src.moves.XScissor;
 
 public class Nincada extends Pokemon {
     public Nincada(String name) {
@@ -14,7 +14,7 @@ public class Nincada extends Pokemon {
 
         super.setMove(
             new Harden(),
-            new X_Scissor(),
+            new XScissor(),
             new Scratch()
         );
 

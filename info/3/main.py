@@ -24,7 +24,7 @@ def task2(string):
 
     result = []
     for word in words:
-        match = re.fullmatch(r"[^ауоыэяюёие]*([ауоыэяюёие])(\1|[^ауоыэяюёие])*", word)
+        match = re.fullmatch(r"[^ауоыэяюёие]*([ауоыэяюёие])(\1|[^ауоыэяюёие])*", word, flags=re.IGNORECASE)
         if match:
             result.append(match.group())
     result.sort(key=len)
