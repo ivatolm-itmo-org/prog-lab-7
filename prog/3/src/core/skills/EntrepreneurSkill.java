@@ -1,12 +1,12 @@
 package core.skills;
 
-import core.Business;
-import core.Person;
+import core.Human;
 
-interface EntrepreneurSkill {
-    Business startBusiness(String name);
-    void investInBusiness(String name, int cash);
-    void closeBusiness(String name);
-    void hireForBusiness(Person person);
-    Business[] getBusinesses();
+public interface EntrepreneurSkill {
+    public void startBusiness(String name, int employeeSalary);
+    public void investInBusiness(String name);
+    public void closeBusiness(String name);
+    public void hireForBusiness(String name, Human human);
+    public void withdrawFromBusiness(String name);
+    public void receivePayment(int cash);
 }

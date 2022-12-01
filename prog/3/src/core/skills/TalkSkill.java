@@ -1,7 +1,8 @@
 package core.skills;
 
-import core.Person;
+import core.Human;
 
-interface TalkSkill {
-    void talk(Person person);
+public interface TalkSkill {
+    public void talk(Human human);
+    public String say();
 }

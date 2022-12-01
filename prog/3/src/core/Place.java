@@ -1,23 +1,26 @@
 package core;
+public enum Place {
+    HOME (new Position(0, 0, 0), "Home"),
+    CARGO_COMPANY_HEADQUATERS (new Position(1, 1, 0), "Cargo company headquaters"),
+    TABLE(new Position(1, 0, 0), "Kitchen table"),
+    CHAIR_1(new Position(1, 0, 1), "Kitchen table"),
+    CHAIR_2(new Position(1, 0, 1.5), "Kitchen table"),
+    ELLIE_BED(new Position(1, 0, 1.5), "Ellie bed"),
+    GEDJ_BED(new Position(1, 0, 1.5), "Gedj bed");
 
-class Place extends Area {
+    private Position position;
     private String name;
 
-    public Place(Point[] points) {
-        super(points);
-    }
-
-    public Place(Point[] points, String name) {
-        super(points);
-
+    Place(Position position, String name) {
+        this.position = position;
         this.name = name;
     }
 
-    String getName() {
+    public Position getPosition() {
+        return this.position;
+    }
+
+    public String getName() {
         return this.name;
-    }
-
-    void setName(String name) {
-        this.name = name;
     }
 }

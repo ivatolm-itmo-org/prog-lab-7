@@ -1,29 +1,81 @@
 package core;
 
-public class Vehicle extends Entity {
-    private int tankSize;
-    private int seatsCnt;
-    private int storageSize;
-    private Thing[] storage;
-    private Person[] persons;
+import java.util.ArrayList;
 
-    public Vehicle(String name, Position position) {
-        super(name, position, true);
+public abstract class Vehicle {
+    private Position position;
+
+    private int seatsNum;
+    private int storageCapacity;
+
+    private ArrayList<Human> passengers;
+    private ArrayList<Thing> storage;
+
+    public Vehicle(Position position, int seatsNum, int storageCapacity) {
+        this.position = position;
+        this.seatsNum = seatsNum;
+        this.storageCapacity = storageCapacity;
+        this.passengers = new ArrayList<Human>();
+        this.storage = new ArrayList<Thing>();
     }
 
-    void start() {
-
+    public void addPassenger(Human human) {
+        if (this.hasEmptySeats()) {
+            this.passengers.add(human);
+        }
     }
 
-    void stop() {
-
+    public void removePassenger(Human human) {
+        this.passengers.remove(human);
     }
 
-    void load(Thing[] things) {
-
+    public void addStorageUnit(Thing thing) {
+        if (this.hasEmptyStorage()) {
+            this.storage.add(thing);
+        }
     }
 
-    Thing[] unload() {
+    public void removeStorageUnit(Thing thing) {
+        this.storage.remove(thing);
+    }
+
+    public boolean hasEmptySeats() {
+        return this.seatsNum == this.passengers.size();
+    }
+
+    public boolean hasEmptyStorage() {
+        return this.storageCapacity == this.storage.size();
+    }
+
+    public Human getDriver() {
+        if (this.passengers.size() > 0) {
+            return this.passengers.get(0);
+        } else {
+            return null;
+        }
+    }
+
+    public void move(Position position) {
+        this.position = position;
+    }
+
+    public Position getPosition() {
+        return this.position;
+    }
+
+    public int getSeatsNum() {
+        return this.seatsNum;
+    }
+
+    public int getStorageCapacity() {
+        return this.storageCapacity;
+    }
+
+    public ArrayList<Human> getPassengers() {
+        return this.passengers;
+    }
+
+    public ArrayList<Thing> getStorage() {
         return this.storage;
     }
 }

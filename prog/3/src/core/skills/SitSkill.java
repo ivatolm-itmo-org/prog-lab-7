@@ -1,5 +1,8 @@
 package core.skills;
 
-interface SitSkill {
-    void sit();
+import core.Thing;
+
+public interface SitSkill {
+    public void sitOn(Thing thing);
+    public void getUp();
 }

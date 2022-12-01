@@ -2,6 +2,7 @@ package core.skills;
 
 import core.Vehicle;
 
-interface PassengerSkill {
-    void sitInVehicle(Vehicle vehicle);
+public interface PassengerSkill {
+    public void sitInVehicle(Vehicle vehicle);
+    public void leaveFromVehicle(Vehicle vehicle);
 }
