@@ -1,13 +1,12 @@
 package cargoCompany;
 
-import core.Human;
+import core.AdultHuman;
 import core.Position;
 import core.Vehicle;
 import core.skills.DriveSkill;
 import core.skills.EmployeeSkill;
-import core.skills.PassengerSkill;
 
-public class CargoCompanyEmployee extends Human implements EmployeeSkill, PassengerSkill, DriveSkill {
+public class CargoCompanyEmployee extends AdultHuman implements EmployeeSkill, DriveSkill {
     public CargoCompanyEmployee(Position position, String name, int age, int cash) {
         super(position, name, age, cash);
     }

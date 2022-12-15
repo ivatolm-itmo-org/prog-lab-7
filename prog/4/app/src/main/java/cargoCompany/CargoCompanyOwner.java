@@ -1,14 +1,12 @@
 package cargoCompany;
 
-import java.util.Random;
-
+import core.AdultHuman;
 import core.Business;
-import core.Human;
 import core.Position;
 import core.skills.EmployeeSkill;
 import core.skills.EntrepreneurSkill;
 
-public class CargoCompanyOwner extends Human implements EntrepreneurSkill {
+public class CargoCompanyOwner extends AdultHuman implements EntrepreneurSkill {
     public CargoCompanyOwner(Position position, String name, int age, int cash) {
         super(position, name, age, cash);
     }
@@ -18,14 +16,16 @@ public class CargoCompanyOwner extends Human implements EntrepreneurSkill {
         this.businesses.add(business);
     }
 
-    public void investInBusiness(String name) {
-        Random random = new Random();
-
+    public void investInBusiness(String name, int amount) {
         int index = findBusiness(name);
         if (index != -1) {
-            int amount = random.nextInt() % this.cash;
-            this.businesses.get(index).invest(amount);
-            this.cash -= amount;
+            if (this.cash > amount) {
+                this.businesses.get(index).invest(amount);
+                this.cash -= amount;
+            } else {
+                System.out.println("Not sufficient cash! Cannot invest, gotta earn smth");
+                System.out.println("Required amount: " + amount + ", got: " + this.cash);
+            }
         } else {
             System.out.println("Business not found!");
         }
@@ -40,13 +40,13 @@ public class CargoCompanyOwner extends Human implements EntrepreneurSkill {
         }
     }
 
-    public void hireForBusiness(String name, Human human) {
+    public void hireForBusiness(String name, AdultHuman human) {
         int index = findBusiness(name);
         if (index != -1) {
             if (human instanceof EmployeeSkill) {
                 boolean response = ((EmployeeSkill) human).receiveOffer(150);
                 if (response == true) {
-                    this.businesses.get(index).addEmployee(human);
+                    this.businesses.get(index).getStateMan().addEmployee(human);
                 } else {
                     System.out.println("Human declined job");
                 }

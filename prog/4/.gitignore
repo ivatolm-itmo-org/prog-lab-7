@@ -6,3 +6,10 @@ build
 
 # Fleet files
 .fleet
+
+# VsCode files
+.vscode
+
+# Build files
+app/out
+app/bin

@@ -1,8 +1,8 @@
 package core.skills;
 
-import core.Position;
+import core.Place;
 
 public interface SleepSkill {
-    void sleep(Position position);
+    void sleep(Place place);
     void wakeUp();
 }

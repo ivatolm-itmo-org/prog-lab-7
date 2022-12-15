@@ -2,16 +2,13 @@ package core;
 
 import core.skills.SleepSkill;
 
-public abstract class Animal implements SleepSkill {
-    protected Position position;
-    protected String name;
+public abstract class Animal extends Entity implements SleepSkill {
     protected int age;
 
     protected boolean sleeping;
 
     public Animal(Position position, String name, int age) {
-        this.position = position;
-        this.name = name;
+        super(position, name);
         this.age = age;
 
         this.sleeping = false;
@@ -22,14 +19,6 @@ public abstract class Animal implements SleepSkill {
     }
 
     void react() { }
-
-    Position getPosition() {
-        return this.position;
-    }
-
-    String getName() {
-        return this.name;
-    }
 
     int getAge() {
         return this.age;

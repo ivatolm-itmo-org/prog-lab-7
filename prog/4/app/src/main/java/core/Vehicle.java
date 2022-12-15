@@ -2,8 +2,11 @@ package core;
 
 import java.util.ArrayList;
 
+import core.skills.DriveSkill;
+
 public abstract class Vehicle {
     private Position position;
+    private String name;
 
     private int seatsNum;
     private int storageCapacity;
@@ -11,8 +14,9 @@ public abstract class Vehicle {
     private ArrayList<Human> passengers;
     private ArrayList<Thing> storage;
 
-    public Vehicle(Position position, int seatsNum, int storageCapacity) {
+    public Vehicle(Position position, String name, int seatsNum, int storageCapacity) {
         this.position = position;
+        this.name = name;
         this.seatsNum = seatsNum;
         this.storageCapacity = storageCapacity;
         this.passengers = new ArrayList<Human>();
@@ -40,19 +44,21 @@ public abstract class Vehicle {
     }
 
     public boolean hasEmptySeats() {
-        return this.seatsNum == this.passengers.size();
+        return this.seatsNum > this.passengers.size();
     }
 
     public boolean hasEmptyStorage() {
-        return this.storageCapacity == this.storage.size();
+        return this.storageCapacity > this.storage.size();
     }
 
     public Human getDriver() {
-        if (this.passengers.size() > 0) {
-            return this.passengers.get(0);
-        } else {
-            return null;
+        for (Human passenger : this.passengers) {
+            if (passenger instanceof DriveSkill) {
+                return passenger;
+            }
         }
+
+        return null;
     }
 
     public void move(Position position) {
@@ -61,6 +67,10 @@ public abstract class Vehicle {
 
     public Position getPosition() {
         return this.position;
+    }
+
+    public String getName() {
+        return this.name;
     }
 
     public int getSeatsNum() {
@@ -77,5 +87,9 @@ public abstract class Vehicle {
 
     public ArrayList<Thing> getStorage() {
         return this.storage;
+    }
+
+    public String toString() {
+        return this.name;
     }
 }

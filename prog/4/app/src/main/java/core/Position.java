@@ -1,4 +1,5 @@
 package core;
+
 public class Position {
     private double x, y, z;
 
@@ -12,6 +13,18 @@ public class Position {
         this.x += shiftX;
         this.y += shiftY;
         this.z += shiftZ;
+    }
+
+    public double getX() {
+        return this.x;
+    }
+
+    public double getY() {
+        return this.y;
+    }
+
+    public double getZ() {
+        return this.z;
     }
 
     public String toString() {

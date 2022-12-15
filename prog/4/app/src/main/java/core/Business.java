@@ -11,9 +11,7 @@ public abstract class Business {
     private double stock;
 
     private Human owner;
-    private ArrayList<Human> employees;
-
-    private int employeeSalary;
+    private StateManagment stateMan;
 
     private Date lastUpdate;
 
@@ -22,8 +20,7 @@ public abstract class Business {
         this.cash = 0;
         this.stock = 0;
         this.owner = owner;
-        this.employees = new ArrayList<>();
-        this.employeeSalary = employeeSalary;
+        this.stateMan = new StateManagment(employeeSalary);
 
         this.lastUpdate = new Date();
     }
@@ -38,6 +35,10 @@ public abstract class Business {
 
     public Human getOwner() {
         return this.owner;
+    }
+
+    public StateManagment getStateMan() {
+        return this.stateMan;
     }
 
     public void withdrawCash(Human human) {
@@ -59,35 +60,27 @@ public abstract class Business {
 
     public void invest(int amount) {
         if (amount > 0) {
-            this.stock += (double) amount / 100;
+            this.stock += (double) amount;
         } else {
             System.out.println("You cannot steal! Ha, thought you smart?");
         }
     }
 
     public void payEmployees() {
-        int requiredAmount = this.employeeSalary * this.employees.size();
+        int requiredAmount = this.stateMan.employeeSalary * this.stateMan.employees.size();
 
         if (this.cash < requiredAmount) {
             System.out.println("Transaction failed. Insufficient cash");
             return;
         }
 
-        for (Human employee : this.employees) {
+        for (Human employee : this.stateMan.employees) {
             if (employee instanceof EmployeeSkill) {
-                ((EmployeeSkill) employee).receivePaycheck(this.employeeSalary);
+                ((EmployeeSkill) employee).receivePaycheck(this.stateMan.employeeSalary);
             }
         }
 
         this.cash -= requiredAmount;
-    }
-
-    public void addEmployee(Human human) {
-        this.employees.add(human);
-    }
-
-    public void removeEmployee(Human human) {
-        this.employees.remove(human);
     }
 
     private void calcCash() {
@@ -96,8 +89,48 @@ public abstract class Business {
             return;
         }
 
-        this.cash += this.stock * (int) (this.lastUpdate.getTime() - date.getTime()) / 10000;
+        this.cash += this.stock * (int) (date.getTime() - this.lastUpdate.getTime()) / 10000;
 
         this.lastUpdate = date;
+    }
+
+    public String toString() {
+        return this.name;
+    }
+
+    public class StateManagment {
+        private ArrayList<Human> employees;
+        private int employeeSalary;
+
+        public StateManagment(int employeeSalary) {
+            this.employees = new ArrayList<>();
+            this.employeeSalary = employeeSalary;
+        }
+
+        public void addEmployee(Human human) {
+            if (ProperEmployee.checkEmployee(human)) {
+                this.employees.add(human);
+            }
+        }
+
+        public void removeEmployee(Human human) {
+            this.employees.remove(human);
+        }
+    }
+
+    static class ProperEmployee {
+        static private int requiredAge;
+
+        static public boolean checkEmployee(Human human) {
+            class Validator {
+                boolean checkAge() {
+                    return human.getAge() == requiredAge;
+                }
+            }
+
+            Validator validator = new Validator();
+
+            return validator.checkAge();
+        }
     }
 }

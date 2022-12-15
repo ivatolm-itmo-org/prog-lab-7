@@ -1,19 +1,11 @@
 package core;
 
-public abstract class Thing {
-    private Position position;
-    private String name;
-
+public class Thing extends Entity {
     public Thing(Position position, String name) {
-        this.position = position;
-        this.name = name;
+        super(position, name);
     }
 
-    public Position getPosition() {
-        return this.position;
-    }
-
-    public String getName() {
-        return this.name;
+    public Thing(Place place, String name) {
+        super(place.getPosition(), name);
     }
 }
