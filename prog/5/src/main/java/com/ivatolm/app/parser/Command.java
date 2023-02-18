@@ -89,7 +89,8 @@ public enum Command {
             },
             "coolness of the car",
             "This argument must be true or false (or null)"),
-    })
+    }),
+    SAVE("save", null),
     ;
 
     private String name;

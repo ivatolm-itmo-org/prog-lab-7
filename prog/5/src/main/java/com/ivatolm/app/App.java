@@ -5,8 +5,14 @@ import com.ivatolm.app.shell.Shell;
 public class App  {
 
     public static void main(String[] args) {
-        Shell shell = new Shell();
-        shell.run();        
+        if (args.length != 1) {
+            System.err.println("Wrong number of input arguments.");
+            return;
+        }
+
+        Shell shell = new Shell(args[0]);
+        shell.run();
+        shell.close();
     }
 
 }

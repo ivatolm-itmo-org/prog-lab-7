@@ -5,6 +5,7 @@ import java.util.LinkedList;
 
 import com.ivatolm.app.parser.arguments.ArgCheck;
 import com.ivatolm.app.parser.arguments.Argument;
+import com.ivatolm.app.utils.CommandParserException;
 
 public class Parser {
 
@@ -61,7 +62,7 @@ public class Parser {
                 System.out.println("You passed: " + inputArg);
 
                 Argument arg = this.cmd.getArgument(argId);
-                
+
                 ArgCheck f = arg.getCheck();
                 if (f.check(inputArg)) {
                     arg.parse(inputArg);
