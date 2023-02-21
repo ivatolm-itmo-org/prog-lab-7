@@ -35,7 +35,7 @@ public enum Mood implements ISerializable {
 
     @Override
     public void deserialize(String[] string) throws SimpleParseException {
-        String value = string[0];        
+        String value = string[0];
 
         try {
             this.value = Mood.parseMood(value).value;

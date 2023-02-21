@@ -26,7 +26,7 @@ public class Car implements ISerializable {
 
         String internal = value.substring(1, value.length() - 1);
         String[] data = internal.split(",");
-        
+
         if (data.length != 2) {
             throw new SimpleParseException(value + " must contain 2 values.");
         }

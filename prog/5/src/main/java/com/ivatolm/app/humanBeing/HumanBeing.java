@@ -91,4 +91,66 @@ public class HumanBeing implements ISerializable, IDatabaseObject {
         };
     }
 
+    @Override
+    public String toString() {
+        String result = "";
+
+        String[] serialized = this.serialize();
+        String[] attributes = this.getAttributesList();
+
+        int min = Math.min(serialized.length, attributes.length);
+        for (int i = 0; i < min; i++) {
+            result += attributes[i] + ": " + serialized[i];
+            if (i < min - 1) {
+                result += "\n";
+            }
+        }
+
+        return result;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public Coordinates getCoordinates() {
+        return coordinates;
+    }
+
+    public LocalDate getCreationDate() {
+        return creationDate;
+    }
+
+    public boolean isRealHero() {
+        return realHero;
+    }
+
+    public Boolean getHasToothpick() {
+        return hasToothpick;
+    }
+
+    public Long getImpactSpeed() {
+        return impactSpeed;
+    }
+
+    public String getSoundtrackName() {
+        return soundtrackName;
+    }
+
+    public int getMinutesOfWaiting() {
+        return minutesOfWaiting;
+    }
+
+    public Mood getMood() {
+        return mood;
+    }
+
+    public Car getCar() {
+        return car;
+    }
+
 }

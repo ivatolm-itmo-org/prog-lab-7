@@ -1,12 +1,12 @@
 package com.ivatolm.app.parser.arguments;
 
-interface Parsable {
+interface IParsable {
 
     void parse(String value);
 
 }
 
-public abstract class Argument implements Parsable {
+public abstract class Argument implements IParsable {
 
     private ArgCheck check;
     private String greetingMsg;
