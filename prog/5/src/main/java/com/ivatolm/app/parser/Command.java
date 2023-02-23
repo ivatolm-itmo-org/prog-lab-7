@@ -183,6 +183,69 @@ public enum Command {
                 "filename",
                 "This argument cannot be empty")
         }
+    ),
+    EXIT(
+        new String[] {
+            "exit",
+            "exit from the program (without saving)"
+        },
+        null
+    ),
+    REMOVE_FIRST(
+        new String[] {
+            "remove_first",
+            "remove first element from the collection"
+        },
+        null
+    ),
+    HEAD(
+        new String[] {
+            "head",
+            "print first element of the collection"
+        },
+        null
+    ),
+    HISTORY(
+        new String[] {
+            "history",
+            "print last 12 commands without arguments"
+        },
+        null
+    ),
+    COUNT_GREATER_THAN_MINUTES_OF_WAITING(
+        new String[] {
+            "count_greater_than_minutes_of_waiting {minutesOfWaiting}",
+            "print number of elements, which 'minutesOfWaiting' property is greater than {minutesOfWaiting}"
+        },
+        new Argument[] {
+            new IntegerArgument(
+            (x) -> {
+                if (x == null) return true;
+                try { Integer.parseInt(x); } catch (Exception e) { return false; }
+                return true;
+            },
+            "minutes of waiting",
+            "This argument must be integer (or null)"),
+        }
+    ),
+    FILTER_STARTS_WITH_NAME(
+        new String[] {
+            "filter_starts_with_name {name}",
+            "print elemenets, which 'name' property starts with substring of {name}"
+        },
+        new Argument[] {
+            new StringArgument(
+                (x) -> x != null,
+                "name",
+                "This argument cannot be empty")
+        }
+    ),
+    PRINT_FIELD_DESCENDING_MINUTES_OF_WAITING(
+        new String[] {
+            "print_field_descending_minutes_of_waiting",
+            "print elements sorted by 'minutesOfWaiting' property in the descending order"
+        },
+        null
     )
     ;
 

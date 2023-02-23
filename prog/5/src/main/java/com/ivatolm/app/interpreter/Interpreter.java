@@ -5,6 +5,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.time.LocalDate;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.LinkedList;
 
 import com.ivatolm.app.database.IDatabase;
@@ -20,9 +22,10 @@ public class Interpreter {
     private LinkedList<HumanBeing> collection;
     private final boolean wasRead;
 
+    private LinkedList<Command> history;
+
     public Interpreter(IDatabase<HumanBeing> database) {
         this.database = database;
-
         this.database.setDummyObject(new HumanBeing());
 
         LinkedList<HumanBeing> data = this.database.read();
@@ -33,6 +36,8 @@ public class Interpreter {
             this.collection = new LinkedList<>();
             this.wasRead = false;
         }
+
+        this.history = new LinkedList<>();
     }
 
     public String[] exec(Command cmd) {
@@ -45,6 +50,12 @@ public class Interpreter {
         //     System.out.println("    " + i + ": " + args.get(i).getValue());
         // }
         // System.out.println();
+
+        if (this.history.size() > 100) {
+            this.history.removeFirst();
+        }
+
+        this.history.add(cmd);
 
         switch (cmd) {
             case HELP:
@@ -73,6 +84,27 @@ public class Interpreter {
 
             case EXECUTE_SCRIPT:
                 return this.execute_script(args);
+
+            case EXIT:
+                return this.exit(args);
+
+            case REMOVE_FIRST:
+                return this.remove_first(args);
+
+            case HEAD:
+                return this.head(args);
+
+            case HISTORY:
+                return this.history(args);
+
+            case COUNT_GREATER_THAN_MINUTES_OF_WAITING:
+                return this.count_greater_than_minutes_of_waiting(args);
+
+            case FILTER_STARTS_WITH_NAME:
+                return this.filter_starts_with_name(args);
+
+            case PRINT_FIELD_DESCENDING_MINUTES_OF_WAITING:
+                return this.print_field_descending_minutes_of_waiting(args);
 
             default:
                 System.err.println("Unknown command.");
@@ -270,6 +302,90 @@ public class Interpreter {
             System.err.println("Cannot read file.");
             return null;
         }
+    }
+
+    private String[] exit(LinkedList<Argument> args) {
+        System.exit(0);
+
+        return null;
+    }
+
+    private String[] remove_first(LinkedList<Argument> args) {
+        if (this.collection.isEmpty()) {
+            System.err.println("Cannot remove first element, collection is empty.");
+            return null;
+        }
+
+        this.collection.removeFirst();
+        return null;
+    }
+
+    private String[] head(LinkedList<Argument> args) {
+        if (this.collection.isEmpty()) {
+            System.err.println("Cannot show first element, collection is empty.");
+            return null;
+        }
+
+        System.out.println(this.collection.getFirst());
+
+        return null;
+    }
+
+    private String[] history(LinkedList<Argument> args) {
+        for (int i = 0; i < Math.min(12, this.history.size()); i++) {
+            Command cmd = this.history.get(i);
+
+            System.out.println(cmd.name());
+        }
+
+        return null;
+    }
+
+    private String[] count_greater_than_minutes_of_waiting(LinkedList<Argument> args) {
+        int minutesOfWaiting = (int) args.get(0).getValue();
+
+        int counter = 0;
+        for (HumanBeing hb : this.collection) {
+            if (hb.getMinutesOfWaiting() > minutesOfWaiting) {
+                counter++;
+            }
+        }
+
+        System.out.println("Result: " + counter);
+
+        return null;
+    }
+
+    private String[] filter_starts_with_name(LinkedList<Argument> args) {
+        String substring = (String) args.get(0).getValue();
+
+        for (HumanBeing hb : this.collection) {
+            if (hb.getName().indexOf(substring) > 0) {
+                System.out.println(hb);
+                System.out.println();
+            }
+        }
+
+        return null;
+    }
+
+    private String[] print_field_descending_minutes_of_waiting(LinkedList<Argument> args) {
+        class SortByMinutesOfWaiting implements Comparator<HumanBeing> {
+            public int compare(HumanBeing a, HumanBeing b)
+            {
+                return a.getMinutesOfWaiting() - b.getMinutesOfWaiting();
+            }
+        }
+
+        HumanBeing[] hbs = this.collection.toArray(new HumanBeing[0]);
+        Arrays.sort(hbs, new SortByMinutesOfWaiting());
+
+        for (HumanBeing hb : hbs) {
+            System.out.println(hb);
+            System.out.println();
+        }
+
+        return null;
     }
 
 }
