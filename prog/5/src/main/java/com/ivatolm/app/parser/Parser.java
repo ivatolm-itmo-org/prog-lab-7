@@ -17,29 +17,39 @@ public class Parser {
 
     public boolean parse(String input) throws SimpleParseException {
         // Splitting received input
+        String strippedInput = input.strip();
+
         LinkedList<String> inputArgs = new LinkedList<>();
         boolean escaping = false;
-        for (int i = 0; i < input.length(); i++) {
-            if (input.charAt(i) == '\\') {
+        for (int i = 0; i < strippedInput.length(); i++) {
+            if (strippedInput.charAt(i) == '\\') {
                 escaping = true;
                 continue;
             }
 
-            if (input.charAt(i) == ' ' && !escaping) {
+            if (strippedInput.charAt(i) == ' ' && !escaping) {
                 inputArgs.add("");
             } else {
                 if (inputArgs.size() == 0) {
                     inputArgs.add("");
                 }
 
-                inputArgs.set(inputArgs.size() - 1, inputArgs.getLast() + input.charAt(i));
+                inputArgs.set(inputArgs.size() - 1, inputArgs.getLast() + strippedInput.charAt(i));
             }
 
             escaping = false;
         }
 
-        if (inputArgs.size() == 0) {
-            throw new SimpleParseException("Nothing to parse.");
+        if (inputArgs.size() == 0 && !this.waitingArgs) {
+            this.cmd = Command.NOOP;
+            this.args = new LinkedList<>();
+
+            return true;
+        }
+
+        // Allowing empty args
+        if (strippedInput.length() == 0) {
+            inputArgs.add(null);
         }
 
         // New command
@@ -84,7 +94,8 @@ public class Parser {
                     arg.parse(inputArg);
                     this.args.add(arg);
                 } else {
-                    throw new SimpleParseException(arg.getErrorMsg());
+                    System.err.println(arg.getErrorMsg());
+                    return false;
                 }
             }
 

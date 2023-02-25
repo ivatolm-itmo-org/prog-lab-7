@@ -58,6 +58,9 @@ public class Interpreter {
         this.history.add(cmd);
 
         switch (cmd) {
+            case NOOP:
+                return this.noop(args);
+
             case HELP:
                 return this.help(args);
 
@@ -111,6 +114,10 @@ public class Interpreter {
         }
 
         return new String[] {};
+    }
+
+    private String[] noop(LinkedList<Argument> args) {
+        return null;
     }
 
     private String[] help(LinkedList<Argument> args) {

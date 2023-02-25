@@ -19,6 +19,13 @@ interface ArgsExtention {
 
 public enum Command {
 
+    NOOP(
+        new String[] {
+            "noop",
+            "does nothing"
+        },
+        null
+    ),
     HELP(
         new String[] {
             "help",
