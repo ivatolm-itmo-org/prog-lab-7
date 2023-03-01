@@ -4,7 +4,7 @@ import com.ivatolm.app.database.ISerializable;
 import com.ivatolm.app.utils.SimpleParseException;
 
 /**
- * Data structure for Coordinates described in the task
+ * Data structure for Coordinates described in the task.
  *
  * @author ivatolm
  */

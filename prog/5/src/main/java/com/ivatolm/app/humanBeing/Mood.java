@@ -5,7 +5,7 @@ import com.ivatolm.app.utils.NameNotFoundException;
 import com.ivatolm.app.utils.SimpleParseException;
 
 /**
- * Data structure for Mood described in the task
+ * Data structure for Mood described in the task.
  *
  * @author ivatolm
  */

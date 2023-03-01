@@ -8,7 +8,7 @@ import com.ivatolm.app.database.ISerializable;
 import com.ivatolm.app.utils.SimpleParseException;
 
 /**
- * Data structure for HumanBeing described in the task
+ * Data structure for HumanBeing described in the task.
  *
  * @author ivatolm
  */
