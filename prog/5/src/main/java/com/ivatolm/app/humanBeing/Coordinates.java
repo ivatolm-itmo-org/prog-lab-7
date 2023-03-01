@@ -3,23 +3,56 @@ package com.ivatolm.app.humanBeing;
 import com.ivatolm.app.database.ISerializable;
 import com.ivatolm.app.utils.SimpleParseException;
 
+/**
+ * Data structure for Coordinates described in the task
+ *
+ * @author ivatolm
+ */
 public class Coordinates implements ISerializable {
 
+    /** x field */
     private Integer x;
+
+    /** y field */
     private Float y;
 
+    /**
+     * Constructs dummy-instance of the class.
+     * Used to create dummy-instances of the class that will be instantly overriden.
+     * Must not be used in typical case.
+     */
     public Coordinates() {}
 
+    /**
+     * Constructs new instance from the passed agruments.
+     * Extracts and casts provided arguments to target types.
+     *
+     * @param x validated {@code x} argument from the command line
+     * @param y validated {@code y} argument from the command line
+     */
     public Coordinates(Object x, Object y) {
         this.x = (Integer) x;
         this.y = (Float) y;
     }
 
+    /**
+     * Implements {@code serialize} for {@code ISerializable}.
+     * Serializes fields into {@code String} array.
+     *
+     * @return serialized object
+     */
     @Override
     public String[] serialize() {
         return new String[] { "(" + this.x + "," + this.y +  ")" };
     }
 
+    /**
+     * Implements {@code deserialize} for {@code ISerializable}.
+     * Casts input values to target types. Overrides internal values with new ones.
+     *
+     * @param string serialized object
+     * @throws SimpleParseException if input is invalid
+     */
     @Override
     public void deserialize(String[] string) throws SimpleParseException {
         String value = string[0];

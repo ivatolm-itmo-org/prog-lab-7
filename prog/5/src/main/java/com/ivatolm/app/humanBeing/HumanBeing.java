@@ -7,22 +7,59 @@ import com.ivatolm.app.database.IDatabaseObject;
 import com.ivatolm.app.database.ISerializable;
 import com.ivatolm.app.utils.SimpleParseException;
 
-public class HumanBeing implements ISerializable, IDatabaseObject {
+/**
+ * Data structure for HumanBeing described in the task
+ *
+ * @author ivatolm
+ */
+public class HumanBeing implements ISerializable, IDatabaseObject, Comparable<HumanBeing> {
 
+    /** Id field */
     private Long id;
+
+    /** Name field */
     private String name;
+
+    /** Coordinates field */
     private Coordinates coordinates;
+
+    /** Creation date field */
     private LocalDate creationDate;
+
+    /** Real hero field */
     private boolean realHero;
+
+    /** Has toothpick field */
     private Boolean hasToothpick;
+
+    /** Impact speed field */
     private Long impactSpeed;
+
+    /** Soundtrack name field */
     private String soundtrackName;
+
+    /** Minutes of waiting field */
     private int minutesOfWaiting;
+
+    /** Mood field */
     private Mood mood;
+
+    /** Car field */
     private Car car;
 
+    /**
+     * Constructs dummy-instance of the class.
+     * Used to create dummy-instances of the class that will be instantly overriden.
+     * Must not be used in typical case.
+     */
     public HumanBeing() {}
 
+    /**
+     * Constructs new instance from the passed agruments.
+     * Extracts and casts provided arguments to target types.
+     *
+     * @param args validated arguments from the command line
+     */
     public HumanBeing(LinkedList<Object> args) {
         this.id               = (Long) args.get(0);
         this.name             = (String) args.get(1);
@@ -37,6 +74,13 @@ public class HumanBeing implements ISerializable, IDatabaseObject {
         this.car              = (Car) args.get(10);
     }
 
+    /**
+     * Implements {@code serialize} for {@code ISerializable}.
+     * Sequentially serializes fiels into {@code String} array. If field is
+     * complex serializes it first.
+     *
+     * @return serialized object
+     */
     @Override
     public String[] serialize() {
         return new String[] {
@@ -54,6 +98,13 @@ public class HumanBeing implements ISerializable, IDatabaseObject {
         };
     }
 
+    /**
+     * Implements {@code deserialize} for {@code ISerializable}.
+     * Casts input values to target types. Overrides internal values with new ones.
+     *
+     * @param value serialized object
+     * @throws SimpleParseException if input is invalid
+     */
     @Override
     public void deserialize(String[] value) throws SimpleParseException {
         if (value.length != 11) {
@@ -75,6 +126,11 @@ public class HumanBeing implements ISerializable, IDatabaseObject {
         this.car.deserialize(new String[] { value[10] });
     }
 
+    /**
+     * Implements {@code getAttributesList} for {@code IDatabaseObject}.
+     *
+     * @return list of class fields
+     */
     public String[] getAttributesList() {
         return new String[] {
             "id",
@@ -91,6 +147,11 @@ public class HumanBeing implements ISerializable, IDatabaseObject {
         };
     }
 
+    /**
+     * Overrides {@code toString} of {@code Object}
+     *
+     * @return string representation of the object
+     */
     @Override
     public String toString() {
         String result = "";
@@ -109,48 +170,98 @@ public class HumanBeing implements ISerializable, IDatabaseObject {
         return result;
     }
 
+    /**
+     * @return 'id' field of the object
+     */
     public Long getId() {
         return id;
     }
 
+    /**
+     * @return {@code name} field of the object
+     */
     public String getName() {
         return name;
     }
 
+    /**
+     * @return {@code coordinates} field of the object
+     */
     public Coordinates getCoordinates() {
         return coordinates;
     }
 
+    /**
+     * @return {@code creationDate} field of the object
+     */
     public LocalDate getCreationDate() {
         return creationDate;
     }
 
+    /**
+     * @return {@code realHero} field of the object
+     */
     public boolean isRealHero() {
         return realHero;
     }
 
+    /**
+     * @return {@code hasToothpick} field of the object
+     */
     public Boolean getHasToothpick() {
         return hasToothpick;
     }
 
+    /**
+     * @return {@code impactSpeed} field of the object
+     */
     public Long getImpactSpeed() {
         return impactSpeed;
     }
 
+    /**
+     * @return {@code soundtrackName} field of the object
+     */
     public String getSoundtrackName() {
         return soundtrackName;
     }
 
+    /**
+     * @return {@code minutesOfWaiting} field of the object
+     */
     public int getMinutesOfWaiting() {
         return minutesOfWaiting;
     }
 
+    /**
+     * @return {@code mood} field of the object
+     */
     public Mood getMood() {
         return mood;
     }
 
+    /**
+     * @return {@code car} field of the object
+     */
     public Car getCar() {
         return car;
+    }
+
+    /**
+     * Implements {@code compareTo} for {@code Comparable}.
+     * Compares objects by id:
+     *  0 -- if equal;
+     *  1 -- if this one is less than other;
+     * -1 -- if other is greater then this.
+     *
+     * @param o object for comparison
+     * @return position relative to other object
+     */
+    @Override
+    public int compareTo(HumanBeing o) {
+        int value = (int) (o.getId() - this.getId());
+
+        return value == 0 ? 0 : value / value;
     }
 
 }
