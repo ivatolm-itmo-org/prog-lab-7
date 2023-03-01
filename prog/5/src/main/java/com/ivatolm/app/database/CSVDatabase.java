@@ -14,20 +14,49 @@ import com.ivatolm.app.utils.SimpleParseException;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVWriter;
 
+/**
+ * Class for interacting with a CSV file (database).
+ *
+ * @author ivatolm
+ */
 public class CSVDatabase<T extends ISerializable & IDatabaseObject> implements IDatabase<T> {
 
+    /**
+     * Read note in {@code IDatabase} interface for explanation.
+     */
     private T dummyObject = null;
+
+    /** filename field */
     private String filename;
 
+    /**
+     * Constructs new instance for working with {@code filename}.
+     *
+     * @param filename database filename
+     */
     public CSVDatabase(String filename) {
         this.filename = filename;
     }
 
+    /**
+     * Implements {@code setDummyObject} for {@code IDatabase}.
+     *
+     * @param dummyObject dummy instance of class T
+     */
     @Override
     public void setDummyObject(T dummyObject) {
         this.dummyObject = dummyObject;
     }
 
+    /**
+     * Implements {@code write} for {@code IDatabase}.
+     * Serializes data via {@code ISerializable} interface and writes it to file.
+     * Prints error if such occures, but does not throw exception.
+     *
+     * TODO: throw exception if failure occures.
+     *
+     * @param data data to write
+     */
     @Override
     public void write(LinkedList<T> data) {
         if (this.dummyObject == null) {
@@ -58,6 +87,16 @@ public class CSVDatabase<T extends ISerializable & IDatabaseObject> implements I
         }
     }
 
+    /**
+     * Implements {@code read} for {@code IDatabase}.
+     * Uses reflection to create instances of class T via {@code dummyObject}.
+     * Deserializes read data into them via {@code ISerializable} interface.
+     * Prints error if such occures, but does not throw exception.
+     *
+     * TODO: throw exception if failure occures.
+     *
+     * @return list of read objects of class T or null if error occured
+     */
     @Override
     public LinkedList<T> read() {
         if (this.dummyObject == null) {
