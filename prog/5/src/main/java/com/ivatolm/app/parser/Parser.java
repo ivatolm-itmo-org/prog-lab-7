@@ -38,7 +38,59 @@ public class Parser {
      * @throws SimpleParseException if error occures
      */
     public boolean parse(String input) throws SimpleParseException {
-        // Splitting received input
+        LinkedList<String> inputArgs = this.split(input);
+
+        // Received empty command
+        if (inputArgs.size() == 0 && !this.waitingArgs) {
+            this.cmd = Command.NOOP;
+            this.args = new LinkedList<>();
+
+            return true;
+        }
+
+        // Allowing empty args
+        if (inputArgs.size() == 0) {
+            inputArgs.add(null);
+        }
+
+        // New command
+        if (!this.waitingArgs) {
+            this.cmd = this.parseCommand(inputArgs);
+
+            this.waitingArgs = true;
+            this.args = new LinkedList<>();
+        }
+
+        // New arguments
+        if (this.waitingArgs) {
+            LinkedList<Argument> arguments = this.parseArguments(inputArgs);
+
+            for (Argument arg : arguments) {
+                this.args.add(arg);
+            }
+        }
+
+        // Checking if there any args left to wait
+        if (this.cmd.getArgsCount() - this.args.size() == 0) {
+            this.waitingArgs = false;
+
+            // Create command
+            this.result = this.cmd;
+            this.result.setArgs(this.args);
+
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Splits string separated by one or more spaces.
+     *
+     * @param input input string
+     * @return splitted string
+     */
+    private LinkedList<String> split(String input) {
         String strippedInput = input.strip();
 
         LinkedList<String> inputArgs = new LinkedList<>();
@@ -50,7 +102,9 @@ public class Parser {
             }
 
             if (strippedInput.charAt(i) == ' ' && !escaping) {
-                inputArgs.add("");
+                if (inputArgs.getLast() != "") {
+                    inputArgs.add("");
+                }
             } else {
                 if (inputArgs.size() == 0) {
                     inputArgs.add("");
@@ -62,78 +116,71 @@ public class Parser {
             escaping = false;
         }
 
-        if (inputArgs.size() == 0 && !this.waitingArgs) {
-            this.cmd = Command.NOOP;
-            this.args = new LinkedList<>();
+        return inputArgs;
+    }
 
-            return true;
-        }
+    /**
+     * Tries to match first argument to existing commands. If command
+     * was found returns actual command, else throws SimpleParseException.
+     * Also, if command was found removes first argument from the provided list.
+     *
+     * @param args input arguments
+     * @return parsed command
+     * @throws SimpleParseException if command wasn't found
+     */
+    private Command parseCommand(LinkedList<String> args) throws SimpleParseException {
+        // Checking if given command exists
+        Command result = null;
 
-        // Allowing empty args
-        if (strippedInput.length() == 0) {
-            inputArgs.add(null);
-        }
-
-        // New command
-        if (!this.waitingArgs) {
-            // Resetting data from previous cmd
-            this.cmd = null;
-            this.args = new LinkedList<>();
-
-            // Checking if given command exists
-            String cmdLabel = inputArgs.get(0);
-            for (Command cmd : Command.values()) {
-                if (cmdLabel.equals(cmd.name().toLowerCase())) {
-                    this.cmd = cmd;
-                    break;
-                }
-            }
-
-            if (this.cmd == null) {
-                throw new SimpleParseException("Provided command doesn't exist.");
-            }
-
-            // Removing command label from splitted input
-            inputArgs.pop();
-
-            // Setting flag for argument-parsing
-            this.waitingArgs = true;
-        }
-
-        if (this.waitingArgs) {
-            // Validating arguments
-            int argCnt = Math.min(this.cmd.getArgsCount() - this.args.size(),
-                                  inputArgs.size());
-
-            for (int i = 0; i < argCnt; i++) {
-                String inputArg = inputArgs.get(i);
-                int argId = this.args.size();
-
-                Argument arg = this.cmd.getArgument(argId);
-
-                ArgCheck f = arg.getCheck();
-                if (f.check(inputArg)) {
-                    arg.parse(inputArg);
-                    this.args.add(arg);
-                } else {
-                    System.err.println(arg.getErrorMsg());
-                    return false;
-                }
-            }
-
-            if (this.cmd.getArgsCount() - this.args.size() == 0) {
-                // Setting flag for new command
-                this.waitingArgs = false;
-
-                // Create command
-                this.result = this.cmd;
-                this.result.setArgs(this.args);
-
-                return true;
+        String cmdLabel = args.get(0);
+        for (Command cmd : Command.values()) {
+            if (cmdLabel.equals(cmd.name().toLowerCase())) {
+                result = cmd;
+                break;
             }
         }
 
-        return false;
+        if (result == null) {
+            throw new SimpleParseException("Provided command doesn't exist.");
+        }
+
+        // Removing command label from args
+        args.pop();
+
+        return result;
+    }
+
+    /**
+     * Tries to parse arguments from provided input args. If it failes,
+     * then nothing special happens. Parser will wait for next input to
+     * try again.
+     *
+     * @param args input arguments
+     * @return parsed arguments
+     */
+    private LinkedList<Argument> parseArguments(LinkedList<String> args) {
+        LinkedList<Argument> result = new LinkedList<>();
+
+        // Validating arguments
+        int argCnt = Math.min(this.cmd.getArgsCount() - this.args.size(),
+                              args.size());
+
+        for (int i = 0; i < argCnt; i++) {
+            String inputArg = args.get(i);
+            int argId = this.args.size();
+
+            Argument arg = this.cmd.getArgument(argId);
+
+            ArgCheck f = arg.getCheck();
+            if (f.check(inputArg)) {
+                arg.parse(inputArg);
+                result.add(arg);
+            } else {
+                System.err.println(arg.getErrorMsg());
+            }
+        }
+
+        return result;
     }
 
     /**
