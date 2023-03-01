@@ -12,12 +12,27 @@ import com.ivatolm.app.parser.Command;
 import com.ivatolm.app.parser.Parser;
 import com.ivatolm.app.utils.SimpleParseException;
 
+/**
+ * Class providing user interactive shell.
+ *
+ * @author ivatolm
+ */
 public class Shell {
 
+    /** Command line scanner */
     private Scanner scanner;
+
+    /** Command parser */
     private Parser parser;
+
+    /** Command interpreter */
     private Interpreter interpreter;
 
+    /**
+     * Constructs new shell with provided arguments.
+     *
+     * @param filename database filename
+     */
     public Shell(String filename) {
         IDatabase<HumanBeing> database = new CSVDatabase<HumanBeing>(filename);
 
@@ -26,6 +41,15 @@ public class Shell {
         this.interpreter = new Interpreter(database);
     }
 
+    /**
+     * Runs interactive shell until EOF.
+     * Work cycle:
+     *  - get user input
+     *  - parse command
+     *    continue if parsed, else go to previous step
+     *  - execute command
+     *    print output to user
+     */
     public void run() {
         try {
             while (true) {
@@ -96,6 +120,10 @@ public class Shell {
         }
     }
 
+    /**
+     * Close shell.
+     * Closes internal connections.
+     */
     public void close() {
         this.scanner.close();
     }
