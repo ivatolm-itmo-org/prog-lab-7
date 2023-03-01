@@ -16,14 +16,30 @@ import com.ivatolm.app.humanBeing.HumanBeing;
 import com.ivatolm.app.parser.Command;
 import com.ivatolm.app.parser.arguments.Argument;
 
+/**
+ * Class for interpreting commands.
+ *
+ * @author ivatolm
+ */
 public class Interpreter {
 
+    /** Link to database */
     private IDatabase<HumanBeing> database;
+
+    /** Collection of objects (described in the task) */
     private LinkedList<HumanBeing> collection;
+
+    /** Was database read or it was created? */
     private final boolean wasRead;
 
+    /** History of interpreted commands */
     private LinkedList<Command> history;
 
+    /**
+     * Constructs instance of the class.
+     *
+     * @param database link to database
+     */
     public Interpreter(IDatabase<HumanBeing> database) {
         this.database = database;
         this.database.setDummyObject(new HumanBeing());
@@ -40,16 +56,17 @@ public class Interpreter {
         this.history = new LinkedList<>();
     }
 
+    /**
+     * Executes {@code cmd}.
+     * Returns list of commands to execute later. It's required for execution not
+     * to happen outside of interpreter (otherwise some commands have to run other
+     * commands inside themselves).
+     *
+     * @param cmd command for interpretation
+     * @return list of commands for later interpretation or null
+     */
     public String[] exec(Command cmd) {
         LinkedList<Argument> args = cmd.getArgsValues();
-
-        // System.out.println("Executing command...");
-        // System.out.println("  CMD: " + cmd.name());
-        // System.out.println("  Args: ");
-        // for (int i = 0; i < args.size(); i++) {
-        //     System.out.println("    " + i + ": " + args.get(i).getValue());
-        // }
-        // System.out.println();
 
         if (this.history.size() > 100) {
             this.history.removeFirst();
@@ -116,10 +133,22 @@ public class Interpreter {
         return new String[] {};
     }
 
+    /**
+     * NOOP command, description is provided in {@code Command}.
+     *
+     * @param args arguments for the command
+     * @return list of commands for later interpretation or null
+     */
     private String[] noop(LinkedList<Argument> args) {
         return null;
     }
 
+    /**
+     * HELP command, description is provided in {@code Command}.
+     *
+     * @param args arguments for the command
+     * @return list of commands for later interpretation or null
+     */
     private String[] help(LinkedList<Argument> args) {
         String result = "";
 
@@ -152,6 +181,12 @@ public class Interpreter {
         return null;
     }
 
+    /**
+     * INFO command, description is provided in {@code Command}.
+     *
+     * @param args arguments for the command
+     * @return list of commands for later interpretation or null
+     */
     private String[] info(LinkedList<Argument> args) {
         String result = "";
         result += "Type: " + this.collection.getClass() + "\n";
@@ -163,6 +198,12 @@ public class Interpreter {
         return null;
     }
 
+    /**
+     * SHOW command, description is provided in {@code Command}.
+     *
+     * @param args arguments for the command
+     * @return list of commands for later interpretation or null
+     */
     private String[] show(LinkedList<Argument> args) {
         for (HumanBeing hb : this.collection) {
             System.out.println(hb);
@@ -172,6 +213,12 @@ public class Interpreter {
         return null;
     }
 
+    /**
+     * ADD command, description is provided in {@code Command}.
+     *
+     * @param args arguments for the command
+     * @return list of commands for later interpretation or null
+     */
     private String[] add(LinkedList<Argument> args) {
         LinkedList<Object> res = new LinkedList<>();
 
@@ -195,6 +242,12 @@ public class Interpreter {
         return null;
     }
 
+    /**
+     * UPDATE command, description is provided in {@code Command}.
+     *
+     * @param args arguments for the command
+     * @return list of commands for later interpretation or null
+     */
     public String[] update(LinkedList<Argument> args) {
         // Checking if object with given id exists
         Long id = (Long) args.get(0).getValue();
@@ -234,6 +287,12 @@ public class Interpreter {
         return null;
     }
 
+    /**
+     * REMOVE_BY_ID command, description is provided in {@code Command}.
+     *
+     * @param args arguments for the command
+     * @return list of commands for later interpretation or null
+     */
     private String[] remove_by_id(LinkedList<Argument> args) {
         // Checking if object with given id exists
         Long id = (Long) args.get(0).getValue();
@@ -255,18 +314,36 @@ public class Interpreter {
         return null;
     }
 
+    /**
+     * CLEAR command, description is provided in {@code Command}.
+     *
+     * @param args arguments for the command
+     * @return list of commands for later interpretation or null
+     */
     private String[] clear(LinkedList<Argument> args) {
         this.collection.clear();
 
         return null;
     }
 
+    /**
+     * SAVE command, description is provided in {@code Command}.
+     *
+     * @param args arguments for the command
+     * @return list of commands for later interpretation or null
+     */
     private String[] save(LinkedList<Argument> args) {
         this.database.write(this.collection);
 
         return null;
     }
 
+    /**
+     * EXECUTE_SCRIPT command, description is provided in {@code Command}.
+     *
+     * @param args arguments for the command
+     * @return list of commands for later interpretation or null
+     */
     private String[] execute_script(LinkedList<Argument> args) {
         String filename = (String) args.get(0).getValue();
 
@@ -311,12 +388,24 @@ public class Interpreter {
         }
     }
 
+    /**
+     * EXIT command, description is provided in {@code Command}.
+     *
+     * @param args arguments for the command
+     * @return list of commands for later interpretation or null
+     */
     private String[] exit(LinkedList<Argument> args) {
         System.exit(0);
 
         return null;
     }
 
+    /**
+     * REMOVE_FIRST command, description is provided in {@code Command}.
+     *
+     * @param args arguments for the command
+     * @return list of commands for later interpretation or null
+     */
     private String[] remove_first(LinkedList<Argument> args) {
         if (this.collection.isEmpty()) {
             System.err.println("Cannot remove first element, collection is empty.");
@@ -327,6 +416,12 @@ public class Interpreter {
         return null;
     }
 
+    /**
+     * HEAD command, description is provided in {@code Command}.
+     *
+     * @param args arguments for the command
+     * @return list of commands for later interpretation or null
+     */
     private String[] head(LinkedList<Argument> args) {
         if (this.collection.isEmpty()) {
             System.err.println("Cannot show first element, collection is empty.");
@@ -338,6 +433,12 @@ public class Interpreter {
         return null;
     }
 
+    /**
+     * HISTORY command, description is provided in {@code Command}.
+     *
+     * @param args arguments for the command
+     * @return list of commands for later interpretation or null
+     */
     private String[] history(LinkedList<Argument> args) {
         for (int i = 0; i < Math.min(12, this.history.size()); i++) {
             Command cmd = this.history.get(i);
@@ -348,6 +449,12 @@ public class Interpreter {
         return null;
     }
 
+    /**
+     * COUNT_GREATER_THAN_MINUTES_OF_WAITING command, description is provided in {@code Command}.
+     *
+     * @param args arguments for the command
+     * @return list of commands for later interpretation or null
+     */
     private String[] count_greater_than_minutes_of_waiting(LinkedList<Argument> args) {
         int minutesOfWaiting = (int) args.get(0).getValue();
 
@@ -363,6 +470,12 @@ public class Interpreter {
         return null;
     }
 
+    /**
+     * FILTER_STARTS_WITH_NAME command, description is provided in {@code Command}.
+     *
+     * @param args arguments for the command
+     * @return list of commands for later interpretation or null
+     */
     private String[] filter_starts_with_name(LinkedList<Argument> args) {
         String substring = (String) args.get(0).getValue();
 
@@ -376,6 +489,12 @@ public class Interpreter {
         return null;
     }
 
+    /**
+     * PRINT_FIELD_DESCENDING_MINUTES_OF_WAITING command, description is provided in {@code Command}.
+     *
+     * @param args arguments for the command
+     * @return list of commands for later interpretation or null
+     */
     private String[] print_field_descending_minutes_of_waiting(LinkedList<Argument> args) {
         class SortByMinutesOfWaiting implements Comparator<HumanBeing> {
             public int compare(HumanBeing a, HumanBeing b)
