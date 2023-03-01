@@ -6,15 +6,37 @@ import com.ivatolm.app.parser.arguments.ArgCheck;
 import com.ivatolm.app.parser.arguments.Argument;
 import com.ivatolm.app.utils.SimpleParseException;
 
+/**
+ * Class for parsing commands.
+ *
+ * @author ivatolm
+ */
 public class Parser {
 
+    /** Do we parse command or its arguments? */
     private boolean waitingArgs = false;
 
+
+    /** Partially parsed command */
     private Command cmd;
+
+    /** Partially parsed arguments */
     private LinkedList<Argument> args;
 
+
+    /** Parsed command */
     private Command result;
 
+    /**
+     * Parsing input string containing command or its arguments.
+     * If required input is abscent, then {@code SimpleParseException} is thrown.
+     *
+     * TODO: Detailed explanation of the process.
+     *
+     * @param input string containing command or its arguments
+     * @return true if command parsing completed, else false
+     * @throws SimpleParseException if error occures
+     */
     public boolean parse(String input) throws SimpleParseException {
         // Splitting received input
         String strippedInput = input.strip();
@@ -114,14 +136,23 @@ public class Parser {
         return false;
     }
 
+    /**
+     * @return parsed command or null, if command was not parsed yet
+     */
     public Command getResult() {
         return this.result;
     }
 
+    /**
+     * @return parsed command or partially parsed command
+     */
     public Command getCurrentCommand() {
         return this.cmd;
     }
 
+    /**
+     * @return number of parsed arguments
+     */
     public int getCurrentArgumentsCnt() {
         return this.args.size();
     }

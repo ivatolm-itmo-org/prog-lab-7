@@ -11,12 +11,31 @@ import com.ivatolm.app.parser.arguments.LongArgument;
 import com.ivatolm.app.parser.arguments.MoodArgument;
 import com.ivatolm.app.parser.arguments.StringArgument;
 
+/**
+ * Functional interface for extending command arguments with arguments
+ * of other command.
+ *
+ * @author ivatolm
+ */
 interface ArgsExtention {
 
+    /**
+     * Extends arguments of the command with arguments of other command.
+     *
+     * @param args arguments of other command
+     * @return final command arguments
+     */
     Argument[] extend(Argument[] args);
 
 }
 
+/**
+ * This enum represents all avaliable commands.
+ * Each command is constructed with validator and all messages required
+ * for its utilization.
+ *
+ * @author ivatolm
+ */
 public enum Command {
 
     NOOP(
@@ -256,10 +275,21 @@ public enum Command {
     )
     ;
 
+    /** Description of the command */
     private String[] description;
+
+    /** Arguments (validator, etc.) for the command */
     private Argument[] args;
+
+    /** Argument values for the command */
     private LinkedList<Argument> argsValues;
 
+    /**
+     * Constructs new command with provided arguments.
+     *
+     * @param description description of the command
+     * @param args arguments for the command
+     */
     Command(String[] description, Argument[] args) {
         this.description = description;
         this.args = args;
@@ -274,26 +304,48 @@ public enum Command {
         }
     }
 
+    /**
+     * @return {@code description} field of the object
+     */
     public String[] getDescription() {
         return this.description;
     }
 
+    /**
+     * @param index index of the argument
+     * @return argument at position of {@code index} from {@code args}
+     */
     public Argument getArgument(int index) {
         return this.args[index];
     }
 
+    /**
+     * @return {@code argsValues} field of the object
+     */
     public LinkedList<Argument> getArgsValues() {
         return this.argsValues;
     }
 
+    /**
+     * @return number of arguments required for the command
+     */
     int getArgsCount() {
         return this.args.length;
     }
 
+    /**
+     * @return {@code args} field of the object
+     */
     Argument[] getArgs() {
         return this.args;
     }
 
+    /**
+     * Set values of the arguments.
+     * Overrides argument values with new values.
+     *
+     * @param values new values for arguments
+     */
     void setArgs(LinkedList<Argument> values) {
         this.argsValues = values;
     }
