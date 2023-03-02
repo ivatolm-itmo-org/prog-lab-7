@@ -1,38 +1,38 @@
-package com.ivatolm.app.humanBeing;
+package com.ivatolm.app.models;
 
 import com.ivatolm.app.database.ISerializable;
 import com.ivatolm.app.utils.SimpleParseException;
 
 /**
- * Data structure for Car described in the task.
+ * Data structure for Coordinates described in the task.
  *
  * @author ivatolm
  */
-public class Car implements ISerializable {
+public class Coordinates implements ISerializable {
 
-    /** Name field */
-    private String name;
+    /** x field */
+    private Integer x;
 
-    /** Cool field */
-    private boolean cool;
+    /** y field */
+    private Float y;
 
     /**
      * Constructs dummy-instance of the class.
      * Used to create dummy-instances of the class that will be instantly overriden.
      * Must not be used in typical case.
      */
-    public Car() {}
+    public Coordinates() {}
 
     /**
      * Constructs new instance from the passed agruments.
      * Extracts and casts provided arguments to target types.
      *
-     * @param name valid {@code name} argument from command line
-     * @param cool valid {@code cool} argument from command line
+     * @param x validated {@code x} argument from the command line
+     * @param y validated {@code y} argument from the command line
      */
-    public Car(Object name, Object cool) {
-        this.name = (String) name;
-        this.cool = (boolean) cool;
+    public Coordinates(Object x, Object y) {
+        this.x = (Integer) x;
+        this.y = (Float) y;
     }
 
     /**
@@ -43,7 +43,7 @@ public class Car implements ISerializable {
      */
     @Override
     public String[] serialize() {
-        return new String[] { "(" + this.name + "," + this.cool +  ")" };
+        return new String[] { "(" + this.x + "," + this.y +  ")" };
     }
 
     /**
@@ -64,8 +64,8 @@ public class Car implements ISerializable {
             throw new SimpleParseException(value + " must contain 2 values.");
         }
 
-        this.name = data[0];
-        this.cool = Boolean.parseBoolean(data[1]);
+        this.x = Integer.parseInt(data[0]);
+        this.y = Float.parseFloat(data[1]);
     }
 
 }

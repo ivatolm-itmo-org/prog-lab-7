@@ -1,4 +1,4 @@
-package com.ivatolm.app.humanBeing;
+package com.ivatolm.app.models;
 
 import com.ivatolm.app.database.ISerializable;
 import com.ivatolm.app.utils.NameNotFoundException;

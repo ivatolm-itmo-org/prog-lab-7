@@ -10,9 +10,9 @@ import java.util.Comparator;
 import java.util.LinkedList;
 
 import com.ivatolm.app.database.IDatabase;
-import com.ivatolm.app.humanBeing.Car;
-import com.ivatolm.app.humanBeing.Coordinates;
-import com.ivatolm.app.humanBeing.HumanBeing;
+import com.ivatolm.app.models.Car;
+import com.ivatolm.app.models.Coordinates;
+import com.ivatolm.app.models.HumanBeing;
 import com.ivatolm.app.parser.Command;
 import com.ivatolm.app.parser.arguments.Argument;
 

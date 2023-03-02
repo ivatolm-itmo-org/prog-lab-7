@@ -1,6 +1,6 @@
 package com.ivatolm.app.parser.arguments;
 
-import com.ivatolm.app.humanBeing.Mood;
+import com.ivatolm.app.models.Mood;
 
 /**
  * This class represents mood command line argument.

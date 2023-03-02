@@ -1,38 +1,38 @@
-package com.ivatolm.app.humanBeing;
+package com.ivatolm.app.models;
 
 import com.ivatolm.app.database.ISerializable;
 import com.ivatolm.app.utils.SimpleParseException;
 
 /**
- * Data structure for Coordinates described in the task.
+ * Data structure for Car described in the task.
  *
  * @author ivatolm
  */
-public class Coordinates implements ISerializable {
+public class Car implements ISerializable {
 
-    /** x field */
-    private Integer x;
+    /** Name field */
+    private String name;
 
-    /** y field */
-    private Float y;
+    /** Cool field */
+    private boolean cool;
 
     /**
      * Constructs dummy-instance of the class.
      * Used to create dummy-instances of the class that will be instantly overriden.
      * Must not be used in typical case.
      */
-    public Coordinates() {}
+    public Car() {}
 
     /**
      * Constructs new instance from the passed agruments.
      * Extracts and casts provided arguments to target types.
      *
-     * @param x validated {@code x} argument from the command line
-     * @param y validated {@code y} argument from the command line
+     * @param name valid {@code name} argument from command line
+     * @param cool valid {@code cool} argument from command line
      */
-    public Coordinates(Object x, Object y) {
-        this.x = (Integer) x;
-        this.y = (Float) y;
+    public Car(Object name, Object cool) {
+        this.name = (String) name;
+        this.cool = (boolean) cool;
     }
 
     /**
@@ -43,7 +43,7 @@ public class Coordinates implements ISerializable {
      */
     @Override
     public String[] serialize() {
-        return new String[] { "(" + this.x + "," + this.y +  ")" };
+        return new String[] { "(" + this.name + "," + this.cool +  ")" };
     }
 
     /**
@@ -64,8 +64,8 @@ public class Coordinates implements ISerializable {
             throw new SimpleParseException(value + " must contain 2 values.");
         }
 
-        this.x = Integer.parseInt(data[0]);
-        this.y = Float.parseFloat(data[1]);
+        this.name = data[0];
+        this.cool = Boolean.parseBoolean(data[1]);
     }
 
 }

@@ -1,4 +1,4 @@
-package com.ivatolm.app.humanBeing;
+package com.ivatolm.app.models;
 
 import java.time.LocalDate;
 import java.util.LinkedList;
