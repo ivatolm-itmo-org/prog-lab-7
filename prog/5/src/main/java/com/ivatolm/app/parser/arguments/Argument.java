@@ -5,7 +5,7 @@ package com.ivatolm.app.parser.arguments;
  *
  * @author ivatolm
  */
-interface IParsable {
+interface Parsable {
 
     /**
      * Parses {@code value} and overrides internal one with new one.
@@ -21,7 +21,7 @@ interface IParsable {
  *
  * @author ivatolm
  */
-public abstract class Argument implements IParsable {
+public abstract class Argument implements Parsable {
 
     /** Value validator */
     private ArgCheck check;
