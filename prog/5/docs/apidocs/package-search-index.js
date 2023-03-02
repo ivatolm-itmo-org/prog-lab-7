@@ -1,1 +1,0 @@
-packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"l":"com.ivatolm.app"},{"l":"com.ivatolm.app.database"},{"l":"com.ivatolm.app.humanBeing"},{"l":"com.ivatolm.app.interpreter"},{"l":"com.ivatolm.app.parser"},{"l":"com.ivatolm.app.parser.arguments"},{"l":"com.ivatolm.app.shell"},{"l":"com.ivatolm.app.utils"}];updateSearchResults();

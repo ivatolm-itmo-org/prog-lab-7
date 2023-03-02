@@ -517,7 +517,7 @@ public class Interpreter {
     /**
      * Checks if there is element with {@code id} in collection.
      *
-     * @param id id of the element to check
+     * @param arg id of the element to check
      * @return true if exists, else false
      */
     public boolean hasItemWithId(Argument arg) {

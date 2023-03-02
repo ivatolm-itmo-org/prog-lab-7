@@ -1,0 +1,8 @@
+com.ivatolm.app
+com.ivatolm.app.database
+com.ivatolm.app.interpreter
+com.ivatolm.app.models
+com.ivatolm.app.parser
+com.ivatolm.app.parser.arguments
+com.ivatolm.app.shell
+com.ivatolm.app.utils
