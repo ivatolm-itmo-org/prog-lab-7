@@ -13,7 +13,7 @@ import java.util.LinkedList;
  *
  * @author ivatolm
  */
-public interface IDatabase<T extends ISerializable & IDatabaseObject> {
+public interface DataBase<T extends Serializable & DataBaseObject> {
 
     /**
      * Register dummy instance of class T.

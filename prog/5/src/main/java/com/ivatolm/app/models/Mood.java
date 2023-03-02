@@ -1,6 +1,6 @@
 package com.ivatolm.app.models;
 
-import com.ivatolm.app.database.ISerializable;
+import com.ivatolm.app.database.Serializable;
 import com.ivatolm.app.utils.NameNotFoundException;
 import com.ivatolm.app.utils.SimpleParseException;
 
@@ -9,7 +9,7 @@ import com.ivatolm.app.utils.SimpleParseException;
  *
  * @author ivatolm
  */
-public enum Mood implements ISerializable {
+public enum Mood implements Serializable {
 
     LONGING("longing"),
     GLOOM("gloom"),
@@ -47,7 +47,7 @@ public enum Mood implements ISerializable {
     }
 
     /**
-     * Implements {@code serialize} for {@code ISerializable}.
+     * Implements {@code serialize} for {@code Serializable}.
      * Serializes fields into {@code String} array.
      *
      * @return serialized object
@@ -58,7 +58,7 @@ public enum Mood implements ISerializable {
     }
 
     /**
-     * Implements {@code deserialize} for {@code ISerializable}.
+     * Implements {@code deserialize} for {@code Serializable}.
      * Casts input value to target type. Overrides internal value with a new one.
      *
      * @param string serialized object

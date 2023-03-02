@@ -5,7 +5,7 @@ import java.util.NoSuchElementException;
 import java.util.Scanner;
 
 import com.ivatolm.app.database.CSVDatabase;
-import com.ivatolm.app.database.IDatabase;
+import com.ivatolm.app.database.DataBase;
 import com.ivatolm.app.interpreter.Interpreter;
 import com.ivatolm.app.models.HumanBeing;
 import com.ivatolm.app.parser.Command;
@@ -34,7 +34,7 @@ public class Shell {
      * @param filename database filename
      */
     public Shell(String filename) {
-        IDatabase<HumanBeing> database = new CSVDatabase<HumanBeing>(filename);
+        DataBase<HumanBeing> database = new CSVDatabase<HumanBeing>(filename);
 
         this.scanner = new Scanner(System.in);
         this.parser = new Parser();

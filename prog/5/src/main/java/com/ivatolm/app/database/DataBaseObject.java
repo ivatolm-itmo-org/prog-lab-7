@@ -9,7 +9,7 @@ package com.ivatolm.app.database;
  *
  * @author ivatolm
  */
-public interface IDatabaseObject {
+public interface DataBaseObject {
 
     /**
      * @return list of object attributes

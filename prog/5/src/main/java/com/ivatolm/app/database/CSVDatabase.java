@@ -19,10 +19,10 @@ import com.opencsv.CSVWriter;
  *
  * @author ivatolm
  */
-public class CSVDatabase<T extends ISerializable & IDatabaseObject> implements IDatabase<T> {
+public class CSVDatabase<T extends Serializable & DataBaseObject> implements DataBase<T> {
 
     /**
-     * Read note in {@code IDatabase} interface for explanation.
+     * Read note in {@code DataBase} interface for explanation.
      */
     private T dummyObject = null;
 
@@ -39,7 +39,7 @@ public class CSVDatabase<T extends ISerializable & IDatabaseObject> implements I
     }
 
     /**
-     * Implements {@code setDummyObject} for {@code IDatabase}.
+     * Implements {@code setDummyObject} for {@code DataBase}.
      *
      * @param dummyObject dummy instance of class T
      */
@@ -49,8 +49,8 @@ public class CSVDatabase<T extends ISerializable & IDatabaseObject> implements I
     }
 
     /**
-     * Implements {@code write} for {@code IDatabase}.
-     * Serializes data via {@code ISerializable} interface and writes it to file.
+     * Implements {@code write} for {@code DataBase}.
+     * Serializes data via {@code Serializable} interface and writes it to file.
      * Prints error if such occures, but does not throw exception.
      *
      * TODO: throw exception if failure occures.
@@ -88,9 +88,9 @@ public class CSVDatabase<T extends ISerializable & IDatabaseObject> implements I
     }
 
     /**
-     * Implements {@code read} for {@code IDatabase}.
+     * Implements {@code read} for {@code DataBase}.
      * Uses reflection to create instances of class T via {@code dummyObject}.
-     * Deserializes read data into them via {@code ISerializable} interface.
+     * Deserializes read data into them via {@code Serializable} interface.
      * Prints error if such occures, but does not throw exception.
      *
      * TODO: throw exception if failure occures.

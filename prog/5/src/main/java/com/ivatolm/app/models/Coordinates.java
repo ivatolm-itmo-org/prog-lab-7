@@ -1,6 +1,6 @@
 package com.ivatolm.app.models;
 
-import com.ivatolm.app.database.ISerializable;
+import com.ivatolm.app.database.Serializable;
 import com.ivatolm.app.utils.SimpleParseException;
 
 /**
@@ -8,7 +8,7 @@ import com.ivatolm.app.utils.SimpleParseException;
  *
  * @author ivatolm
  */
-public class Coordinates implements ISerializable {
+public class Coordinates implements Serializable {
 
     /** x field */
     private Integer x;
@@ -36,7 +36,7 @@ public class Coordinates implements ISerializable {
     }
 
     /**
-     * Implements {@code serialize} for {@code ISerializable}.
+     * Implements {@code serialize} for {@code Serializable}.
      * Serializes fields into {@code String} array.
      *
      * @return serialized object
@@ -47,7 +47,7 @@ public class Coordinates implements ISerializable {
     }
 
     /**
-     * Implements {@code deserialize} for {@code ISerializable}.
+     * Implements {@code deserialize} for {@code Serializable}.
      * Casts input values to target types. Overrides internal values with new ones.
      *
      * @param string serialized object

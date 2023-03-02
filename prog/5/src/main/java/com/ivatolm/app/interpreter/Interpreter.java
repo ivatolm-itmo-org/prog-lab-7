@@ -9,7 +9,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.LinkedList;
 
-import com.ivatolm.app.database.IDatabase;
+import com.ivatolm.app.database.DataBase;
 import com.ivatolm.app.models.Car;
 import com.ivatolm.app.models.Coordinates;
 import com.ivatolm.app.models.HumanBeing;
@@ -24,7 +24,7 @@ import com.ivatolm.app.parser.arguments.Argument;
 public class Interpreter {
 
     /** Link to database */
-    private IDatabase<HumanBeing> database;
+    private DataBase<HumanBeing> database;
 
     /** Collection of objects (described in the task) */
     private LinkedList<HumanBeing> collection;
@@ -40,7 +40,7 @@ public class Interpreter {
      *
      * @param database link to database
      */
-    public Interpreter(IDatabase<HumanBeing> database) {
+    public Interpreter(DataBase<HumanBeing> database) {
         this.database = database;
         this.database.setDummyObject(new HumanBeing());
 

@@ -3,8 +3,8 @@ package com.ivatolm.app.models;
 import java.time.LocalDate;
 import java.util.LinkedList;
 
-import com.ivatolm.app.database.IDatabaseObject;
-import com.ivatolm.app.database.ISerializable;
+import com.ivatolm.app.database.DataBaseObject;
+import com.ivatolm.app.database.Serializable;
 import com.ivatolm.app.utils.SimpleParseException;
 
 /**
@@ -12,7 +12,7 @@ import com.ivatolm.app.utils.SimpleParseException;
  *
  * @author ivatolm
  */
-public class HumanBeing implements ISerializable, IDatabaseObject, Comparable<HumanBeing> {
+public class HumanBeing implements Serializable, DataBaseObject, Comparable<HumanBeing> {
 
     /** Id field */
     private Long id;
@@ -75,7 +75,7 @@ public class HumanBeing implements ISerializable, IDatabaseObject, Comparable<Hu
     }
 
     /**
-     * Implements {@code serialize} for {@code ISerializable}.
+     * Implements {@code serialize} for {@code Serializable}.
      * Sequentially serializes fiels into {@code String} array. If field is
      * complex serializes it first.
      *
@@ -99,7 +99,7 @@ public class HumanBeing implements ISerializable, IDatabaseObject, Comparable<Hu
     }
 
     /**
-     * Implements {@code deserialize} for {@code ISerializable}.
+     * Implements {@code deserialize} for {@code Serializable}.
      * Casts input values to target types. Overrides internal values with new ones.
      *
      * @param value serialized object
@@ -127,7 +127,7 @@ public class HumanBeing implements ISerializable, IDatabaseObject, Comparable<Hu
     }
 
     /**
-     * Implements {@code getAttributesList} for {@code IDatabaseObject}.
+     * Implements {@code getAttributesList} for {@code DataBaseObject}.
      *
      * @return list of class fields
      */
