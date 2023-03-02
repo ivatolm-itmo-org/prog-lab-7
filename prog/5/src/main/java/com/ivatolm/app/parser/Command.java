@@ -72,25 +72,29 @@ public enum Command {
             "add new element to the collection"
         },
         new Argument[] {
-            new StringArgument( // Name
+            new StringArgument(
+                "name",
                 (x) -> x != null && !x.isEmpty(),
                 "name",
                 "This argument cannot be empty"),
-            new IntegerArgument( // X coordinate
+            new IntegerArgument(
+                "xCoordinate",
                 (x) -> {
                     int y; try { y = Integer.parseInt(x); } catch (Exception e) { return false; }
                     return x != null && y > -58;
                 },
                 "x coordinate",
                 "This argument must be greater than -58 (integer)"),
-            new FloatArgument( // Y coordinate
+            new FloatArgument(
+                "yCoordinate",
                 (x) -> {
                     float y; try { y = Float.parseFloat(x); } catch (Exception e) { return false; }
                     return x != null && y <= 414;
                 },
                 "y coordinate",
                 "This argument must be less or equal than 414 (float)"),
-            new BooleanArgument( // Real hero
+            new BooleanArgument(
+                "realHero",
                 (x) -> {
                     if (x == null) return true;
                     boolean y = ("true".equalsIgnoreCase(x) || "false".equalsIgnoreCase(x));
@@ -98,25 +102,29 @@ public enum Command {
                 },
                 "real hero",
                 "This argument must be true, false (or null)"),
-            new BooleanArgument( // Has toothpick
+            new BooleanArgument(
+                "hasToothpick",
                 (x) -> {
                     boolean y = ("true".equalsIgnoreCase(x) || "false".equalsIgnoreCase(x));
                     return x != null && y;
                 },
                 "has toothpick",
                 "This argument must be true or false"),
-            new LongArgument( // Impact speed
+            new LongArgument(
+                "impactSpeed",
                 (x) -> {
                     try { Long.parseLong(x); } catch (Exception e) { return false; }
                     return x != null;
                 },
                 "impact speed",
                 "This argument must be long integer"),
-            new StringArgument( // Soundtrack name
+            new StringArgument(
+                "soundtrackName",
                 (x) -> x != null,
                 "soundtrack name",
                 "This argument cannot be empty"),
-            new IntegerArgument( // Minutes of waiting
+            new IntegerArgument(
+                "minutesOfWaiting",
                 (x) -> {
                     if (x == null) return true;
                     try { Integer.parseInt(x); } catch (Exception e) { return false; }
@@ -124,18 +132,21 @@ public enum Command {
                 },
                 "minutes of waiting",
                 "This argument must be integer (or null)"),
-            new MoodArgument( // Mood
+            new MoodArgument(
+                "mood",
                 (x) -> {
                     try { Mood.parseMood(x); } catch (Exception e) { return false; }
                     return x != null;
                 },
                 "mood",
                 "This argument must be equal to 'LONGING', 'GLOOM', 'APATHY' or 'RAGE'"),
-            new StringArgument( // Car name
+            new StringArgument(
+                "carName",
                 (x) -> x != null,
                 "car name",
                 "This argument cannot be empty"),
-            new BooleanArgument( // Car cool
+            new BooleanArgument(
+                "carCool",
                 (x) -> {
                     if (x == null) return true;
                     boolean y = ("true".equalsIgnoreCase(x) || "false".equalsIgnoreCase(x));
@@ -153,7 +164,8 @@ public enum Command {
         ((ArgsExtention) ((a) -> {
             Argument[] args = new Argument[1 + a.length];
 
-            args[0] = new LongArgument( // Id
+            args[0] = new LongArgument(
+                "id",
                 (x) -> {
                     try { Long.parseLong(x); } catch (Exception e) { return false; }
                     return x != null;
@@ -175,7 +187,8 @@ public enum Command {
             "remove element with id of {id} from collection"
         },
         new Argument[] {
-            new LongArgument( // Id
+            new LongArgument(
+                "id",
                 (x) -> {
                     try { Long.parseLong(x); } catch (Exception e) { return false; }
                     return x != null;
@@ -204,7 +217,8 @@ public enum Command {
             "execute script from the file"
         },
         new Argument[] {
-            new StringArgument( // Filename
+            new StringArgument(
+                "filename",
                 (x) -> x != null,
                 "filename",
                 "This argument cannot be empty")
@@ -245,13 +259,14 @@ public enum Command {
         },
         new Argument[] {
             new IntegerArgument(
-            (x) -> {
-                if (x == null) return true;
-                try { Integer.parseInt(x); } catch (Exception e) { return false; }
-                return true;
-            },
-            "minutes of waiting",
-            "This argument must be integer (or null)"),
+                "minutesOfWaiting",
+                (x) -> {
+                    if (x == null) return true;
+                    try { Integer.parseInt(x); } catch (Exception e) { return false; }
+                    return true;
+                },
+                "minutes of waiting",
+                "This argument must be integer (or null)"),
         }
     ),
     FILTER_STARTS_WITH_NAME(
@@ -261,6 +276,7 @@ public enum Command {
         },
         new Argument[] {
             new StringArgument(
+                "name",
                 (x) -> x != null,
                 "name",
                 "This argument cannot be empty")

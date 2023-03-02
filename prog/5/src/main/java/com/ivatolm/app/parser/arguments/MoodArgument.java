@@ -12,12 +12,13 @@ public class MoodArgument extends Argument {
     /**
      * Constructs new instance with provided arguments.
      *
+     * @param name name
      * @param check check
      * @param greeingMsg greeting message
      * @param errorMsg error message
      */
-    public MoodArgument(ArgCheck check, String greeingMsg, String errorMsg) {
-        super(check, greeingMsg, errorMsg);
+    public MoodArgument(String name, ArgCheck check, String greeingMsg, String errorMsg) {
+        super(name, check, greeingMsg, errorMsg);
     }
 
     /**

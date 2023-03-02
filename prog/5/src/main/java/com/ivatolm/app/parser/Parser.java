@@ -23,6 +23,8 @@ public class Parser {
     /** Partially parsed arguments */
     private LinkedList<Argument> args;
 
+    /** Id argument (urgent validation) */
+    private Argument idArg;
 
     /** Parsed command */
     private Command result;
@@ -174,7 +176,11 @@ public class Parser {
             ArgCheck f = arg.getCheck();
             if (f.check(inputArg)) {
                 arg.parse(inputArg);
-                result.add(arg);
+
+                if (arg.getName().equalsIgnoreCase("id")) {
+                    this.idArg = arg;
+                    result.add(arg);
+                }
             } else {
                 System.err.println(arg.getErrorMsg());
             }
@@ -202,6 +208,13 @@ public class Parser {
      */
     public int getCurrentArgumentsCnt() {
         return this.args.size();
+    }
+
+    /**
+     * @return id argument or null, if no such argument
+     */
+    public Argument getIdArgument() {
+        return this.idArg;
     }
 
 }

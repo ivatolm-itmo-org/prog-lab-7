@@ -23,6 +23,9 @@ interface Parsable {
  */
 public abstract class Argument implements Parsable {
 
+    /** Name of the argument */
+    private String name;
+
     /** Value validator */
     private ArgCheck check;
 
@@ -38,14 +41,23 @@ public abstract class Argument implements Parsable {
     /**
      * Constructs new instance with given arguments.
      *
+     * @param name name of the argument
      * @param check value validator
      * @param greeingMsg greeting message
      * @param errorMsg error message
      */
-    public Argument(ArgCheck check, String greeingMsg, String errorMsg) {
+    public Argument(String name, ArgCheck check, String greeingMsg, String errorMsg) {
+        this.name = name;
         this.check = check;
         this.greetingMsg = greeingMsg;
         this.errorMsg = errorMsg;
+    }
+
+    /**
+     * @return {@code name} field of the object
+     */
+    public String getName() {
+        return this.name;
     }
 
     /**

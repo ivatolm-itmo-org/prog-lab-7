@@ -10,12 +10,13 @@ public class BooleanArgument extends Argument {
     /**
      * Constructs new instance with provided arguments.
      *
+     * @param name name
      * @param check check
      * @param greeingMsg greeting message
      * @param errorMsg error message
      */
-    public BooleanArgument(ArgCheck check, String greeingMsg, String errorMsg) {
-        super(check, greeingMsg, errorMsg);
+    public BooleanArgument(String name, ArgCheck check, String greeingMsg, String errorMsg) {
+        super(name, check, greeingMsg, errorMsg);
     }
 
     /**
