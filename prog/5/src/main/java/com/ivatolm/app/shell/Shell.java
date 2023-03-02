@@ -10,6 +10,7 @@ import com.ivatolm.app.interpreter.Interpreter;
 import com.ivatolm.app.models.HumanBeing;
 import com.ivatolm.app.parser.Command;
 import com.ivatolm.app.parser.Parser;
+import com.ivatolm.app.parser.arguments.Argument;
 import com.ivatolm.app.utils.SimpleParseException;
 
 /**
@@ -70,6 +71,14 @@ public class Shell {
                     if (result == false) {
                         Command cmd = this.parser.getCurrentCommand();
                         int argCnt = this.parser.getCurrentArgumentsCnt();
+
+                        Argument id = this.parser.getIdArgument();
+                        if (id != null) {
+                            if (!this.interpreter.hasItemWithId(id)) {
+                                this.parser.raiseNoSuchId();
+                                argCnt--;
+                            }
+                        }
 
                         String greeting = "Enter" + " " + "'" + cmd.getArgument(argCnt).getGreetingMsg() + "'";
                         System.out.print(greeting);

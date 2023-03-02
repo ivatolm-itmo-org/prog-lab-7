@@ -514,4 +514,22 @@ public class Interpreter {
         return null;
     }
 
+    /**
+     * Checks if there is element with {@code id} in collection.
+     *
+     * @param id id of the element to check
+     * @return true if exists, else false
+     */
+    public boolean hasItemWithId(Argument arg) {
+        Long id = (Long) arg.getValue();
+
+        for (HumanBeing hb : this.collection) {
+            if (id.equals(hb.getId())) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
 }

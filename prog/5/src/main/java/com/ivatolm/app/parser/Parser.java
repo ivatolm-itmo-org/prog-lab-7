@@ -24,7 +24,7 @@ public class Parser {
     private LinkedList<Argument> args;
 
     /** Id argument (urgent validation) */
-    private Argument idArg;
+    private Argument idArg = null;
 
     /** Parsed command */
     private Command result;
@@ -179,14 +179,23 @@ public class Parser {
 
                 if (arg.getName().equalsIgnoreCase("id")) {
                     this.idArg = arg;
-                    result.add(arg);
                 }
+
+                result.add(arg);
             } else {
                 System.err.println(arg.getErrorMsg());
             }
         }
 
         return result;
+    }
+
+    /**
+     * Removes last parsed argument.
+     */
+    public void raiseNoSuchId() {
+        this.args.removeLast();
+        System.out.println("There is no element with such id in collection.");
     }
 
     /**
@@ -214,7 +223,9 @@ public class Parser {
      * @return id argument or null, if no such argument
      */
     public Argument getIdArgument() {
-        return this.idArg;
+        Argument arg = this.idArg;
+        this.idArg = null;
+        return arg;
     }
 
 }
