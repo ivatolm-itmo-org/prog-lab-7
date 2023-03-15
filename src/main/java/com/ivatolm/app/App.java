@@ -6,17 +6,14 @@ import com.ivatolm.app.shell.Shell;
 public class App  {
 
     public static void main(String[] args) {
-        // if (args.length != 1) {
-        //     System.err.println("Wrong number of input arguments.");
-        //     return;
-        // }
+        if (args.length != 1) {
+            System.err.println("Wrong number of input arguments.");
+            return;
+        }
 
-        // Shell shell = new Shell(args[0]);
-        // shell.run();
-        // shell.close();
-
-        Coordinates coordinates = new Coordinates();
-        coordinates.validate();
+        Shell shell = new Shell(args[0]);
+        shell.run();
+        shell.close();
     }
 
 }

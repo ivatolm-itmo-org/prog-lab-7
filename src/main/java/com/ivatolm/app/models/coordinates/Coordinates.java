@@ -1,12 +1,11 @@
 package com.ivatolm.app.models.coordinates;
 
 import java.lang.reflect.Field;
-import java.util.LinkedList;
+import java.lang.reflect.InvocationTargetException;
 
 import com.ivatolm.app.database.Serializable;
 import com.ivatolm.app.models.Validatable;
 import com.ivatolm.app.models.Validator;
-import com.ivatolm.app.models.ValidatorException;
 import com.ivatolm.app.parser.arguments.ArgCheck;
 import com.ivatolm.app.utils.SimpleParseException;
 
@@ -77,6 +76,12 @@ public class Coordinates implements Serializable, Validatable {
         this.y = Float.parseFloat(data[1]);
     }
 
+    /**
+     * Implements {@code validate} for {@code Validatable}.
+     * Checks each field value for being valid via provided {@code Validator}.
+     *
+     * @return true if whole object is valid, else false
+     */
     @Override
     public boolean validate() {
         Class<?> clazz = this.getClass();
@@ -84,20 +89,28 @@ public class Coordinates implements Serializable, Validatable {
         for (Field field : clazz.getDeclaredFields()) {
             field.setAccessible(true);
 
+            // Checking if field has an annotaion
             if (field.isAnnotationPresent(Validator.class)) {
+                // Getting annotation from the field
                 Validator validator = field.getAnnotation(Validator.class);
+
+                // Extracting validator class from the annotation
                 Class<? extends ArgCheck> validatorClass = validator.validator();
-                ArgCheck a = (ArgCheck) validatorClass;
 
+                // Instantinating validator
                 try {
-                    boolean result = check.check("" + field.get(clazz));
+                    ArgCheck check = validatorClass.getDeclaredConstructor().newInstance();
 
+                    // Checking field value
+                    boolean result = check.check("" + field.get(this));
                     if (!result) {
                         return false;
                     }
 
-                } catch (IllegalArgumentException | IllegalAccessException e) {
+                } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+                        | InvocationTargetException | NoSuchMethodException | SecurityException e) {
                     System.err.println(e);
+                    return false;
                 }
             }
         }
