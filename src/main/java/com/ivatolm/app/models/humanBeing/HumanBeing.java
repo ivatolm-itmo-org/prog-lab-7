@@ -1,10 +1,15 @@
-package com.ivatolm.app.models;
+package com.ivatolm.app.models.humanBeing;
 
 import java.time.LocalDate;
 import java.util.LinkedList;
 
 import com.ivatolm.app.database.DataBaseObject;
 import com.ivatolm.app.database.Serializable;
+import com.ivatolm.app.models.Mood;
+import com.ivatolm.app.models.Validator;
+import com.ivatolm.app.models.car.Car;
+import com.ivatolm.app.models.coordinates.Coordinates;
+import com.ivatolm.app.models.coordinates.CoordinatesValidator;
 import com.ivatolm.app.utils.SimpleParseException;
 
 /**
@@ -15,12 +20,15 @@ import com.ivatolm.app.utils.SimpleParseException;
 public class HumanBeing implements Serializable, DataBaseObject, Comparable<HumanBeing> {
 
     /** Id field */
+    @Validator(validator = HumanBeingIdValidator.class)
     private Long id;
 
     /** Name field */
+    @Validator(validator = HumanBeingNameValidator.class)
     private String name;
 
     /** Coordinates field */
+    @Validator(validator = CoordinatesValidator.class)
     private Coordinates coordinates;
 
     /** Creation date field */

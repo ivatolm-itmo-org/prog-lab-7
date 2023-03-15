@@ -7,7 +7,7 @@ import java.util.Scanner;
 import com.ivatolm.app.database.CSVDatabase;
 import com.ivatolm.app.database.DataBase;
 import com.ivatolm.app.interpreter.Interpreter;
-import com.ivatolm.app.models.HumanBeing;
+import com.ivatolm.app.models.humanBeing.HumanBeing;
 import com.ivatolm.app.parser.Command;
 import com.ivatolm.app.parser.Parser;
 import com.ivatolm.app.parser.arguments.Argument;
