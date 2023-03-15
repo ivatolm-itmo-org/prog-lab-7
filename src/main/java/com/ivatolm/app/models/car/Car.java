@@ -1,7 +1,12 @@
 package com.ivatolm.app.models.car;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+
 import com.ivatolm.app.database.Serializable;
+import com.ivatolm.app.models.Validatable;
 import com.ivatolm.app.models.Validator;
+import com.ivatolm.app.parser.arguments.ArgCheck;
 import com.ivatolm.app.utils.SimpleParseException;
 
 /**
@@ -9,7 +14,7 @@ import com.ivatolm.app.utils.SimpleParseException;
  *
  * @author ivatolm
  */
-public class Car implements Serializable {
+public class Car implements Serializable, Validatable {
 
     /** Name field */
     @Validator(validator = CarNameValidator.class)
@@ -69,6 +74,62 @@ public class Car implements Serializable {
 
         this.name = data[0];
         this.cool = Boolean.parseBoolean(data[1]);
+    }
+
+    /**
+     * Implements {@code validate} for {@code Validatable}.
+     * Checks each field value for being valid via provided {@code Validator}.
+     *
+     * @return true if whole object is valid, else false
+     */
+    @Override
+    public boolean validate() {
+        Class<?> clazz = this.getClass();
+
+        for (Field field : clazz.getDeclaredFields()) {
+            field.setAccessible(true);
+
+            // Checking if field has an annotaion
+            if (field.isAnnotationPresent(Validator.class)) {
+                // Getting annotation from the field
+                Validator validator = field.getAnnotation(Validator.class);
+
+                // Extracting validator class from the annotation
+                Class<? extends ArgCheck> validatorClass = validator.validator();
+
+                // Instantinating validator
+                try {
+                    ArgCheck check = validatorClass.getDeclaredConstructor().newInstance();
+
+                    // Checking field value
+                    boolean result = check.check("" + field.get(this));
+                    if (!result) {
+                        return false;
+                    }
+
+                } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+                        | InvocationTargetException | NoSuchMethodException | SecurityException e) {
+                    System.err.println(e);
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * @return 'name' field of the object
+     */
+    public String getName() {
+        return this.name;
+    }
+
+    /**
+     * @return 'cool' field of the object
+     */
+    public boolean getCool() {
+        return this.cool;
     }
 
 }
