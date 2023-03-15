@@ -193,7 +193,14 @@ public class HumanBeing implements Serializable, DataBaseObject, Comparable<Huma
                     ArgCheck check = validatorClass.getDeclaredConstructor().newInstance();
 
                     // Checking field value
-                    boolean result = check.check("" + field.get(this));
+                    boolean result;
+                    if (field.get(this) instanceof Serializable) {
+                        Serializable f = (Serializable) field.get(this);
+                        result = check.check(f.serialize()[0]);
+                    } else {
+                        result = check.check("" + field.get(this));
+                    }
+
                     if (!result) {
                         return false;
                     }

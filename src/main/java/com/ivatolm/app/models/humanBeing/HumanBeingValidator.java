@@ -35,13 +35,13 @@ public class HumanBeingValidator implements ArgCheck {
         CarValidator carValidator = new CarValidator();
 
         return nameValidator.check("" + hb.getName()) &&
-               coordinateValidator.check("" + hb.getCoordinates()) &&
+               coordinateValidator.check(hb.getCoordinates().serialize()[0]) &&
                realHeroValidator.check("" + hb.isRealHero()) &&
                hasToothpickValidator.check("" + hb.getHasToothpick()) &&
                impactSpeedValidator.check("" + hb.getImpactSpeed()) &&
                minutesOfWaitingValidator.check("" + hb.getMinutesOfWaiting()) &&
-               moodValidator.check("" + hb.getMood()) &&
-               carValidator.check("" + hb.getCar());
+               moodValidator.check("" + hb.getMood().serialize()[0]) &&
+               carValidator.check("" + hb.getCar().serialize()[0]);
     }
 
 }

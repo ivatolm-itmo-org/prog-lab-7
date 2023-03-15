@@ -237,7 +237,11 @@ public class Interpreter {
                         args.get(10).getValue()));          // car
 
         HumanBeing instance = new HumanBeing(res);
-        this.collection.add(instance);
+        if (instance.validate()) {
+            this.collection.add(instance);
+        } else {
+            System.err.println("Instance validation failed.");
+        }
 
         return null;
     }
@@ -282,7 +286,11 @@ public class Interpreter {
                         args.get(11).getValue()));          // car
 
         HumanBeing instance = new HumanBeing(res);
-        this.collection.set(index, instance);
+        if (instance.validate()) {
+            this.collection.set(index, instance);
+        } else {
+            System.err.println("Instance validation failed.");
+        }
 
         return null;
     }
