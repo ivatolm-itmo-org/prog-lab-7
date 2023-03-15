@@ -2,7 +2,7 @@ package com.ivatolm.app.parser;
 
 import java.util.LinkedList;
 
-import com.ivatolm.app.models.Mood;
+import com.ivatolm.app.models.mood.Mood;
 import com.ivatolm.app.parser.arguments.Argument;
 import com.ivatolm.app.parser.arguments.BooleanArgument;
 import com.ivatolm.app.parser.arguments.FloatArgument;

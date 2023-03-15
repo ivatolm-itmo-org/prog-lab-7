@@ -1,6 +1,5 @@
 package com.ivatolm.app;
 
-import com.ivatolm.app.models.coordinates.Coordinates;
 import com.ivatolm.app.shell.Shell;
 
 public class App  {

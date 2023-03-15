@@ -1,15 +1,21 @@
 package com.ivatolm.app.models.humanBeing;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.time.LocalDate;
 import java.util.LinkedList;
 
 import com.ivatolm.app.database.DataBaseObject;
 import com.ivatolm.app.database.Serializable;
-import com.ivatolm.app.models.Mood;
+import com.ivatolm.app.models.Validatable;
 import com.ivatolm.app.models.Validator;
 import com.ivatolm.app.models.car.Car;
+import com.ivatolm.app.models.car.CarValidator;
 import com.ivatolm.app.models.coordinates.Coordinates;
 import com.ivatolm.app.models.coordinates.CoordinatesValidator;
+import com.ivatolm.app.models.mood.Mood;
+import com.ivatolm.app.models.mood.MoodValidator;
+import com.ivatolm.app.parser.arguments.ArgCheck;
 import com.ivatolm.app.utils.SimpleParseException;
 
 /**
@@ -17,10 +23,9 @@ import com.ivatolm.app.utils.SimpleParseException;
  *
  * @author ivatolm
  */
-public class HumanBeing implements Serializable, DataBaseObject, Comparable<HumanBeing> {
+public class HumanBeing implements Serializable, DataBaseObject, Comparable<HumanBeing>, Validatable {
 
     /** Id field */
-    @Validator(validator = HumanBeingIdValidator.class)
     private Long id;
 
     /** Name field */
@@ -35,24 +40,31 @@ public class HumanBeing implements Serializable, DataBaseObject, Comparable<Huma
     private LocalDate creationDate;
 
     /** Real hero field */
+    @Validator(validator = HumanBeingRealHeroValidator.class)
     private boolean realHero;
 
     /** Has toothpick field */
+    @Validator(validator = HumanBeingHasToothpickValidator.class)
     private Boolean hasToothpick;
 
     /** Impact speed field */
+    @Validator(validator = HumanBeingImpactSpeedValidator.class)
     private Long impactSpeed;
 
     /** Soundtrack name field */
+    @Validator(validator = HumanBeingSoundtrackNameValidator.class)
     private String soundtrackName;
 
     /** Minutes of waiting field */
+    @Validator(validator = HumanBeingMinutesOfWaitingValidator.class)
     private int minutesOfWaiting;
 
     /** Mood field */
+    @Validator(validator = MoodValidator.class)
     private Mood mood;
 
     /** Car field */
+    @Validator(validator = CarValidator.class)
     private Car car;
 
     /**
@@ -154,6 +166,49 @@ public class HumanBeing implements Serializable, DataBaseObject, Comparable<Huma
             "car"
         };
     }
+
+    /**
+     * Implements {@code validate} for {@code Validatable}.
+     * Checks each field value for being valid via provided {@code Validator}.
+     *
+     * @return true if whole object is valid, else false
+     */
+    @Override
+    public boolean validate() {
+        Class<?> clazz = this.getClass();
+
+        for (Field field : clazz.getDeclaredFields()) {
+            field.setAccessible(true);
+
+            // Checking if field has an annotaion
+            if (field.isAnnotationPresent(Validator.class)) {
+                // Getting annotation from the field
+                Validator validator = field.getAnnotation(Validator.class);
+
+                // Extracting validator class from the annotation
+                Class<? extends ArgCheck> validatorClass = validator.validator();
+
+                // Instantinating validator
+                try {
+                    ArgCheck check = validatorClass.getDeclaredConstructor().newInstance();
+
+                    // Checking field value
+                    boolean result = check.check("" + field.get(this));
+                    if (!result) {
+                        return false;
+                    }
+
+                } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+                        | InvocationTargetException | NoSuchMethodException | SecurityException e) {
+                    System.err.println(e);
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
 
     /**
      * Overrides {@code toString} of {@code Object}
