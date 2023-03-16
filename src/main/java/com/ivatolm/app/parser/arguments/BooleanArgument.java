@@ -20,12 +20,26 @@ public class BooleanArgument extends Argument {
     }
 
     /**
-     * Implements {@code parse} for {@code IParsable}.
+     * Implements {@code parse} for {@code Parsable}.
      *
      * @param value value to parse
      */
     @Override
     public void parse(String value) {
+        try {
+            int intValue = Integer.parseInt(value);
+
+            if (intValue == 0) {
+                this.value = false;
+            }
+
+            if (intValue == 1) {
+                this.value = true;
+            }
+
+            return;
+        } catch (Exception e) {}
+
         this.value = Boolean.parseBoolean(value);
     }
 

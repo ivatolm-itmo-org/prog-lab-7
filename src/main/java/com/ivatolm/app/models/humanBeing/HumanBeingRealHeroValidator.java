@@ -1,6 +1,7 @@
 package com.ivatolm.app.models.humanBeing;
 
 import com.ivatolm.app.parser.arguments.ArgCheck;
+import com.ivatolm.app.parser.arguments.BooleanArgument;
 
 /**
  * Validator for {@code realHero} field of the {@code HumanBeing}.
@@ -14,7 +15,10 @@ public class HumanBeingRealHeroValidator implements ArgCheck {
         if (value == null)
             return true;
 
-        return "true".equalsIgnoreCase(value) || "false".equalsIgnoreCase(value);
+        BooleanArgument arg = new BooleanArgument(null, null, null, null);
+        arg.parse(value);
+
+        return ((Boolean) arg.getValue()) instanceof Boolean;
     }
 
 }

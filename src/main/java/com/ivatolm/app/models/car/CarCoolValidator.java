@@ -1,6 +1,7 @@
 package com.ivatolm.app.models.car;
 
 import com.ivatolm.app.parser.arguments.ArgCheck;
+import com.ivatolm.app.parser.arguments.BooleanArgument;
 
 /**
  * Validator for {@code cool} field of the {@code Car}.
@@ -14,8 +15,10 @@ public class CarCoolValidator implements ArgCheck {
         if (value == null)
             return true;
 
-        boolean y = ("true".equalsIgnoreCase(value) || "false".equalsIgnoreCase(value));
-        return y;
+        BooleanArgument arg = new BooleanArgument(null, null, null, null);
+        arg.parse(value);
+
+        return ((Boolean) arg.getValue()) instanceof Boolean;
     }
 
 }

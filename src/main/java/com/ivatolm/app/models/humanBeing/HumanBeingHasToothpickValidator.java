@@ -1,6 +1,7 @@
 package com.ivatolm.app.models.humanBeing;
 
 import com.ivatolm.app.parser.arguments.ArgCheck;
+import com.ivatolm.app.parser.arguments.BooleanArgument;
 
 /**
  * Validator for {@code hasToothpick} field of the {@code HumanBeing}.
@@ -11,7 +12,10 @@ public class HumanBeingHasToothpickValidator implements ArgCheck {
 
     @Override
     public boolean check(String value) {
-        return value != null && ("true".equalsIgnoreCase(value) || "false".equalsIgnoreCase(value));
+        BooleanArgument arg = new BooleanArgument(null, null, null, null);
+        arg.parse(value);
+
+        return value != null && ((Boolean) arg.getValue()) instanceof Boolean;
     }
 
 }

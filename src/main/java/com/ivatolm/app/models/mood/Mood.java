@@ -37,6 +37,15 @@ public enum Mood implements Serializable, Validatable {
     }
 
     /**
+     * Constructs new instance from the integer argument.
+     *
+     * @param value enum int representation
+     */
+    Mood(int value) {
+        this.value = Mood.parseMood("" + value).value;
+    }
+
+    /**
      * Parses {@code value} into {@code Mood}.
      *
      * @param value enum string representation
@@ -44,6 +53,17 @@ public enum Mood implements Serializable, Validatable {
      * @throws NameNotFoundException if there is no instance with such name
      */
     public static Mood parseMood(String value) throws NameNotFoundException {
+        try {
+            int intValue = Integer.parseInt(value);
+
+            if (0 <= intValue && intValue < values().length) {
+                return values()[intValue];
+            }
+
+        } catch (Exception e) {
+
+        }
+
         for (Mood mood : Mood.values()) {
             if (value.equalsIgnoreCase(mood.value)) {
                 return mood;
