@@ -86,58 +86,58 @@ public enum Command {
             new StringArgument(
                 "name",
                 new HumanBeingNameValidator(),
-                "name",
+                "name (string, cannot be empty)",
                 "This argument cannot be empty"),
             new IntegerArgument(
                 "xCoordinate",
                 new CoordinatesXValidator(),
-                "x coordinate",
-                "This argument must be greater than -58 (integer)"),
+                "x coordinate (integer, value greater than -58)",
+                "This argument must be greater than -58"),
             new FloatArgument(
                 "yCoordinate",
                 new CoordinatesYValidator(),
-                "y coordinate",
-                "This argument must be less or equal than 414 (float)"),
+                "y coordinate (float, value less or equal than 414)",
+                "This argument must be less or equal than 414"),
             new BooleanArgument(
                 "realHero",
                 new HumanBeingRealHeroValidator(),
-                "real hero",
-                "This argument must be true, false (or null)"),
+                "real hero (boolean, null)",
+                "This argument must be boolean or null"),
             new BooleanArgument(
                 "hasToothpick",
                 new HumanBeingHasToothpickValidator(),
-                "has toothpick",
-                "This argument must be true or false"),
+                "has toothpick (boolean)",
+                "This argument must be boolean"),
             new LongArgument(
                 "impactSpeed",
                 new HumanBeingImpactSpeedValidator(),
-                "impact speed",
+                "impact speed (long integer)",
                 "This argument must be long integer"),
             new StringArgument(
                 "soundtrackName",
                 new HumanBeingSoundtrackNameValidator(),
-                "soundtrack name",
+                "soundtrack name (string, cannot be empty)",
                 "This argument cannot be empty"),
             new IntegerArgument(
                 "minutesOfWaiting",
                 new HumanBeingMinutesOfWaitingValidator(),
-                "minutes of waiting",
-                "This argument must be integer (or null)"),
+                "minutes of waiting (integer, null)",
+                "This argument must be integer or null"),
             new MoodArgument(
                 "mood",
                 new MoodValidator(),
-                "mood",
-                "This argument must be equal to 'LONGING', 'GLOOM', 'APATHY' or 'RAGE'"),
+                "mood (Mood {'longin' - 0, 'gloom' - 1, 'apathy' - 2, 'rage' - 3})",
+                "This argument must be Mood"),
             new StringArgument(
                 "carName",
                 new CarNameValidator(),
-                "car name",
+                "car name (string, cannot be empty)",
                 "This argument cannot be empty"),
             new BooleanArgument(
                 "carCool",
                 new CarCoolValidator(),
-                "coolness of the car",
-                "This argument must be true or false (or null)")
+                "coolness of the car (boolean, null)",
+                "This argument must be boolean or null")
         }
     ),
     UPDATE(
@@ -151,7 +151,7 @@ public enum Command {
             args[0] = new LongArgument(
                 "id",
                 new HumanBeingIdValidator(),
-                "id",
+                "id (long integer)",
                 "This argument must be long integer"
             );
 
@@ -171,7 +171,7 @@ public enum Command {
             new LongArgument(
                 "id",
                 new HumanBeingIdValidator(),
-                "id",
+                "id (long integer)",
            "This argument must be long integer"),
         }
     ),
@@ -198,7 +198,7 @@ public enum Command {
             new StringArgument(
                 "filename",
                 (x) -> x != null,
-                "filename",
+                "filename (string, cannot be empty)",
                 "This argument cannot be empty")
         }
     ),
@@ -239,8 +239,8 @@ public enum Command {
             new IntegerArgument(
                 "minutesOfWaiting",
                 new HumanBeingMinutesOfWaitingValidator(),
-                "minutes of waiting",
-                "This argument must be integer (or null)"),
+                "minutes of waiting (integer, null)",
+                "This argument must be integer or null"),
         }
     ),
     FILTER_STARTS_WITH_NAME(
@@ -252,7 +252,7 @@ public enum Command {
             new StringArgument(
                 "name",
                 (x) -> x != null,
-                "name",
+                "name (string, cannot be empty)",
                 "This argument cannot be empty")
         }
     ),
