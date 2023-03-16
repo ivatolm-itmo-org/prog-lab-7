@@ -2,7 +2,17 @@ package com.ivatolm.app.parser;
 
 import java.util.LinkedList;
 
-import com.ivatolm.app.models.mood.Mood;
+import com.ivatolm.app.models.car.CarCoolValidator;
+import com.ivatolm.app.models.car.CarNameValidator;
+import com.ivatolm.app.models.coordinates.CoordinatesXValidator;
+import com.ivatolm.app.models.coordinates.CoordinatesYValidator;
+import com.ivatolm.app.models.humanBeing.HumanBeingHasToothpickValidator;
+import com.ivatolm.app.models.humanBeing.HumanBeingImpactSpeedValidator;
+import com.ivatolm.app.models.humanBeing.HumanBeingMinutesOfWaitingValidator;
+import com.ivatolm.app.models.humanBeing.HumanBeingNameValidator;
+import com.ivatolm.app.models.humanBeing.HumanBeingRealHeroValidator;
+import com.ivatolm.app.models.humanBeing.HumanBeingSoundtrackNameValidator;
+import com.ivatolm.app.models.mood.MoodValidator;
 import com.ivatolm.app.parser.arguments.Argument;
 import com.ivatolm.app.parser.arguments.BooleanArgument;
 import com.ivatolm.app.parser.arguments.FloatArgument;
@@ -74,84 +84,57 @@ public enum Command {
         new Argument[] {
             new StringArgument(
                 "name",
-                (x) -> x != null && !x.isEmpty(),
+                new HumanBeingNameValidator(),
                 "name",
                 "This argument cannot be empty"),
             new IntegerArgument(
                 "xCoordinate",
-                (x) -> {
-                    int y; try { y = Integer.parseInt(x); } catch (Exception e) { return false; }
-                    return x != null && y > -58;
-                },
+                new CoordinatesXValidator(),
                 "x coordinate",
                 "This argument must be greater than -58 (integer)"),
             new FloatArgument(
                 "yCoordinate",
-                (x) -> {
-                    float y; try { y = Float.parseFloat(x); } catch (Exception e) { return false; }
-                    return x != null && y <= 414;
-                },
+                new CoordinatesYValidator(),
                 "y coordinate",
                 "This argument must be less or equal than 414 (float)"),
             new BooleanArgument(
                 "realHero",
-                (x) -> {
-                    if (x == null) return true;
-                    boolean y = ("true".equalsIgnoreCase(x) || "false".equalsIgnoreCase(x));
-                    return y;
-                },
+                new HumanBeingRealHeroValidator(),
                 "real hero",
                 "This argument must be true, false (or null)"),
             new BooleanArgument(
                 "hasToothpick",
-                (x) -> {
-                    boolean y = ("true".equalsIgnoreCase(x) || "false".equalsIgnoreCase(x));
-                    return x != null && y;
-                },
+                new HumanBeingHasToothpickValidator(),
                 "has toothpick",
                 "This argument must be true or false"),
             new LongArgument(
                 "impactSpeed",
-                (x) -> {
-                    try { Long.parseLong(x); } catch (Exception e) { return false; }
-                    return x != null;
-                },
+                new HumanBeingImpactSpeedValidator(),
                 "impact speed",
                 "This argument must be long integer"),
             new StringArgument(
                 "soundtrackName",
-                (x) -> x != null,
+                new HumanBeingSoundtrackNameValidator(),
                 "soundtrack name",
                 "This argument cannot be empty"),
             new IntegerArgument(
                 "minutesOfWaiting",
-                (x) -> {
-                    if (x == null) return true;
-                    try { Integer.parseInt(x); } catch (Exception e) { return false; }
-                    return true;
-                },
+                new HumanBeingMinutesOfWaitingValidator(),
                 "minutes of waiting",
                 "This argument must be integer (or null)"),
             new MoodArgument(
                 "mood",
-                (x) -> {
-                    try { Mood.parseMood(x); } catch (Exception e) { return false; }
-                    return x != null;
-                },
+                new MoodValidator(),
                 "mood",
                 "This argument must be equal to 'LONGING', 'GLOOM', 'APATHY' or 'RAGE'"),
             new StringArgument(
                 "carName",
-                (x) -> x != null,
+                new CarNameValidator(),
                 "car name",
                 "This argument cannot be empty"),
             new BooleanArgument(
                 "carCool",
-                (x) -> {
-                    if (x == null) return true;
-                    boolean y = ("true".equalsIgnoreCase(x) || "false".equalsIgnoreCase(x));
-                    return y;
-                },
+                new CarCoolValidator(),
                 "coolness of the car",
                 "This argument must be true or false (or null)")
         }
@@ -260,11 +243,7 @@ public enum Command {
         new Argument[] {
             new IntegerArgument(
                 "minutesOfWaiting",
-                (x) -> {
-                    if (x == null) return true;
-                    try { Integer.parseInt(x); } catch (Exception e) { return false; }
-                    return true;
-                },
+                new HumanBeingMinutesOfWaitingValidator(),
                 "minutes of waiting",
                 "This argument must be integer (or null)"),
         }

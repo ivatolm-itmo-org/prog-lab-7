@@ -17,7 +17,7 @@ import com.ivatolm.app.parser.Command;
 import com.ivatolm.app.parser.arguments.Argument;
 
 /**
- * Class for interpreting commands.
+ * Standalone class for interpreting commands.
  *
  * @author ivatolm
  */
@@ -27,7 +27,7 @@ public class Interpreter {
     private DataBase<HumanBeing> database;
 
     /** Collection of objects (described in the task) */
-    private LinkedList<HumanBeing> collection;
+    static private LinkedList<HumanBeing> collection;
 
     /** Was database read or it was created? */
     private final boolean wasRead;
@@ -46,10 +46,10 @@ public class Interpreter {
 
         LinkedList<HumanBeing> data = this.database.read();
         if (data != null) {
-            this.collection = data;
+            Interpreter.collection = data;
             this.wasRead = true;
         } else {
-            this.collection = new LinkedList<>();
+            Interpreter.collection = new LinkedList<>();
             this.wasRead = false;
         }
 
@@ -189,9 +189,9 @@ public class Interpreter {
      */
     private String[] info(LinkedList<Argument> args) {
         String result = "";
-        result += "Type: " + this.collection.getClass() + "\n";
+        result += "Type: " + Interpreter.collection.getClass() + "\n";
         result += "Creation date: " + (this.wasRead ? "unknown" : "recently") + "\n";
-        result += "Size: " + this.collection.size() + "\n";
+        result += "Size: " + Interpreter.collection.size() + "\n";
 
         System.out.println(result);
 
@@ -205,7 +205,7 @@ public class Interpreter {
      * @return list of commands for later interpretation or null
      */
     private String[] show(LinkedList<Argument> args) {
-        for (HumanBeing hb : this.collection) {
+        for (HumanBeing hb : Interpreter.collection) {
             System.out.println(hb);
             System.out.println();
         }
@@ -238,7 +238,7 @@ public class Interpreter {
 
         HumanBeing instance = new HumanBeing(res);
         if (instance.validate()) {
-            this.collection.add(instance);
+            Interpreter.collection.add(instance);
         } else {
             System.err.println("Instance validation failed.");
         }
@@ -256,8 +256,8 @@ public class Interpreter {
         // Checking if object with given id exists
         Long id = (Long) args.get(0).getValue();
         int index = -1;
-        for (int i = 0; i < this.collection.size(); i++) {
-            if (id.equals(this.collection.get(i).getId())) {
+        for (int i = 0; i < Interpreter.collection.size(); i++) {
+            if (id.equals(Interpreter.collection.get(i).getId())) {
                 index = i;
                 break;
             }
@@ -270,7 +270,7 @@ public class Interpreter {
 
         LinkedList<Object> res = new LinkedList<>();
 
-        HumanBeing prevInstance = this.collection.get(index);
+        HumanBeing prevInstance = Interpreter.collection.get(index);
         res.add(prevInstance.getId());                      // id
         res.add(args.get(1).getValue());                    // name
         res.add(new Coordinates(args.get(2).getValue(),
@@ -287,7 +287,7 @@ public class Interpreter {
 
         HumanBeing instance = new HumanBeing(res);
         if (instance.validate()) {
-            this.collection.set(index, instance);
+            Interpreter.collection.set(index, instance);
         } else {
             System.err.println("Instance validation failed.");
         }
@@ -305,8 +305,8 @@ public class Interpreter {
         // Checking if object with given id exists
         Long id = (Long) args.get(0).getValue();
         int index = -1;
-        for (int i = 0; i < this.collection.size(); i++) {
-            if (id.equals(this.collection.get(i).getId())) {
+        for (int i = 0; i < Interpreter.collection.size(); i++) {
+            if (id.equals(Interpreter.collection.get(i).getId())) {
                 index = i;
                 break;
             }
@@ -317,7 +317,7 @@ public class Interpreter {
             return null;
         }
 
-        this.collection.remove(index);
+        Interpreter.collection.remove(index);
 
         return null;
     }
@@ -329,7 +329,7 @@ public class Interpreter {
      * @return list of commands for later interpretation or null
      */
     private String[] clear(LinkedList<Argument> args) {
-        this.collection.clear();
+        Interpreter.collection.clear();
 
         return null;
     }
@@ -341,7 +341,7 @@ public class Interpreter {
      * @return list of commands for later interpretation or null
      */
     private String[] save(LinkedList<Argument> args) {
-        this.database.write(this.collection);
+        this.database.write(Interpreter.collection);
 
         return null;
     }
@@ -415,12 +415,12 @@ public class Interpreter {
      * @return list of commands for later interpretation or null
      */
     private String[] remove_first(LinkedList<Argument> args) {
-        if (this.collection.isEmpty()) {
+        if (Interpreter.collection.isEmpty()) {
             System.err.println("Cannot remove first element, collection is empty.");
             return null;
         }
 
-        this.collection.removeFirst();
+        Interpreter.collection.removeFirst();
         return null;
     }
 
@@ -431,12 +431,12 @@ public class Interpreter {
      * @return list of commands for later interpretation or null
      */
     private String[] head(LinkedList<Argument> args) {
-        if (this.collection.isEmpty()) {
+        if (Interpreter.collection.isEmpty()) {
             System.err.println("Cannot show first element, collection is empty.");
             return null;
         }
 
-        System.out.println(this.collection.getFirst());
+        System.out.println(Interpreter.collection.getFirst());
 
         return null;
     }
@@ -467,7 +467,7 @@ public class Interpreter {
         int minutesOfWaiting = (int) args.get(0).getValue();
 
         int counter = 0;
-        for (HumanBeing hb : this.collection) {
+        for (HumanBeing hb : Interpreter.collection) {
             if (hb.getMinutesOfWaiting() > minutesOfWaiting) {
                 counter++;
             }
@@ -487,7 +487,7 @@ public class Interpreter {
     private String[] filter_starts_with_name(LinkedList<Argument> args) {
         String substring = (String) args.get(0).getValue();
 
-        for (HumanBeing hb : this.collection) {
+        for (HumanBeing hb : Interpreter.collection) {
             if (hb.getName().indexOf(substring) > 0) {
                 System.out.println(hb);
                 System.out.println();
@@ -511,7 +511,7 @@ public class Interpreter {
             }
         }
 
-        HumanBeing[] hbs = this.collection.toArray(new HumanBeing[0]);
+        HumanBeing[] hbs = Interpreter.collection.toArray(new HumanBeing[0]);
         Arrays.sort(hbs, new SortByMinutesOfWaiting());
 
         for (HumanBeing hb : hbs) {
@@ -524,14 +524,34 @@ public class Interpreter {
 
     /**
      * Checks if there is element with {@code id} in collection.
+     * Deprecated in favor of static method {@code HasItemWithId}.
      *
      * @param arg id of the element to check
      * @return true if exists, else false
      */
+    @Deprecated
     public boolean hasItemWithId(Argument arg) {
         Long id = (Long) arg.getValue();
 
-        for (HumanBeing hb : this.collection) {
+        for (HumanBeing hb : Interpreter.collection) {
+            if (id.equals(hb.getId())) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Statically checks if there is an element with {@code id} in the collection.
+     *
+     * @param arg id of the element to check
+     * @return true if exists, else false
+     */
+    public static boolean HasItemWithId(Argument arg) {
+        Long id = (Long) arg.getValue();
+
+        for (HumanBeing hb : Interpreter.collection) {
             if (id.equals(hb.getId())) {
                 return true;
             }

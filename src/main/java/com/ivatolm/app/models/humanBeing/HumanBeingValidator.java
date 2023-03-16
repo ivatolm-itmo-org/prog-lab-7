@@ -25,6 +25,8 @@ public class HumanBeingValidator implements ArgCheck {
             return false;
         }
 
+        HumanBeingIdValidator idValidator = new HumanBeingIdValidator();
+        HumanBeingCreationDateValidator creationDateValidator = new HumanBeingCreationDateValidator();
         HumanBeingNameValidator nameValidator = new HumanBeingNameValidator();
         CoordinatesValidator coordinateValidator = new CoordinatesValidator();
         HumanBeingRealHeroValidator realHeroValidator = new HumanBeingRealHeroValidator();
@@ -34,7 +36,9 @@ public class HumanBeingValidator implements ArgCheck {
         MoodValidator moodValidator = new MoodValidator();
         CarValidator carValidator = new CarValidator();
 
-        return nameValidator.check("" + hb.getName()) &&
+        return idValidator.check("" + hb.getId()) &&
+               creationDateValidator.check("" + hb.getCreationDate()) &&
+               nameValidator.check("" + hb.getName()) &&
                coordinateValidator.check(hb.getCoordinates().serialize()[0]) &&
                realHeroValidator.check("" + hb.isRealHero()) &&
                hasToothpickValidator.check("" + hb.getHasToothpick()) &&

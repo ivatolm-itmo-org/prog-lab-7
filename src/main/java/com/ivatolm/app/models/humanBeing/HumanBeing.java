@@ -26,6 +26,7 @@ import com.ivatolm.app.utils.SimpleParseException;
 public class HumanBeing implements Serializable, DataBaseObject, Comparable<HumanBeing>, Validatable {
 
     /** Id field */
+    @Validator(validator = HumanBeingIdValidator.class)
     private Long id;
 
     /** Name field */
@@ -37,6 +38,7 @@ public class HumanBeing implements Serializable, DataBaseObject, Comparable<Huma
     private Coordinates coordinates;
 
     /** Creation date field */
+    @Validator(validator = HumanBeingCreationDateValidator.class)
     private LocalDate creationDate;
 
     /** Real hero field */
