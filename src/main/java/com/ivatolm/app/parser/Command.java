@@ -7,6 +7,7 @@ import com.ivatolm.app.models.car.CarNameValidator;
 import com.ivatolm.app.models.coordinates.CoordinatesXValidator;
 import com.ivatolm.app.models.coordinates.CoordinatesYValidator;
 import com.ivatolm.app.models.humanBeing.HumanBeingHasToothpickValidator;
+import com.ivatolm.app.models.humanBeing.HumanBeingIdValidator;
 import com.ivatolm.app.models.humanBeing.HumanBeingImpactSpeedValidator;
 import com.ivatolm.app.models.humanBeing.HumanBeingMinutesOfWaitingValidator;
 import com.ivatolm.app.models.humanBeing.HumanBeingNameValidator;
@@ -149,10 +150,7 @@ public enum Command {
 
             args[0] = new LongArgument(
                 "id",
-                (x) -> {
-                    try { Long.parseLong(x); } catch (Exception e) { return false; }
-                    return x != null;
-                },
+                new HumanBeingIdValidator(),
                 "id",
                 "This argument must be long integer"
             );
@@ -172,10 +170,7 @@ public enum Command {
         new Argument[] {
             new LongArgument(
                 "id",
-                (x) -> {
-                    try { Long.parseLong(x); } catch (Exception e) { return false; }
-                    return x != null;
-                },
+                new HumanBeingIdValidator(),
                 "id",
            "This argument must be long integer"),
         }
