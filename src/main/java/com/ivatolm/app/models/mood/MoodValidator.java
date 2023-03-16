@@ -11,11 +11,9 @@ public class MoodValidator implements ArgCheck {
 
     @Override
     public boolean check(String value) {
-        Mood mood = Mood.parseMood(value);
-
         MoodValueValidator valueValidator = new MoodValueValidator();
 
-        return valueValidator.check("" + mood);
+        return valueValidator.check("" + value);
     }
 
 }

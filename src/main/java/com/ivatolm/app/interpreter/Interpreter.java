@@ -237,9 +237,9 @@ public class Interpreter {
                         args.get(10).getValue()));          // car
 
         HumanBeing instance = new HumanBeing(res);
-        if (instance.validate()) {
-            Interpreter.collection.add(instance);
-        } else {
+        Interpreter.collection.add(instance);
+        if (!instance.validate()) {
+            Interpreter.collection.remove(instance);
             System.err.println("Instance validation failed.");
         }
 
