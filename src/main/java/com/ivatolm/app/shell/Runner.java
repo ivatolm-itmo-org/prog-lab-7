@@ -115,7 +115,7 @@ public class Runner {
 
             for (Argument argument : command.getArgsValues()) {
                 Object value = argument.getValue();
-                cmdHashCode = 31*cmdHashCode + (value==null ? 0 : value.hashCode());
+                cmdHashCode = 31 * cmdHashCode + (value == null ? 0 : value.hashCode());
             }
 
             hashCode = 31 * hashCode + (command == null ? 0 : cmdHashCode);

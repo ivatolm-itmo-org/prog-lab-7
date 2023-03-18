@@ -56,10 +56,7 @@ public class Shell {
     public void run() {
         try {
             while (true) {
-                System.out.print(": ");
-                String input = this.scanner.nextLine();
-
-                Command command = this.parseCommand(input);
+                Command command = this.parseCommand(null);
                 try {
                     this.runner.addCommand(command);
                 } catch (RecursionFoundException e) {
@@ -86,19 +83,26 @@ public class Shell {
 
     /**
      * Parses {@code Command} from {@code input}.
+     * If input is null, greets user and parses the command.
      * If parsing fails, then asks user to correct the input.
      *
-     * @param input string to parse {@code Command} from
+     * @param input string to parse {@code Command} from or null
      * @return parsed {@code Command}
      */
     private Command parseCommand(String input) {
         while (true) {
+            if (input == null) {
+                System.out.print(": ");
+                input = this.scanner.nextLine();
+            }
+
             boolean result = false;
             try {
                 result = this.parser.parse(input);
 
             } catch (SimpleParseException e) {
                 System.err.println(e.getMessage());
+                input = null;
                 continue;
             }
 
@@ -119,8 +123,7 @@ public class Shell {
 
             String greeting = "Enter" + " " + "'" + cmd.getArgument(argCnt).getGreetingMsg() + "'";
             System.out.print(greeting);
-            System.out.print(": ");
-            input = this.scanner.nextLine();
+            input = null;
         }
     }
 

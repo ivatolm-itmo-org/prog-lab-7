@@ -292,6 +292,8 @@ public enum Command {
         if (args == null) {
             this.args = new Argument[] {};
         }
+
+        this.argsValues = new LinkedList<>();
     }
 
     /**
