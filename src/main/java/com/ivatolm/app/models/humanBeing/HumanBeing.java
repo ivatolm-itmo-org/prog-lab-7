@@ -43,7 +43,7 @@ public class HumanBeing implements Serializable, DataBaseObject, Comparable<Huma
 
     /** Real hero field */
     @Validator(validator = HumanBeingRealHeroValidator.class)
-    private boolean realHero;
+    private Boolean realHero;
 
     /** Has toothpick field */
     @Validator(validator = HumanBeingHasToothpickValidator.class)
@@ -59,7 +59,7 @@ public class HumanBeing implements Serializable, DataBaseObject, Comparable<Huma
 
     /** Minutes of waiting field */
     @Validator(validator = HumanBeingMinutesOfWaitingValidator.class)
-    private int minutesOfWaiting;
+    private Integer minutesOfWaiting;
 
     /** Mood field */
     @Validator(validator = MoodValidator.class)
@@ -87,11 +87,11 @@ public class HumanBeing implements Serializable, DataBaseObject, Comparable<Huma
         this.name             = (String) args.get(1);
         this.coordinates      = (Coordinates) args.get(2);
         this.creationDate     = (LocalDate) args.get(3);
-        this.realHero         = (boolean) args.get(4);
+        this.realHero         = (Boolean) args.get(4);
         this.hasToothpick     = (Boolean) args.get(5);
         this.impactSpeed      = (Long) args.get(6);
         this.soundtrackName   = (String) args.get(7);
-        this.minutesOfWaiting = (int) args.get(8);
+        this.minutesOfWaiting = (Integer) args.get(8);
         this.mood             = (Mood) args.get(9);
         this.car              = (Car) args.get(10);
     }
@@ -142,7 +142,7 @@ public class HumanBeing implements Serializable, DataBaseObject, Comparable<Huma
         this.hasToothpick     = Boolean.parseBoolean(value[5]);
         this.impactSpeed      = Long.parseLong(value[6]);
         this.soundtrackName   = value[7];
-        this.minutesOfWaiting = Integer.parseUnsignedInt(value[8]);
+        this.minutesOfWaiting = Integer.parseInt(value[8]);
         this.mood             = Mood.parseMood(value[9]);
         this.car              = new Car();
         this.car.deserialize(new String[] { value[10] });
@@ -273,7 +273,7 @@ public class HumanBeing implements Serializable, DataBaseObject, Comparable<Huma
     /**
      * @return {@code realHero} field of the object
      */
-    public boolean isRealHero() {
+    public Boolean isRealHero() {
         return realHero;
     }
 
@@ -301,7 +301,7 @@ public class HumanBeing implements Serializable, DataBaseObject, Comparable<Huma
     /**
      * @return {@code minutesOfWaiting} field of the object
      */
-    public int getMinutesOfWaiting() {
+    public Integer getMinutesOfWaiting() {
         return minutesOfWaiting;
     }
 

@@ -22,7 +22,7 @@ public class Car implements Serializable, Validatable {
 
     /** Cool field */
     @Validator(validator = CarCoolValidator.class)
-    private boolean cool;
+    private Boolean cool;
 
     /**
      * Constructs dummy-instance of the class.
@@ -40,7 +40,7 @@ public class Car implements Serializable, Validatable {
      */
     public Car(Object name, Object cool) {
         this.name = (String) name;
-        this.cool = (boolean) cool;
+        this.cool = (Boolean) cool;
     }
 
     /**
@@ -128,7 +128,7 @@ public class Car implements Serializable, Validatable {
     /**
      * @return 'cool' field of the object
      */
-    public boolean getCool() {
+    public Boolean getCool() {
         return this.cool;
     }
 

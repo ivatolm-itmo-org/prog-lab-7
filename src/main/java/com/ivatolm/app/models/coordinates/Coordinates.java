@@ -121,7 +121,7 @@ public class Coordinates implements Serializable, Validatable {
     /**
      * @return 'x' field of the object
      */
-    public int getX() {
+    public Integer getX() {
         return this.x;
     }
 
