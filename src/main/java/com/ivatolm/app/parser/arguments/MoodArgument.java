@@ -10,6 +10,13 @@ import com.ivatolm.app.models.mood.Mood;
 public class MoodArgument extends Argument {
 
     /**
+     * Constructs new instance without arguments.
+     */
+    public MoodArgument() {
+        super(null, null, null, null);
+    }
+
+    /**
      * Constructs new instance with provided arguments.
      *
      * @param name name

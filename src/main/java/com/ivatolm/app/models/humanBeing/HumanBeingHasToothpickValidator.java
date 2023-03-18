@@ -12,7 +12,7 @@ public class HumanBeingHasToothpickValidator implements ArgCheck {
 
     @Override
     public boolean check(String value) {
-        BooleanArgument arg = new BooleanArgument(null, null, null, null);
+        BooleanArgument arg = new BooleanArgument();
         arg.parse(value);
 
         return value != null && ((Boolean) arg.getValue()) instanceof Boolean;

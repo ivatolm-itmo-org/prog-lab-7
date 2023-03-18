@@ -8,6 +8,13 @@ package com.ivatolm.app.parser.arguments;
 public class StringArgument extends Argument {
 
     /**
+     * Constructs new instance without arguments.
+     */
+    public StringArgument() {
+        super(null, null, null, null);
+    }
+
+    /**
      * Constructs new instance with provided arguments.
      *
      * @param name name

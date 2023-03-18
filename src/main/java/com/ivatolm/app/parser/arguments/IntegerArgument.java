@@ -8,6 +8,13 @@ package com.ivatolm.app.parser.arguments;
 public class IntegerArgument extends Argument {
 
     /**
+     * Constructs new instance without arguments.
+     */
+    public IntegerArgument() {
+        super(null, null, null, null);
+    }
+
+    /**
      * Constructs new instance with provided arguments.
      *
      * @param name name

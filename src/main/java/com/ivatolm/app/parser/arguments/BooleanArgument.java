@@ -8,6 +8,13 @@ package com.ivatolm.app.parser.arguments;
 public class BooleanArgument extends Argument {
 
     /**
+     * Constructs new instance without arguments.
+     */
+    public BooleanArgument() {
+        super(null, null, null, null);
+    }
+
+    /**
      * Constructs new instance with provided arguments.
      *
      * @param name name

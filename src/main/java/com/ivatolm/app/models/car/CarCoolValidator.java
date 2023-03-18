@@ -15,7 +15,7 @@ public class CarCoolValidator implements ArgCheck {
         if (value == null)
             return true;
 
-        BooleanArgument arg = new BooleanArgument(null, null, null, null);
+        BooleanArgument arg = new BooleanArgument();
         arg.parse(value);
 
         return ((Boolean) arg.getValue()) instanceof Boolean;
