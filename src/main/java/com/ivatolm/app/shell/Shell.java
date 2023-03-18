@@ -26,11 +26,11 @@ public class Shell {
     /** Command parser */
     private Parser parser;
 
-    /** Command interpreter */
-    private Interpreter interpreter;
+    /** Program runner */
+    private Runner runner;
 
     /**
-     * Constructs new shell with provided arguments.
+     * Constructs new {@code Shell} with provided arguments.
      *
      * @param filename database filename
      */
@@ -39,90 +39,45 @@ public class Shell {
 
         this.scanner = new Scanner(System.in);
         this.parser = new Parser();
-        this.interpreter = new Interpreter(database);
+
+        Interpreter interpreter = new Interpreter(database);
+        this.runner = new Runner(interpreter);
     }
 
     /**
      * Runs interactive shell until EOF.
      * Work cycle:
-     *  - get user input
-     *  - parse command
-     *    continue if parsed, else go to previous step
-     *  - execute command
-     *    print output to user
+     *  1. get user input
+     *  2. parse user input
+     *  3. run command
+     *  4. if command require more commands to be run,
+     *     then go to step 3
      */
     public void run() {
         try {
             while (true) {
-                LinkedList<Command[]> commandQueue = new LinkedList<>();
+                System.out.print(": ");
+                String input = this.scanner.nextLine();
 
-                while (true) {
-                    System.out.print(": ");
-                    String input = this.scanner.nextLine();
+                Command command = this.parseCommand(input);
+                try {
+                    this.runner.addCommand(command);
+                } catch (RecursionFoundException e) {
+                    System.err.println(e.getMessage());
+                    continue;
+                }
 
-                    boolean result = false;
+                String[] inputs;
+                while ((inputs = this.runner.run()) != null) {
+                    LinkedList<Command> commands = this.parseCommands(inputs);
+
                     try {
-                        result = this.parser.parse(input);
-                    } catch (SimpleParseException e) {
+                        this.runner.addSubroutine(commands);
+                    } catch(RecursionFoundException e) {
                         System.err.println(e.getMessage());
-                        continue;
-                    }
-
-                    if (result == false) {
-                        Command cmd = this.parser.getCurrentCommand();
-                        int argCnt = this.parser.getCurrentArgumentsCnt();
-
-                        Argument id = this.parser.getIdArgument();
-                        if (id != null) {
-                            if (!this.interpreter.hasItemWithId(id)) {
-                                this.parser.raiseNoSuchId();
-                                argCnt--;
-                            }
-                        }
-
-                        String greeting = "Enter" + " " + "'" + cmd.getArgument(argCnt).getGreetingMsg() + "'";
-                        System.out.print(greeting);
-                    } else {
-                        Command cmd = this.parser.getCurrentCommand();
-                        Command[] subQueue = new Command[] { cmd };
-                        commandQueue.add(subQueue);
                         break;
                     }
                 }
-
-                // TODO: Sending to the server for remote processing
-                while (commandQueue.size() > 0) {
-                    Command[] subQueue = commandQueue.pop();
-
-                    for (Command cmd : subQueue) {
-                        String[] subInput = this.interpreter.exec(cmd);
-
-                        if (subInput == null) {
-                            continue;
-                        }
-
-                        try {
-                            LinkedList<Command> newSubQueue = new LinkedList<>();
-
-                            for (String input : subInput) {
-                                boolean result = this.parser.parse(input);
-
-                                if (!result) {
-                                    throw new SimpleParseException("Incomplete command inside subInput.");
-                                }
-
-                                Command newCmd = this.parser.getCurrentCommand();
-                                newSubQueue.add(newCmd);
-                            }
-
-                            commandQueue.add(newSubQueue.toArray(new Command[0]));
-                        } catch (SimpleParseException e) {
-                            System.out.println("Cannot parse command from script. Skipping...");
-                            break;
-                        }
-                    }
-                }
-
             }
         } catch(NoSuchElementException e) {
             System.out.println("\nExiting by Ctrl-D (EOF)");
@@ -130,7 +85,64 @@ public class Shell {
     }
 
     /**
-     * Close shell.
+     * Parses {@code Command} from {@code input}.
+     * If parsing fails, then asks user to correct the input.
+     *
+     * @param input string to parse {@code Command} from
+     * @return parsed {@code Command}
+     */
+    private Command parseCommand(String input) {
+        while (true) {
+            boolean result = false;
+            try {
+                result = this.parser.parse(input);
+
+            } catch (SimpleParseException e) {
+                System.err.println(e.getMessage());
+                continue;
+            }
+
+            if (result == true) {
+                return this.parser.getCurrentCommand();
+            }
+
+            Command cmd = this.parser.getCurrentCommand();
+            int argCnt = this.parser.getCurrentArgumentsCnt();
+
+            Argument id = this.parser.getIdArgument();
+            if (id != null) {
+                if (!Interpreter.HasItemWithId(id)) {
+                    this.parser.raiseNoSuchId();
+                    argCnt--;
+                }
+            }
+
+            String greeting = "Enter" + " " + "'" + cmd.getArgument(argCnt).getGreetingMsg() + "'";
+            System.out.print(greeting);
+            System.out.print(": ");
+            input = this.scanner.nextLine();
+        }
+    }
+
+    /**
+     * Parses multiple commands sequentially using {@code parseCommand}.
+     *
+     * @param inputs strings to parse {@code Command}-s from
+     * @return list of parsed commands
+     */
+    private LinkedList<Command> parseCommands(String[] inputs) {
+        LinkedList<Command> result = new LinkedList<>();
+
+        for (String input : inputs) {
+            Command command = this.parseCommand(input);
+            result.add(command);
+        }
+
+        return result;
+    }
+
+    /**
+     * Closes shell.
      * Closes internal connections.
      */
     public void close() {
