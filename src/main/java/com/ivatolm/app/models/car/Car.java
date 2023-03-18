@@ -51,7 +51,10 @@ public class Car implements Serializable, Validatable {
      */
     @Override
     public String[] serialize() {
-        return new String[] { "(" + this.name + "," + this.cool +  ")" };
+        return new String[] {
+            "(" + (this.name == null ? null : this.name) + "," +
+                  (this.cool == null ? null : this.cool) +  ")"
+        };
     }
 
     /**
@@ -72,8 +75,8 @@ public class Car implements Serializable, Validatable {
             throw new SimpleParseException(value + " must contain 2 values.");
         }
 
-        this.name = data[0];
-        this.cool = Boolean.parseBoolean(data[1]);
+        this.name = data[0] == "" ? null : data[0];
+        this.cool = data[1] == "" ? null : Boolean.parseBoolean(data[1]);
     }
 
     /**
@@ -102,7 +105,14 @@ public class Car implements Serializable, Validatable {
                     ArgCheck check = validatorClass.getDeclaredConstructor().newInstance();
 
                     // Checking field value
-                    boolean result = check.check("" + field.get(this));
+                    boolean result;
+                    if (field.get(this) instanceof Serializable) {
+                        Serializable f = (Serializable) field.get(this);
+                        result = check.check(f.serialize()[0]);
+                    } else {
+                        result = check.check(field.get(this) == null ? null : "" + field.get(this));
+                    }
+
                     if (!result) {
                         return false;
                     }
@@ -116,6 +126,16 @@ public class Car implements Serializable, Validatable {
         }
 
         return true;
+    }
+
+    /**
+     * Overrides {@code toString} of {@code Object}
+     *
+     * @return string representation of the object
+     */
+    @Override
+    public String toString() {
+        return "(" + "name: " + this.name + ", " + "cool: " + this.cool + ")";
     }
 
     /**

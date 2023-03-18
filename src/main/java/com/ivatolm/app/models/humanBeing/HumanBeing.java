@@ -106,17 +106,17 @@ public class HumanBeing implements Serializable, DataBaseObject, Comparable<Huma
     @Override
     public String[] serialize() {
         return new String[] {
-            "" + this.id,
-            this.name,
-            this.coordinates.serialize()[0],
-            "" + this.creationDate,
-            "" + this.realHero,
-            "" + this.hasToothpick,
-            "" + this.impactSpeed,
-            this.soundtrackName,
-            "" + this.minutesOfWaiting,
-            this.mood.serialize()[0],
-            this.car.serialize()[0]
+            this.id               == null ? null : "" + this.id,
+            this.name             == null ? null : "" + this.name,
+            this.coordinates      == null ? null : "" + this.coordinates.serialize()[0],
+            this.creationDate     == null ? null : "" + this.creationDate,
+            this.realHero         == null ? null : "" + this.realHero,
+            this.hasToothpick     == null ? null : "" + this.hasToothpick,
+            this.impactSpeed      == null ? null : "" + this.impactSpeed,
+            this.soundtrackName   == null ? null : "" + this.soundtrackName,
+            this.minutesOfWaiting == null ? null : "" + this.minutesOfWaiting,
+            this.mood             == null ? null : "" + this.mood.serialize()[0],
+            this.car              == null ? null : "" + this.car.serialize()[0]
         };
     }
 
@@ -133,17 +133,17 @@ public class HumanBeing implements Serializable, DataBaseObject, Comparable<Huma
             throw new SimpleParseException(value + " must contain 11 values.");
         }
 
-        this.id               = Long.parseLong(value[0]);
-        this.name             = value[1];
+        this.id               = value[0] == "" ? null : Long.parseLong(value[0]);
+        this.name             = value[1] == "" ? null : value[1];
         this.coordinates      = new Coordinates();
         this.coordinates.deserialize(new String[] { value[2] });
-        this.creationDate     = java.time.LocalDate.parse(value[3]);
-        this.realHero         = Boolean.parseBoolean(value[4]);
-        this.hasToothpick     = Boolean.parseBoolean(value[5]);
-        this.impactSpeed      = Long.parseLong(value[6]);
-        this.soundtrackName   = value[7];
-        this.minutesOfWaiting = Integer.parseInt(value[8]);
-        this.mood             = Mood.parseMood(value[9]);
+        this.creationDate     = value[3] == "" ? null : java.time.LocalDate.parse(value[3]);
+        this.realHero         = value[4] == "" ? null : Boolean.parseBoolean(value[4]);
+        this.hasToothpick     = value[5] == "" ? null : Boolean.parseBoolean(value[5]);
+        this.impactSpeed      = value[6] == "" ? null : Long.parseLong(value[6]);
+        this.soundtrackName   = value[7] == "" ? null : value[7];
+        this.minutesOfWaiting = value[8] == "" ? null : Integer.parseInt(value[8]);
+        this.mood             = value[9] == "" ? null : Mood.parseMood(value[9]);
         this.car              = new Car();
         this.car.deserialize(new String[] { value[10] });
     }
@@ -200,7 +200,7 @@ public class HumanBeing implements Serializable, DataBaseObject, Comparable<Huma
                         Serializable f = (Serializable) field.get(this);
                         result = check.check(f.serialize()[0]);
                     } else {
-                        result = check.check("" + field.get(this));
+                        result = check.check(field.get(this) == null ? null : "" + field.get(this));
                     }
 
                     if (!result) {
@@ -228,16 +228,17 @@ public class HumanBeing implements Serializable, DataBaseObject, Comparable<Huma
     public String toString() {
         String result = "";
 
-        String[] serialized = this.serialize();
-        String[] attributes = this.getAttributesList();
-
-        int min = Math.min(serialized.length, attributes.length);
-        for (int i = 0; i < min; i++) {
-            result += attributes[i] + ": " + serialized[i];
-            if (i < min - 1) {
-                result += "\n";
-            }
-        }
+        result += "id: "               + this.id               + "\n";
+        result += "name: "             + this.name             + "\n";
+        result += "coordinates: "      + this.coordinates      + "\n";
+        result += "creationDate: "     + this.creationDate     + "\n";
+        result += "realHero: "         + this.realHero         + "\n";
+        result += "hasToothpick: "     + this.hasToothpick     + "\n";
+        result += "impactSpeed: "      + this.impactSpeed      + "\n";
+        result += "soundtrackName: "   + this.soundtrackName   + "\n";
+        result += "minutesOfWaiting: " + this.minutesOfWaiting + "\n";
+        result += "mood: "             + this.mood             + "\n";
+        result += "car: "              + this.car;
 
         return result;
     }

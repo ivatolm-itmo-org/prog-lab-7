@@ -144,4 +144,14 @@ public enum Mood implements Serializable, Validatable {
         return true;
     }
 
+    /**
+     * Overrides {@code toString} of {@code Object}
+     *
+     * @return string representation of the object
+     */
+    @Override
+    public String toString() {
+        return this.value;
+    }
+
 }

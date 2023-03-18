@@ -51,7 +51,10 @@ public class Coordinates implements Serializable, Validatable {
      */
     @Override
     public String[] serialize() {
-        return new String[] { "(" + this.x + "," + this.y +  ")" };
+        return new String[] {
+            "(" + (this.x == null ? null : this.x) + "," +
+                  (this.y == null ? null : this.y) +  ")"
+        };
     }
 
     /**
@@ -72,8 +75,8 @@ public class Coordinates implements Serializable, Validatable {
             throw new SimpleParseException(value + " must contain 2 values.");
         }
 
-        this.x = Integer.parseInt(data[0]);
-        this.y = Float.parseFloat(data[1]);
+        this.x = data[0] == "" ? null : Integer.parseInt(data[0]);
+        this.y = data[1] == "" ? null : Float.parseFloat(data[1]);
     }
 
     /**
@@ -102,7 +105,14 @@ public class Coordinates implements Serializable, Validatable {
                     ArgCheck check = validatorClass.getDeclaredConstructor().newInstance();
 
                     // Checking field value
-                    boolean result = check.check("" + field.get(this));
+                    boolean result;
+                    if (field.get(this) instanceof Serializable) {
+                        Serializable f = (Serializable) field.get(this);
+                        result = check.check(f.serialize()[0]);
+                    } else {
+                        result = check.check(field.get(this) == null ? null : "" + field.get(this));
+                    }
+
                     if (!result) {
                         return false;
                     }
@@ -116,6 +126,16 @@ public class Coordinates implements Serializable, Validatable {
         }
 
         return true;
+    }
+
+    /**
+     * Overrides {@code toString} of {@code Object}
+     *
+     * @return string representation of the object
+     */
+    @Override
+    public String toString() {
+        return "(" + "x: " + this.x + ", " + "y: " + this.y + ")";
     }
 
     /**
