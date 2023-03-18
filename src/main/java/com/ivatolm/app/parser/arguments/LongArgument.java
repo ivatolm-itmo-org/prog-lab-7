@@ -20,12 +20,13 @@ public class LongArgument extends Argument {
     }
 
     /**
-     * Implements {@code parse} for {@code IParsable}.
+     * Implements {@code parse} for {@code Parsable}.
      *
      * @param value value to parse
+     * @throws NumberFormatException if number format is invalid
      */
     @Override
-    public void parse(String value) {
+    public void parse(String value) throws NumberFormatException {
         this.value = Long.parseLong(value);
     }
 

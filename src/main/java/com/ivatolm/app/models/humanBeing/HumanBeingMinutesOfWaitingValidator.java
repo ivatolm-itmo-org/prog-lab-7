@@ -16,7 +16,7 @@ public class HumanBeingMinutesOfWaitingValidator implements ArgCheck {
 
         try {
             Integer.parseInt(value);
-        } catch (Exception e) {
+        } catch (NumberFormatException e) {
             return false;
         }
 

@@ -13,7 +13,7 @@ public class HumanBeingImpactSpeedValidator implements ArgCheck {
     public boolean check(String value) {
         try {
             Long.parseLong(value);
-        } catch (Exception e) {
+        } catch (NumberFormatException e) {
             return false;
         }
 

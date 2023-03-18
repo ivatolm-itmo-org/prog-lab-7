@@ -13,14 +13,15 @@ public class HumanBeingIdValidator implements ArgCheck {
 
     @Override
     public boolean check(String value) {
-        try {
-            LongArgument id = new LongArgument("id", null, null, null);
-            id.parse(value);
+        LongArgument id = new LongArgument("id", null, null, null);
 
-            return Interpreter.HasItemWithId(id);
-        } catch (Exception e) {
+        try {
+            id.parse(value);
+        } catch (NumberFormatException e) {
             return false;
         }
+
+        return Interpreter.HasItemWithId(id);
     }
 
 }

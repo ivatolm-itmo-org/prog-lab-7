@@ -88,4 +88,11 @@ public abstract class Argument implements Parsable {
         return this.value;
     }
 
+    /**
+     * @param value new value for {@code value}
+     */
+    public void setValue(Object value) {
+        this.value = value;
+    }
+
 }

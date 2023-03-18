@@ -175,7 +175,11 @@ public class Parser {
 
             ArgCheck f = arg.getCheck();
             if (f.check(inputArg)) {
-                arg.parse(inputArg);
+                try {
+                    arg.parse(inputArg);
+                } catch (Exception e) {
+                    arg.setValue(null);
+                }
 
                 if (arg.getName().equalsIgnoreCase("id")) {
                     this.idArg = arg;
