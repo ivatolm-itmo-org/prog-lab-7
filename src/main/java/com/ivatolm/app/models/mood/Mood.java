@@ -61,7 +61,10 @@ public enum Mood implements Serializable, Validatable {
             }
 
         } catch (Exception e) {
-
+            /*
+                Mood value is not represented by integer, maybe it's
+                represented by String. So, skipping...
+             */
         }
 
         for (Mood mood : Mood.values()) {

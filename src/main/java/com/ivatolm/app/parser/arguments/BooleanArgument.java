@@ -45,7 +45,12 @@ public class BooleanArgument extends Argument {
             }
 
             return;
-        } catch (Exception e) {}
+        } catch (Exception e) {
+            /*
+                Boolean value is not represented by integer, maybe it's
+                represented by Boolean. So, skipping...
+             */
+        }
 
         this.value = Boolean.parseBoolean(value);
     }
