@@ -25,6 +25,9 @@ public class Runner {
     /** Program's subroutines */
     private Hashtable<Integer, LinkedList<Command>> subroutines;
 
+    /** Running flag */
+    private Boolean isRunning = true;
+
     /**
      * Constructs new {@code Runner} with provided arguments.
      *
@@ -43,8 +46,10 @@ public class Runner {
      * Runs subroutines until required to create new one.
      * If new one have to be created, then saves current state
      * and returns new inputs to parse.
+     * Returns null if halted by finish of {@code Interpreter}. Also sets
+     * {@code isRunning} flag positive.
      *
-     * @return new inputs to parse
+     * @return new inputs to parse or null, if nothing to parse or halted
      */
     public String[] run() {
         while (!this.callstack.isEmpty()) {
@@ -56,6 +61,10 @@ public class Runner {
                 Command command = subroutine.pop();
 
                 String[] newInputs = this.interpreter.exec(command);
+                if (!this.interpreter.isRunning()) {
+                    this.isRunning = false;
+                    return null;
+                }
 
                 if (newInputs != null) {
                     // Saving current state
@@ -122,6 +131,16 @@ public class Runner {
         }
 
         return hashCode;
+    }
+
+    /**
+     * Returns {@code isRunning} flag, that shows whether {@code Runner}
+     * is still running or halted by finish of {@code Interpreter}.
+     *
+     * @return {@code isRunning} flag
+     */
+    public Boolean isRunning() {
+        return this.isRunning;
     }
 
 }

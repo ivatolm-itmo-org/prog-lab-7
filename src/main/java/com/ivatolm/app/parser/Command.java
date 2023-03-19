@@ -50,38 +50,38 @@ interface ArgsExtention {
 public enum Command {
 
     NOOP(
-        new String[] {
+        new CommandInfo(
             "noop",
             "does nothing"
-        },
+        ),
         null
     ),
     HELP(
-        new String[] {
+        new CommandInfo(
             "help",
             "print information about avaliable commands"
-        },
+        ),
         null
     ),
     INFO(
-        new String[] {
+        new CommandInfo(
             "info",
             "print information about collection"
-        },
+        ),
         null
     ),
     SHOW(
-        new String[] {
+        new CommandInfo(
             "show",
             "print collection"
-        },
+        ),
         null
     ),
     ADD(
-        new String[] {
+        new CommandInfo(
             "add",
             "add new element to the collection"
-        },
+        ),
         new Argument[] {
             new StringArgument(
                 "name",
@@ -141,10 +141,10 @@ public enum Command {
         }
     ),
     UPDATE(
-        new String[] {
+        new CommandInfo(
             "update {id} {element}",
             "replace element with id of {id} for {element}"
-        },
+        ),
         ((ArgsExtention) ((a) -> {
             Argument[] args = new Argument[1 + a.length];
 
@@ -163,10 +163,10 @@ public enum Command {
         })).extend(ADD.getArgs())
     ),
     REMOVE_BY_ID(
-        new String[] {
+        new CommandInfo(
             "remove_by_id {id}",
             "remove element with id of {id} from collection"
-        },
+        ),
         new Argument[] {
             new LongArgument(
                 "id",
@@ -176,24 +176,24 @@ public enum Command {
         }
     ),
     CLEAR(
-        new String[] {
+        new CommandInfo(
             "clear",
             "remove all elements from collection"
-        },
+        ),
         null
     ),
     SAVE(
-        new String[] {
+        new CommandInfo(
             "save",
             "save collection to the storage"
-        },
+        ),
         null
     ),
     EXECUTE_SCRIPT(
-        new String[] {
+        new CommandInfo(
             "execute_script",
             "execute script from the file"
-        },
+        ),
         new Argument[] {
             new StringArgument(
                 "filename",
@@ -203,38 +203,38 @@ public enum Command {
         }
     ),
     EXIT(
-        new String[] {
+        new CommandInfo(
             "exit",
             "exit from the program (without saving)"
-        },
+        ),
         null
     ),
     REMOVE_FIRST(
-        new String[] {
+        new CommandInfo(
             "remove_first",
             "remove first element from the collection"
-        },
+        ),
         null
     ),
     HEAD(
-        new String[] {
+        new CommandInfo(
             "head",
             "print first element of the collection"
-        },
+        ),
         null
     ),
     HISTORY(
-        new String[] {
+        new CommandInfo(
             "history",
             "print last 12 commands without arguments"
-        },
+        ),
         null
     ),
     COUNT_GREATER_THAN_MINUTES_OF_WAITING(
-        new String[] {
+        new CommandInfo(
             "count_greater_than_minutes_of_waiting {minutesOfWaiting}",
             "print number of elements, which 'minutesOfWaiting' property is greater than {minutesOfWaiting}"
-        },
+        ),
         new Argument[] {
             new IntegerArgument(
                 "minutesOfWaiting",
@@ -244,10 +244,10 @@ public enum Command {
         }
     ),
     FILTER_STARTS_WITH_NAME(
-        new String[] {
+        new CommandInfo(
             "filter_starts_with_name {name}",
             "print elemenets, which 'name' property starts with substring of {name}"
-        },
+        ),
         new Argument[] {
             new StringArgument(
                 "name",
@@ -257,16 +257,16 @@ public enum Command {
         }
     ),
     PRINT_FIELD_DESCENDING_MINUTES_OF_WAITING(
-        new String[] {
+        new CommandInfo(
             "print_field_descending_minutes_of_waiting",
             "print elements sorted by 'minutesOfWaiting' property in the descending order"
-        },
+        ),
         null
     )
     ;
 
-    /** Description of the command */
-    private String[] description;
+    /** Information about the command */
+    private CommandInfo info;
 
     /** Arguments (validator, etc.) for the command */
     private Argument[] args;
@@ -277,17 +277,12 @@ public enum Command {
     /**
      * Constructs new command with provided arguments.
      *
-     * @param description description of the command
+     * @param info information about the command
      * @param args arguments for the command
      */
-    Command(String[] description, Argument[] args) {
-        this.description = description;
+    Command(CommandInfo info, Argument[] args) {
+        this.info = info;
         this.args = args;
-
-        if (this.description == null || this.description.length != 2) {
-            System.err.println("Command cannot be registred. Description must contain 2 values");
-            System.exit(-1);
-        }
 
         if (args == null) {
             this.args = new Argument[] {};
@@ -297,10 +292,10 @@ public enum Command {
     }
 
     /**
-     * @return {@code description} field of the object
+     * @return {@code info} field of the object
      */
-    public String[] getDescription() {
-        return this.description;
+    public CommandInfo getInfo() {
+        return this.info;
     }
 
     /**

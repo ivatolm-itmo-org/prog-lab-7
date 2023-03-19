@@ -14,6 +14,7 @@ import com.ivatolm.app.models.car.Car;
 import com.ivatolm.app.models.coordinates.Coordinates;
 import com.ivatolm.app.models.humanBeing.HumanBeing;
 import com.ivatolm.app.parser.Command;
+import com.ivatolm.app.parser.CommandInfo;
 import com.ivatolm.app.parser.arguments.Argument;
 
 /**
@@ -34,6 +35,9 @@ public class Interpreter {
 
     /** History of interpreted commands */
     private LinkedList<Command> history;
+
+    /** Running flag */
+    private Boolean isRunning = true;
 
     /**
      * Constructs instance of the class.
@@ -156,23 +160,23 @@ public class Interpreter {
         final int gap = 4;
         int length = 0;
         for (Command c : Command.values()) {
-            String[] description = c.getDescription();
-            int nameDescriptionLength = description[0].length();
+            CommandInfo info = c.getInfo();
+            int nameDescriptionLength = info.getName().length();
             if (length < nameDescriptionLength) {
                 length = nameDescriptionLength;
             }
         }
 
         for (Command c : Command.values()) {
-            String[] description = c.getDescription();
-            result += description[0];
+            CommandInfo info = c.getInfo();
+            result += info.getName();
 
             // Adding whitespaces
-            for (int i = 0; i < length - description[0].length() + gap; i++) {
+            for (int i = 0; i < length - info.getName().length() + gap; i++) {
                 result += " ";
             }
 
-            result += description[1];
+            result += info.getDescription();
             result += "\n";
         }
 
@@ -403,7 +407,7 @@ public class Interpreter {
      * @return list of commands for later interpretation or null
      */
     private String[] exit(LinkedList<Argument> args) {
-        System.exit(0);
+        this.isRunning = false;
 
         return null;
     }
@@ -558,6 +562,16 @@ public class Interpreter {
         }
 
         return false;
+    }
+
+    /**
+     * Returns {@code isRunning} flag, that shows whether {@code Interpreter}
+     * is still running or halted by an {@code exit} command.
+     *
+     * @return {@code isRunning} flag
+     */
+    public Boolean isRunning() {
+        return this.isRunning;
     }
 
 }

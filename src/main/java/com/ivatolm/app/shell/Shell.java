@@ -75,6 +75,11 @@ public class Shell {
                         break;
                     }
                 }
+
+                if (!this.runner.isRunning()) {
+                    System.out.println("Exiting by 'Exit' command");
+                    break;
+                }
             }
         } catch(NoSuchElementException e) {
             System.out.println("\nExiting by Ctrl-D (EOF)");
