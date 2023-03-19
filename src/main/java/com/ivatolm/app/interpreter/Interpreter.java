@@ -98,7 +98,7 @@ public class Interpreter {
                 return this.update(args);
 
             case REMOVE_BY_ID:
-                return this.remove_by_id(args);
+                return this.removeById(args);
 
             case CLEAR:
                 return this.clear(args);
@@ -107,13 +107,13 @@ public class Interpreter {
                 return this.save(args);
 
             case EXECUTE_SCRIPT:
-                return this.execute_script(args);
+                return this.executeScript(args);
 
             case EXIT:
                 return this.exit(args);
 
             case REMOVE_FIRST:
-                return this.remove_first(args);
+                return this.removeFirst(args);
 
             case HEAD:
                 return this.head(args);
@@ -122,13 +122,13 @@ public class Interpreter {
                 return this.history(args);
 
             case COUNT_GREATER_THAN_MINUTES_OF_WAITING:
-                return this.count_greater_than_minutes_of_waiting(args);
+                return this.countGreaterThanMinutesOfWaiting(args);
 
             case FILTER_STARTS_WITH_NAME:
-                return this.filter_starts_with_name(args);
+                return this.filterStartsWithName(args);
 
             case PRINT_FIELD_DESCENDING_MINUTES_OF_WAITING:
-                return this.print_field_descending_minutes_of_waiting(args);
+                return this.printFieldDescendingMinutesOfWaiting(args);
 
             default:
                 System.err.println("Unknown command.");
@@ -305,7 +305,7 @@ public class Interpreter {
      * @param args arguments for the command
      * @return list of commands for later interpretation or null
      */
-    private String[] remove_by_id(LinkedList<Argument> args) {
+    private String[] removeById(LinkedList<Argument> args) {
         // Checking if object with given id exists
         Long id = (Long) args.get(0).getValue();
         int index = -1;
@@ -356,7 +356,7 @@ public class Interpreter {
      * @param args arguments for the command
      * @return list of commands for later interpretation or null
      */
-    private String[] execute_script(LinkedList<Argument> args) {
+    private String[] executeScript(LinkedList<Argument> args) {
         String filename = (String) args.get(0).getValue();
 
         try {
@@ -418,7 +418,7 @@ public class Interpreter {
      * @param args arguments for the command
      * @return list of commands for later interpretation or null
      */
-    private String[] remove_first(LinkedList<Argument> args) {
+    private String[] removeFirst(LinkedList<Argument> args) {
         if (Interpreter.collection.isEmpty()) {
             System.err.println("Cannot remove first element, collection is empty.");
             return null;
@@ -467,7 +467,7 @@ public class Interpreter {
      * @param args arguments for the command
      * @return list of commands for later interpretation or null
      */
-    private String[] count_greater_than_minutes_of_waiting(LinkedList<Argument> args) {
+    private String[] countGreaterThanMinutesOfWaiting(LinkedList<Argument> args) {
         int minutesOfWaiting = (int) args.get(0).getValue();
 
         int counter = 0;
@@ -488,7 +488,7 @@ public class Interpreter {
      * @param args arguments for the command
      * @return list of commands for later interpretation or null
      */
-    private String[] filter_starts_with_name(LinkedList<Argument> args) {
+    private String[] filterStartsWithName(LinkedList<Argument> args) {
         String substring = (String) args.get(0).getValue();
 
         for (HumanBeing hb : Interpreter.collection) {
@@ -507,7 +507,7 @@ public class Interpreter {
      * @param args arguments for the command
      * @return list of commands for later interpretation or null
      */
-    private String[] print_field_descending_minutes_of_waiting(LinkedList<Argument> args) {
+    private String[] printFieldDescendingMinutesOfWaiting(LinkedList<Argument> args) {
         class SortByMinutesOfWaiting implements Comparator<HumanBeing> {
             public int compare(HumanBeing a, HumanBeing b)
             {
