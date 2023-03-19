@@ -8,9 +8,9 @@ import com.ivatolm.app.database.CSVDatabase;
 import com.ivatolm.app.database.DataBase;
 import com.ivatolm.app.interpreter.Interpreter;
 import com.ivatolm.app.models.humanBeing.HumanBeing;
+import com.ivatolm.app.parser.ArgumentCheckFailedException;
 import com.ivatolm.app.parser.Command;
 import com.ivatolm.app.parser.Parser;
-import com.ivatolm.app.parser.arguments.Argument;
 import com.ivatolm.app.utils.SimpleParseException;
 
 /**
@@ -56,17 +56,17 @@ public class Shell {
     public void run() {
         try {
             while (true) {
-                Command command = this.parseCommand(null);
+                LinkedList<Command> commands = this.parseCommands(null);
                 try {
-                    this.runner.addCommand(command);
+                    this.runner.addSubroutine(commands);
                 } catch (RecursionFoundException e) {
                     System.err.println(e.getMessage());
                     continue;
                 }
 
-                String[] inputs;
+                LinkedList<String> inputs;
                 while ((inputs = this.runner.run()) != null) {
-                    LinkedList<Command> commands = this.parseCommands(inputs);
+                    commands = this.parseCommands(inputs);
 
                     try {
                         this.runner.addSubroutine(commands);
@@ -87,66 +87,56 @@ public class Shell {
     }
 
     /**
-     * Parses {@code Command} from {@code input}.
+     * Parses one or multiple {@code Command}-s from {@code inputs}.
      * If input is null, greets user and parses the command.
      * If parsing fails, then asks user to correct the input.
      *
-     * @param input string to parse {@code Command} from or null
-     * @return parsed {@code Command}
+     * @param inputs strings to parse {@code Command} from or null
+     * @return parsed {@code Command}-s
      */
-    private Command parseCommand(String input) {
+    private LinkedList<Command> parseCommands(LinkedList<String> inputs) {
+        LinkedList<Command> result = new LinkedList<>();
+
+        boolean promptRequired = inputs == null || inputs.isEmpty();
         while (true) {
-            if (input == null) {
+            String input;
+            if (promptRequired) {
                 System.out.print(": ");
                 input = this.scanner.nextLine();
+            } else {
+                input = inputs.pop();
             }
 
-            boolean result = false;
+            promptRequired = inputs == null || inputs.isEmpty();
+
             try {
-                result = this.parser.parse(input);
+                boolean hasParsedCommands = this.parser.parse(input);
+                if (hasParsedCommands == true) {
+                    result.addAll(this.parser.getResult());
+
+                    if (promptRequired) {
+                        return result;
+                    }
+                }
 
             } catch (SimpleParseException e) {
                 System.err.println(e.getMessage());
-                input = null;
+                promptRequired = true;
                 continue;
+
+            } catch (ArgumentCheckFailedException e) {
+                System.err.println(e.getMessage());
+                promptRequired = true;
             }
 
-            if (result == true) {
-                return this.parser.getCurrentCommand();
+            if (promptRequired) {
+                Command cmd = this.parser.getCurrentCommand();
+                int argCnt = this.parser.getCurrentArgumentsCnt();
+
+                String greeting = "Enter" + " " + "'" + cmd.getArgument(argCnt).getGreetingMsg() + "'";
+                System.out.print(greeting);
             }
-
-            Command cmd = this.parser.getCurrentCommand();
-            int argCnt = this.parser.getCurrentArgumentsCnt();
-
-            Argument id = this.parser.getIdArgument();
-            if (id != null) {
-                if (!Interpreter.HasItemWithId(id)) {
-                    this.parser.raiseNoSuchId();
-                    argCnt--;
-                }
-            }
-
-            String greeting = "Enter" + " " + "'" + cmd.getArgument(argCnt).getGreetingMsg() + "'";
-            System.out.print(greeting);
-            input = null;
         }
-    }
-
-    /**
-     * Parses multiple commands sequentially using {@code parseCommand}.
-     *
-     * @param inputs strings to parse {@code Command}-s from
-     * @return list of parsed commands
-     */
-    private LinkedList<Command> parseCommands(String[] inputs) {
-        LinkedList<Command> result = new LinkedList<>();
-
-        for (String input : inputs) {
-            Command command = this.parseCommand(input);
-            result.add(command);
-        }
-
-        return result;
     }
 
     /**

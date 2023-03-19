@@ -1,3 +1,4 @@
 info
-execute_script res/script2.jsh
+execute_script
+
 help

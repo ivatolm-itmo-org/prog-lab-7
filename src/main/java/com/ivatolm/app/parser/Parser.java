@@ -13,21 +13,14 @@ import com.ivatolm.app.utils.SimpleParseException;
  */
 public class Parser {
 
-    /** Do we parse command or its arguments? */
-    private boolean waitingArgs = false;
-
-
     /** Partially parsed command */
-    private Command cmd;
+    private Command cmd = null;
 
     /** Partially parsed arguments */
-    private LinkedList<Argument> args;
+    private LinkedList<Argument> args = null;
 
-    /** Id argument (urgent validation) */
-    private Argument idArg = null;
-
-    /** Parsed command */
-    private Command result;
+    /** List of parsed commands */
+    private LinkedList<Command> result = new LinkedList<>();
 
     /**
      * Parsing input string containing command or its arguments.
@@ -37,108 +30,136 @@ public class Parser {
      *
      * @param input string containing command or its arguments
      * @return true if command parsing completed, else false
-     * @throws SimpleParseException if error occures
+     * @throws SimpleParseException if error occured in parsing or command not found
+     * @throws ArgumentCheckFailedException if argument check failed
      */
-    public boolean parse(String input) throws SimpleParseException {
-        LinkedList<String> inputArgs = this.split(input);
-
-        // Received empty command
-        if (inputArgs.size() == 0 && !this.waitingArgs) {
-            this.cmd = Command.NOOP;
-            this.args = new LinkedList<>();
-
-            return true;
-        }
+    public boolean parse(String input) throws SimpleParseException, ArgumentCheckFailedException {
+        String slimmedString = this.slim(input);
+        LinkedList<String> slices = this.split(slimmedString);
 
         // Allowing empty args
-        if (inputArgs.size() == 0) {
-            inputArgs.add(null);
+        if (slices.isEmpty()) {
+            slices.add(null);
         }
 
         // New command
-        if (!this.waitingArgs) {
-            this.cmd = this.parseCommand(inputArgs);
-
-            this.waitingArgs = true;
+        if (this.cmd == null) {
+            this.cmd = this.parseCommand(slices);
             this.args = new LinkedList<>();
         }
 
         // New arguments
-        if (this.waitingArgs) {
-            LinkedList<Argument> arguments = this.parseArguments(inputArgs);
+        if (this.cmd.getArgsCount() - this.args.size() > 0) {
+            LinkedList<Argument> arguments = this.parseArguments(slices);
 
             for (Argument arg : arguments) {
                 this.args.add(arg);
             }
         }
 
-        // Checking if there any args left to wait
+        // Checking if there are no args left to wait for
         if (this.cmd.getArgsCount() - this.args.size() == 0) {
-            this.waitingArgs = false;
+            Command command = this.cmd;
+            command.setArgs(this.args);
 
-            // Create command
-            this.result = this.cmd;
-            this.result.setArgs(this.args);
+            this.cmd = null;
+            this.args = null;
 
-            return true;
-        } else {
-            return false;
+            this.result.add(command);
         }
+
+        return !this.result.isEmpty();
     }
 
     /**
-     * Splits string separated by one or more spaces.
+     * Replaces all '\n' chatacter with spaces and replaces multiple
+     * spaces with just one.
      *
-     * @param input input string
-     * @return splitted string
+     * @return slimmed string
+     * @throws SimpleParseException if input is null
      */
-    private LinkedList<String> split(String input) {
-        String strippedInput = input.strip();
+    private String slim(String input) throws SimpleParseException {
+        if (input == null) {
+            throw new SimpleParseException("Cannot slim null value.");
+        }
 
-        LinkedList<String> inputArgs = new LinkedList<>();
+        String result = input.strip();
+
+        result = result.replaceAll("\n", " ");
+        result = result.replaceAll("\\s+", " ");
+
+        return result;
+    }
+
+    /**
+     * Splits slimmed string by spaces with support of escaping space
+     * with a backslash.
+     *
+     * @param input slimmed string
+     * @return splitted string
+     * @throws SimpleParseException if input is null
+     */
+    private LinkedList<String> split(String input) throws SimpleParseException {
+        if (input == null) {
+            throw new SimpleParseException("Cannot split null value.");
+        }
+
+        LinkedList<String> result = new LinkedList<>();
+
+        int substringStartPtr = 0;
         boolean escaping = false;
-        for (int i = 0; i < strippedInput.length(); i++) {
-            if (strippedInput.charAt(i) == '\\') {
+        for (int i = 0; i < input.length(); i++) {
+            char current = input.charAt(i);
+
+            if (current == '\\') {
                 escaping = true;
                 continue;
             }
 
-            if (strippedInput.charAt(i) == ' ' && !escaping) {
-                if (inputArgs.getLast() != "") {
-                    inputArgs.add("");
-                }
-            } else {
-                if (inputArgs.size() == 0) {
-                    inputArgs.add("");
-                }
-
-                inputArgs.set(inputArgs.size() - 1, inputArgs.getLast() + strippedInput.charAt(i));
+            if (current == ' ' && !escaping) {
+                result.add(input.substring(substringStartPtr, i));
+                substringStartPtr = i + 1;
             }
 
             escaping = false;
         }
 
-        return inputArgs;
+        if (substringStartPtr != input.length()) {
+            result.add(input.substring(substringStartPtr, input.length()));
+        }
+
+        return result;
     }
 
     /**
      * Tries to match first argument to existing commands. If command
-     * was found returns actual command, else throws SimpleParseException.
+     * was found returns actual command else throws SimpleParseException.
+     * If found null as first argument returns NOOP command.
      * Also, if command was found removes first argument from the provided list.
      *
-     * @param args input arguments
+     * @param slices input arguments
      * @return parsed command
-     * @throws SimpleParseException if command wasn't found
+     * @throws SimpleParseException if command wasn't found or slices is null
      */
-    private Command parseCommand(LinkedList<String> args) throws SimpleParseException {
-        // Checking if given command exists
+    private Command parseCommand(LinkedList<String> slices) throws SimpleParseException {
         Command result = null;
 
-        String cmdLabel = args.get(0);
-        for (Command cmd : Command.values()) {
-            if (cmdLabel.equals(cmd.name().toLowerCase())) {
-                result = cmd;
-                break;
+        if (slices != null && !slices.isEmpty()) {
+            String label = slices.get(0);
+
+            if (label == null) {
+                result = Command.NOOP;
+            }
+
+            else {
+                for (Command command : Command.values()) {
+                    String commandLabel = command.name().toLowerCase();
+
+                    if (commandLabel.equals(label)) {
+                        result = command;
+                        break;
+                    }
+                }
             }
         }
 
@@ -147,33 +168,33 @@ public class Parser {
         }
 
         // Removing command label from args
-        args.pop();
+        slices.pop();
 
         return result;
     }
 
     /**
      * Tries to parse arguments from provided input args. If it failes,
-     * then nothing special happens. Parser will wait for next input to
+     * then throws ArgumentCheckFailedException. Parser will wait for next input to
      * try again.
      *
-     * @param args input arguments
+     * @param slices input arguments
      * @return parsed arguments
+     * @throws ArgumentCheckFailedException if argument check failed
      */
-    private LinkedList<Argument> parseArguments(LinkedList<String> args) {
+    private LinkedList<Argument> parseArguments(LinkedList<String> slices) throws ArgumentCheckFailedException {
         LinkedList<Argument> result = new LinkedList<>();
 
-        // Validating arguments
         int argCnt = Math.min(this.cmd.getArgsCount() - this.args.size(),
-                              args.size());
+                              slices.size());
 
         for (int i = 0; i < argCnt; i++) {
-            String inputArg = args.get(i);
             int argId = this.args.size();
-
             Argument arg = this.cmd.getArgument(argId);
 
             ArgCheck f = arg.getCheck();
+
+            String inputArg = slices.get(i);
             if (f.check(inputArg)) {
                 try {
                     arg.parse(inputArg);
@@ -181,13 +202,9 @@ public class Parser {
                     arg.setValue(null);
                 }
 
-                if (arg.getName().equalsIgnoreCase("id")) {
-                    this.idArg = arg;
-                }
-
                 result.add(arg);
             } else {
-                System.err.println(arg.getErrorMsg());
+                throw new ArgumentCheckFailedException(arg.getErrorMsg());
             }
         }
 
@@ -195,22 +212,19 @@ public class Parser {
     }
 
     /**
-     * Removes last parsed argument.
+     * Returns parsed commands with removal from parser.
+     *
+     * @return parsed commands or null, if no command was parsed yet
      */
-    public void raiseNoSuchId() {
-        this.args.removeLast();
-        System.out.println("There is no element with such id in collection.");
+    public LinkedList<Command> getResult() {
+        LinkedList<Command> result = this.result;
+        this.result = new LinkedList<>();
+
+        return result.isEmpty() ? null : result;
     }
 
     /**
-     * @return parsed command or null, if command was not parsed yet
-     */
-    public Command getResult() {
-        return this.result;
-    }
-
-    /**
-     * @return parsed command or partially parsed command
+     * @return partially parsed command
      */
     public Command getCurrentCommand() {
         return this.cmd;
@@ -221,15 +235,6 @@ public class Parser {
      */
     public int getCurrentArgumentsCnt() {
         return this.args.size();
-    }
-
-    /**
-     * @return id argument or null, if no such argument
-     */
-    public Argument getIdArgument() {
-        Argument arg = this.idArg;
-        this.idArg = null;
-        return arg;
     }
 
 }

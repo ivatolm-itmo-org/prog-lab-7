@@ -51,7 +51,7 @@ public class Runner {
      *
      * @return new inputs to parse or null, if nothing to parse or halted
      */
-    public String[] run() {
+    public LinkedList<String> run() {
         while (!this.callstack.isEmpty()) {
             Integer subroutineId = this.callstack.pop();
             LinkedList<Command> subroutine = subroutines.get(subroutineId);
@@ -71,7 +71,7 @@ public class Runner {
                     subroutines.put(subroutineId, subroutine);
                     this.callstack.push(subroutineId);
 
-                    return newInputs;
+                    return new LinkedList<>(Arrays.asList(newInputs));
                 }
             }
         }
