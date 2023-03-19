@@ -1,6 +1,6 @@
 package com.ivatolm.app.database;
 
-import com.ivatolm.app.utils.SimpleParseException;
+import com.ivatolm.app.parser.SimpleParseException;
 
 /**
  * Interface for serializing and deserializing database objects.

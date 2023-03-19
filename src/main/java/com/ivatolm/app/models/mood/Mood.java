@@ -6,9 +6,9 @@ import java.lang.reflect.InvocationTargetException;
 import com.ivatolm.app.database.Serializable;
 import com.ivatolm.app.models.Validatable;
 import com.ivatolm.app.models.Validator;
+import com.ivatolm.app.parser.NameNotFoundException;
+import com.ivatolm.app.parser.SimpleParseException;
 import com.ivatolm.app.parser.arguments.ArgCheck;
-import com.ivatolm.app.utils.NameNotFoundException;
-import com.ivatolm.app.utils.SimpleParseException;
 
 /**
  * Data structure for Mood described in the task.

@@ -4,7 +4,6 @@ import java.util.LinkedList;
 
 import com.ivatolm.app.parser.arguments.ArgCheck;
 import com.ivatolm.app.parser.arguments.Argument;
-import com.ivatolm.app.utils.SimpleParseException;
 
 /**
  * Class for parsing commands.

@@ -1,7 +1,7 @@
 package com.ivatolm.app.models.car;
 
+import com.ivatolm.app.parser.SimpleParseException;
 import com.ivatolm.app.parser.arguments.ArgCheck;
-import com.ivatolm.app.utils.SimpleParseException;
 
 /**
  * Validator for {@code Car}.

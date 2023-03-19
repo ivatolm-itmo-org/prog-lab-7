@@ -15,8 +15,8 @@ import com.ivatolm.app.models.coordinates.Coordinates;
 import com.ivatolm.app.models.coordinates.CoordinatesValidator;
 import com.ivatolm.app.models.mood.Mood;
 import com.ivatolm.app.models.mood.MoodValidator;
+import com.ivatolm.app.parser.SimpleParseException;
 import com.ivatolm.app.parser.arguments.ArgCheck;
-import com.ivatolm.app.utils.SimpleParseException;
 
 /**
  * Data structure for HumanBeing described in the task.

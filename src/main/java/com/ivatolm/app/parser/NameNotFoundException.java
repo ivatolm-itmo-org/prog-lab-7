@@ -1,4 +1,4 @@
-package com.ivatolm.app.utils;
+package com.ivatolm.app.parser;
 
 public class NameNotFoundException extends RuntimeException {
 

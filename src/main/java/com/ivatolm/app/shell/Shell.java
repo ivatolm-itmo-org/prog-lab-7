@@ -11,7 +11,7 @@ import com.ivatolm.app.models.humanBeing.HumanBeing;
 import com.ivatolm.app.parser.ArgumentCheckFailedException;
 import com.ivatolm.app.parser.Command;
 import com.ivatolm.app.parser.Parser;
-import com.ivatolm.app.utils.SimpleParseException;
+import com.ivatolm.app.parser.SimpleParseException;
 
 /**
  * Class providing user interactive shell.

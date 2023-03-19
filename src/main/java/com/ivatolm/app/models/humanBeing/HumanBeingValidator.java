@@ -3,8 +3,8 @@ package com.ivatolm.app.models.humanBeing;
 import com.ivatolm.app.models.car.CarValidator;
 import com.ivatolm.app.models.coordinates.CoordinatesValidator;
 import com.ivatolm.app.models.mood.MoodValidator;
+import com.ivatolm.app.parser.SimpleParseException;
 import com.ivatolm.app.parser.arguments.ArgCheck;
-import com.ivatolm.app.utils.SimpleParseException;
 
 /**
  * Validator for {@code HumanBeing}.

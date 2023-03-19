@@ -10,7 +10,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.LinkedList;
 
-import com.ivatolm.app.utils.SimpleParseException;
+import com.ivatolm.app.parser.SimpleParseException;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVWriter;
 

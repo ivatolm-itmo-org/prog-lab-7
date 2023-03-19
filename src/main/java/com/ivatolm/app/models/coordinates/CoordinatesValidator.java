@@ -1,7 +1,7 @@
 package com.ivatolm.app.models.coordinates;
 
+import com.ivatolm.app.parser.SimpleParseException;
 import com.ivatolm.app.parser.arguments.ArgCheck;
-import com.ivatolm.app.utils.SimpleParseException;
 
 /**
  * Validator for {@code Coordinates}.
