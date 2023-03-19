@@ -10,6 +10,7 @@ import java.util.Comparator;
 import java.util.LinkedList;
 
 import com.ivatolm.app.database.DataBase;
+import com.ivatolm.app.models.Validatable;
 import com.ivatolm.app.models.car.Car;
 import com.ivatolm.app.models.coordinates.Coordinates;
 import com.ivatolm.app.models.humanBeing.HumanBeing;
@@ -242,7 +243,7 @@ public class Interpreter {
 
         HumanBeing instance = new HumanBeing(res);
         Interpreter.collection.add(instance);
-        if (!instance.validate()) {
+        if (!Validatable.validate(instance)) {
             Interpreter.collection.remove(instance);
             System.err.println("Instance validation failed.");
         }
@@ -290,7 +291,7 @@ public class Interpreter {
                         args.get(11).getValue()));          // car
 
         HumanBeing instance = new HumanBeing(res);
-        if (instance.validate()) {
+        if (Validatable.validate(instance)) {
             Interpreter.collection.set(index, instance);
         } else {
             System.err.println("Instance validation failed.");

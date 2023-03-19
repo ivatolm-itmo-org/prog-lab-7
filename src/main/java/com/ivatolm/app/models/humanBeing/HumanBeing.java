@@ -1,7 +1,5 @@
 package com.ivatolm.app.models.humanBeing;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.time.LocalDate;
 import java.util.LinkedList;
 
@@ -16,7 +14,6 @@ import com.ivatolm.app.models.coordinates.CoordinatesValidator;
 import com.ivatolm.app.models.mood.Mood;
 import com.ivatolm.app.models.mood.MoodValidator;
 import com.ivatolm.app.parser.SimpleParseException;
-import com.ivatolm.app.parser.arguments.ArgCheck;
 
 /**
  * Data structure for HumanBeing described in the task.
@@ -168,56 +165,6 @@ public class HumanBeing implements Serializable, DataBaseObject, Comparable<Huma
             "car"
         };
     }
-
-    /**
-     * Implements {@code validate} for {@code Validatable}.
-     * Checks each field value for being valid via provided {@code Validator}.
-     *
-     * @return true if whole object is valid, else false
-     */
-    @Override
-    public boolean validate() {
-        Class<?> clazz = this.getClass();
-
-        for (Field field : clazz.getDeclaredFields()) {
-            field.setAccessible(true);
-
-            // Checking if field has an annotaion
-            if (field.isAnnotationPresent(Validator.class)) {
-                // Getting annotation from the field
-                Validator validator = field.getAnnotation(Validator.class);
-
-                // Extracting validator class from the annotation
-                Class<? extends ArgCheck> validatorClass = validator.validator();
-
-                // Instantinating validator
-                try {
-                    ArgCheck check = validatorClass.getDeclaredConstructor().newInstance();
-
-                    // Checking field value
-                    boolean result;
-                    if (field.get(this) instanceof Serializable) {
-                        Serializable f = (Serializable) field.get(this);
-                        result = check.check(f.serialize()[0]);
-                    } else {
-                        result = check.check(field.get(this) == null ? null : "" + field.get(this));
-                    }
-
-                    if (!result) {
-                        return false;
-                    }
-
-                } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
-                        | InvocationTargetException | NoSuchMethodException | SecurityException e) {
-                    System.err.println(e);
-                    return false;
-                }
-            }
-        }
-
-        return true;
-    }
-
 
     /**
      * Overrides {@code toString} of {@code Object}

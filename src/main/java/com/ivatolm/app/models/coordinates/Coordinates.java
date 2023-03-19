@@ -1,13 +1,9 @@
 package com.ivatolm.app.models.coordinates;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-
 import com.ivatolm.app.database.Serializable;
 import com.ivatolm.app.models.Validatable;
 import com.ivatolm.app.models.Validator;
 import com.ivatolm.app.parser.SimpleParseException;
-import com.ivatolm.app.parser.arguments.ArgCheck;
 
 /**
  * Data structure for Coordinates described in the task.
@@ -77,55 +73,6 @@ public class Coordinates implements Serializable, Validatable {
 
         this.x = data[0] == "" ? null : Integer.parseInt(data[0]);
         this.y = data[1] == "" ? null : Float.parseFloat(data[1]);
-    }
-
-    /**
-     * Implements {@code validate} for {@code Validatable}.
-     * Checks each field value for being valid via provided {@code Validator}.
-     *
-     * @return true if whole object is valid, else false
-     */
-    @Override
-    public boolean validate() {
-        Class<?> clazz = this.getClass();
-
-        for (Field field : clazz.getDeclaredFields()) {
-            field.setAccessible(true);
-
-            // Checking if field has an annotaion
-            if (field.isAnnotationPresent(Validator.class)) {
-                // Getting annotation from the field
-                Validator validator = field.getAnnotation(Validator.class);
-
-                // Extracting validator class from the annotation
-                Class<? extends ArgCheck> validatorClass = validator.validator();
-
-                // Instantinating validator
-                try {
-                    ArgCheck check = validatorClass.getDeclaredConstructor().newInstance();
-
-                    // Checking field value
-                    boolean result;
-                    if (field.get(this) instanceof Serializable) {
-                        Serializable f = (Serializable) field.get(this);
-                        result = check.check(f.serialize()[0]);
-                    } else {
-                        result = check.check(field.get(this) == null ? null : "" + field.get(this));
-                    }
-
-                    if (!result) {
-                        return false;
-                    }
-
-                } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
-                        | InvocationTargetException | NoSuchMethodException | SecurityException e) {
-                    System.err.println(e);
-                    return false;
-                }
-            }
-        }
-
-        return true;
     }
 
     /**

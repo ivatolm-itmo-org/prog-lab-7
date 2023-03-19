@@ -1,14 +1,10 @@
 package com.ivatolm.app.models.mood;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-
 import com.ivatolm.app.database.Serializable;
 import com.ivatolm.app.models.Validatable;
 import com.ivatolm.app.models.Validator;
 import com.ivatolm.app.parser.NameNotFoundException;
 import com.ivatolm.app.parser.SimpleParseException;
-import com.ivatolm.app.parser.arguments.ArgCheck;
 
 /**
  * Data structure for Mood described in the task.
@@ -103,48 +99,6 @@ public enum Mood implements Serializable, Validatable {
         } catch(NameNotFoundException e) {
             throw new SimpleParseException("Cannot parse Mood from: " + value);
         }
-    }
-
-    /**
-     * Implements {@code validate} for {@code Validatable}.
-     * Checks each field value for being valid via provided {@code Validator}.
-     *
-     * @return true if whole object is valid, else false
-     */
-    @Override
-    public boolean validate() {
-        Class<?> clazz = this.getClass();
-
-        for (Field field : clazz.getDeclaredFields()) {
-            field.setAccessible(true);
-
-            // Checking if field has an annotaion
-            if (field.isAnnotationPresent(Validator.class)) {
-                // Getting annotation from the field
-                Validator validator = field.getAnnotation(Validator.class);
-
-                // Extracting validator class from the annotation
-                Class<? extends ArgCheck> validatorClass = validator.validator();
-
-                // Instantinating validator
-                try {
-                    ArgCheck check = validatorClass.getDeclaredConstructor().newInstance();
-
-                    // Checking field value
-                    boolean result = check.check("" + field.get(this));
-                    if (!result) {
-                        return false;
-                    }
-
-                } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
-                        | InvocationTargetException | NoSuchMethodException | SecurityException e) {
-                    System.err.println(e);
-                    return false;
-                }
-            }
-        }
-
-        return true;
     }
 
     /**
