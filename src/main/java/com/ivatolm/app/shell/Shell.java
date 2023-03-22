@@ -10,6 +10,7 @@ import com.ivatolm.app.interpreter.Interpreter;
 import com.ivatolm.app.models.humanBeing.HumanBeing;
 import com.ivatolm.app.parser.ArgumentCheckFailedException;
 import com.ivatolm.app.parser.Command;
+import com.ivatolm.app.parser.CommandType;
 import com.ivatolm.app.parser.Parser;
 import com.ivatolm.app.parser.SimpleParseException;
 
@@ -47,11 +48,11 @@ public class Shell {
     /**
      * Runs interactive shell until EOF.
      * Work cycle:
-     *  1. get user input
-     *  2. parse user input
-     *  3. run command
-     *  4. if command require more commands to be run,
-     *     then go to step 3
+     * 1. get user input
+     * 2. parse user input
+     * 3. run command
+     * 4. if command require more commands to be run,
+     * then go to step 3
      */
     public void run() {
         try {
@@ -70,7 +71,7 @@ public class Shell {
 
                     try {
                         this.runner.addSubroutine(commands);
-                    } catch(RecursionFoundException e) {
+                    } catch (RecursionFoundException e) {
                         System.err.println(e.getMessage());
                         break;
                     }
@@ -81,7 +82,7 @@ public class Shell {
                     break;
                 }
             }
-        } catch(NoSuchElementException e) {
+        } catch (NoSuchElementException e) {
             System.out.println("\nExiting by Ctrl-D (EOF)");
         }
     }
@@ -130,10 +131,10 @@ public class Shell {
             }
 
             if (promptRequired) {
-                Command cmd = this.parser.getCurrentCommand();
+                CommandType cmdType = this.parser.getCurrentCommandType();
                 int argCnt = this.parser.getCurrentArgumentsCnt();
 
-                String greeting = "Enter" + " " + "'" + cmd.getArgument(argCnt).getGreetingMsg() + "'";
+                String greeting = "Enter" + " " + "'" + cmdType.getArgument(argCnt).getGreetingMsg() + "'";
                 System.out.print(greeting);
             }
         }

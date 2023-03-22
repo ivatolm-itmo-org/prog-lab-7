@@ -1,5 +1,7 @@
 package com.ivatolm.app.parser;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.LinkedList;
 
 import com.ivatolm.app.parser.arguments.ArgCheck;
@@ -12,8 +14,8 @@ import com.ivatolm.app.parser.arguments.Argument;
  */
 public class Parser {
 
-    /** Partially parsed command */
-    private Command cmd = null;
+    /** Partially parsed command type */
+    private CommandType cmdType = null;
 
     /** Partially parsed arguments */
     private LinkedList<Argument> args = null;
@@ -42,13 +44,13 @@ public class Parser {
         }
 
         // New command
-        if (this.cmd == null) {
-            this.cmd = this.parseCommand(slices);
+        if (this.cmdType == null) {
+            this.cmdType = this.parseCommandType(slices);
             this.args = new LinkedList<>();
         }
 
         // New arguments
-        if (this.cmd.getArgsCount() - this.args.size() > 0) {
+        if (this.cmdType.getArgsCount() - this.args.size() > 0) {
             LinkedList<Argument> arguments = this.parseArguments(slices);
 
             for (Argument arg : arguments) {
@@ -57,11 +59,10 @@ public class Parser {
         }
 
         // Checking if there are no args left to wait for
-        if (this.cmd.getArgsCount() - this.args.size() == 0) {
-            Command command = this.cmd;
-            command.setArgs(this.args);
+        if (this.cmdType.getArgsCount() - this.args.size() == 0) {
+            Command command = new Command(this.cmdType, this.args);
 
-            this.cmd = null;
+            this.cmdType = null;
             this.args = null;
 
             this.result.add(command);
@@ -131,27 +132,27 @@ public class Parser {
     }
 
     /**
-     * Tries to match first argument to existing commands. If command
-     * was found returns actual command else throws SimpleParseException.
-     * If found null as first argument returns NOOP command.
-     * Also, if command was found removes first argument from the provided list.
+     * Tries to match first argument to existing command types. If command type
+     * was found returns it, else throws SimpleParseException.
+     * If found null as first argument returns NOOP command type.
+     * Also, if command type was found removes first argument from the provided list.
      *
      * @param slices input arguments
-     * @return parsed command
-     * @throws SimpleParseException if command wasn't found or slices is null
+     * @return parsed command type
+     * @throws SimpleParseException if command type wasn't found or slices is null
      */
-    private Command parseCommand(LinkedList<String> slices) throws SimpleParseException {
-        Command result = null;
+    private CommandType parseCommandType(LinkedList<String> slices) throws SimpleParseException {
+        CommandType result = null;
 
         if (slices != null && !slices.isEmpty()) {
             String label = slices.get(0);
 
             if (label == null) {
-                result = Command.NOOP;
+                result = CommandType.NOOP;
             }
 
             else {
-                for (Command command : Command.values()) {
+                for (CommandType command : CommandType.values()) {
                     String commandLabel = command.name().toLowerCase();
 
                     if (commandLabel.equals(label)) {
@@ -184,14 +185,37 @@ public class Parser {
     private LinkedList<Argument> parseArguments(LinkedList<String> slices) throws ArgumentCheckFailedException {
         LinkedList<Argument> result = new LinkedList<>();
 
-        int argCnt = Math.min(this.cmd.getArgsCount() - this.args.size(),
+        int argCnt = Math.min(this.cmdType.getArgsCount() - this.args.size(),
                               slices.size());
 
         for (int i = 0; i < argCnt; i++) {
             int argId = this.args.size();
-            Argument arg = this.cmd.getArgument(argId);
+            Argument argType = this.cmdType.getArgument(argId);
 
-            ArgCheck f = arg.getCheck();
+            // Using reflection to get constuctor of the argument
+            Constructor<?> constructor = null;
+            try {
+                Constructor<?>[] constructors = argType.getClass().getConstructors();
+                for (Constructor<?> c : constructors) {
+                    if (c.getParameterTypes().length == 0) {
+                        constructor = c;
+                        break;
+                    }
+                }
+            } catch (SecurityException e) {
+                throw new ArgumentCheckFailedException("Cannot create new instance of argument object.");
+            }
+
+            // Using reflection to create new instace of database object
+            Argument arg = null;
+            try {
+                arg = (Argument) constructor.newInstance();
+            } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+                    | InvocationTargetException e) {
+                throw new ArgumentCheckFailedException("Cannot create new instance of argument object.");
+            }
+
+            ArgCheck f = argType.getCheck();
 
             String inputArg = slices.get(i);
             if (f.check(inputArg)) {
@@ -223,10 +247,10 @@ public class Parser {
     }
 
     /**
-     * @return partially parsed command
+     * @return partially parsed command type
      */
-    public Command getCurrentCommand() {
-        return this.cmd;
+    public CommandType getCurrentCommandType() {
+        return this.cmdType;
     }
 
     /**

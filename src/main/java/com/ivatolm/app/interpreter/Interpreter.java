@@ -16,6 +16,7 @@ import com.ivatolm.app.models.coordinates.Coordinates;
 import com.ivatolm.app.models.humanBeing.HumanBeing;
 import com.ivatolm.app.parser.Command;
 import com.ivatolm.app.parser.CommandInfo;
+import com.ivatolm.app.parser.CommandType;
 import com.ivatolm.app.parser.arguments.Argument;
 
 /**
@@ -79,7 +80,7 @@ public class Interpreter {
 
         this.history.add(cmd);
 
-        switch (cmd) {
+        switch (cmd.getType()) {
             case NOOP:
                 return this.noop(args);
 
@@ -160,7 +161,7 @@ public class Interpreter {
         // Finding length of the longest name-description
         final int gap = 4;
         int length = 0;
-        for (Command c : Command.values()) {
+        for (CommandType c : CommandType.values()) {
             CommandInfo info = c.getInfo();
             int nameDescriptionLength = info.getName().length();
             if (length < nameDescriptionLength) {
@@ -168,7 +169,7 @@ public class Interpreter {
             }
         }
 
-        for (Command c : Command.values()) {
+        for (CommandType c : CommandType.values()) {
             CommandInfo info = c.getInfo();
             result += info.getName();
 
@@ -456,7 +457,7 @@ public class Interpreter {
         for (int i = 0; i < Math.min(12, this.history.size()); i++) {
             Command cmd = this.history.get(i);
 
-            System.out.println(cmd.name());
+            System.out.println(cmd.getType().name());
         }
 
         return null;
