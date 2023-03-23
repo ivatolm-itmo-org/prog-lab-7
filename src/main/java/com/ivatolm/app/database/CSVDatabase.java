@@ -71,12 +71,12 @@ public class CSVDatabase<T extends Serializable & DataBaseObject> implements Dat
 
             // Writing attributes
             String[] attributes = this.dummyObject.getAttributesList();
-            writer.writeNext(attributes);
+            writer.writeNext(attributes, false);
 
             // Writing records
             for (T item : data) {
                 String[] serializedItem = item.serialize();
-                writer.writeNext(serializedItem);
+                writer.writeNext(serializedItem, false);
             }
 
             writer.close();
