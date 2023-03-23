@@ -78,7 +78,7 @@ public class Parser {
      * @return slimmed string
      * @throws SimpleParseException if input is null
      */
-    private String slim(String input) throws SimpleParseException {
+    public String slim(String input) throws SimpleParseException {
         if (input == null) {
             throw new SimpleParseException("Cannot slim null value.");
         }
@@ -99,7 +99,7 @@ public class Parser {
      * @return splitted string
      * @throws SimpleParseException if input is null
      */
-    private LinkedList<String> split(String input) throws SimpleParseException {
+    public LinkedList<String> split(String input) throws SimpleParseException {
         if (input == null) {
             throw new SimpleParseException("Cannot split null value.");
         }
@@ -107,6 +107,8 @@ public class Parser {
         LinkedList<String> result = new LinkedList<>();
 
         int substringStartPtr = 0;
+        String substringBuffer = new String();
+
         boolean escaping = false;
         for (int i = 0; i < input.length(); i++) {
             char current = input.charAt(i);
@@ -116,11 +118,13 @@ public class Parser {
                 continue;
             }
 
-            if (current == ' ' && !escaping) {
-                result.add(input.substring(substringStartPtr, i));
+            if (("" + current).isBlank() && !escaping) {
+                result.add(substringBuffer);
+                substringBuffer = new String();
                 substringStartPtr = i + 1;
             }
 
+            substringBuffer += current;
             escaping = false;
         }
 
@@ -227,7 +231,7 @@ public class Parser {
 
                 result.add(arg);
             } else {
-                throw new ArgumentCheckFailedException(arg.getErrorMsg());
+                throw new ArgumentCheckFailedException(argType.getErrorMsg());
             }
         }
 

@@ -17,6 +17,8 @@ import com.ivatolm.app.models.humanBeing.HumanBeing;
 import com.ivatolm.app.parser.Command;
 import com.ivatolm.app.parser.CommandInfo;
 import com.ivatolm.app.parser.CommandType;
+import com.ivatolm.app.parser.Parser;
+import com.ivatolm.app.parser.SimpleParseException;
 import com.ivatolm.app.parser.arguments.Argument;
 
 /**
@@ -367,29 +369,26 @@ public class Interpreter {
             FileInputStream fstream = new FileInputStream(filename);
             InputStreamReader istream = new InputStreamReader(fstream);
 
-            String current = "";
+            String input = "";
             int data;
             while ((data = istream.read()) != -1) {
-                char c = (char) data;
+                input += (char) data;
+            }
 
-                if (source.isEmpty()) {
-                    source.add("");
-                }
-
-                if (c == '\n') {
-                    source.set(source.size() - 1, current);
-                    source.add("");
-                    current = "";
+            Parser parser = new Parser();
+            try {
+                if (input.isBlank()) {
+                    return null;
                 } else {
-                    current += c;
+                    // intentionally not slimming input
+                    source = parser.split(input);
                 }
+            } catch (SimpleParseException e) {
+                System.out.println("Cannot parse script file");
+                return null;
+            } finally {
+                istream.close();
             }
-
-            if (!current.isEmpty()) {
-                source.set(source.size() - 1, current);
-            }
-
-            istream.close();
 
             return source.toArray(new String[0]);
 
