@@ -469,11 +469,15 @@ public class Interpreter {
      * @return list of commands for later interpretation or null
      */
     private String[] countGreaterThanMinutesOfWaiting(LinkedList<Argument> args) {
-        int minutesOfWaiting = (int) args.get(0).getValue();
+        Integer minutesOfWaiting = (Integer) args.get(0).getValue();
+        minutesOfWaiting = minutesOfWaiting == null ? 0 : minutesOfWaiting;
 
         int counter = 0;
         for (HumanBeing hb : Interpreter.collection) {
-            if (hb.getMinutesOfWaiting() > minutesOfWaiting) {
+            Integer MOF = hb.getMinutesOfWaiting();
+            MOF = MOF == null ? 0 : MOF;
+            
+            if (MOF > minutesOfWaiting) {
                 counter++;
             }
         }
@@ -493,7 +497,7 @@ public class Interpreter {
         String substring = (String) args.get(0).getValue();
 
         for (HumanBeing hb : Interpreter.collection) {
-            if (hb.getName().indexOf(substring) > 0) {
+            if (hb.getName().indexOf(substring) >= 0) {
                 System.out.println(hb);
                 System.out.println();
             }
@@ -512,7 +516,11 @@ public class Interpreter {
         class SortByMinutesOfWaiting implements Comparator<HumanBeing> {
             public int compare(HumanBeing a, HumanBeing b)
             {
-                return a.getMinutesOfWaiting() - b.getMinutesOfWaiting();
+                Integer aMOF = a.getMinutesOfWaiting();
+                Integer bMOF = b.getMinutesOfWaiting();
+
+                return (bMOF == null ? 0 : bMOF) - 
+                       (aMOF == null ? 0 : aMOF);
             }
         }
 
