@@ -1,11 +1,6 @@
 package core.net.packet;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.Serializable;
 
 /**
  * Class representing communication packet used
@@ -13,46 +8,22 @@ import java.io.ObjectOutputStream;
  *
  * @author ivatolm
  */
-public class Packet {
+public class Packet implements Serializable {
 
     // Type of packet
     private PacketType type;
 
     // Data of packet
-    private byte[] data;
-
-    /**
-     * Constructs new {@code Packet} with provided arguments.
-     *
-     * @param type type of the packet
-     * @param bytes bytes of the packet
-     */
-    public Packet(PacketType type, byte[] bytes) {
-        this.type = type;
-        this.data = bytes;
-    }
+    private Object data;
 
     /**
      * Constructs new {@code Packet} with provided arguments.
      *
      * @param type type of the packet
      * @param data data of the packet
-     *
-     * @throws IOException if cannot serialize object
      */
-    public Packet(PacketType type, Object data) throws IOException {
+    public Packet(PacketType type, Object data) {
         this.type = type;
-
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        ObjectOutputStream out = null;
-        try {
-            out = new ObjectOutputStream(bos);
-            out.writeObject(data);
-            out.flush();
-            this.data = bos.toByteArray();
-        } finally {
-            bos.close();
-        }
     }
 
     /**
@@ -63,33 +34,10 @@ public class Packet {
     }
 
     /**
-     * @return bytes of the packet
-     */
-    public byte[] getBytes() {
-        return this.data;
-    }
-
-    /**
      * @return data of the packet
-     * @throws IOException if cannot deserialize data
      */
-    public Object getData() throws IOException {
-        Object result = null;
-        ByteArrayInputStream bis = new ByteArrayInputStream(this.data);
-        ObjectInput in = null;
-        try {
-            in = new ObjectInputStream(bis);
-            try {
-                result = in.readObject();
-            } catch (ClassNotFoundException e) {
-                System.err.println("Cannot deserialize data. Class not found.");
-                throw new IOException("Failed to deserialize data.");
-            }
-        } finally {
-            in.close();
-        }
-
-        return result;
+    public Object getData() {
+        return this.data;
     }
 
 }

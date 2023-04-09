@@ -56,13 +56,8 @@ public class Shell {
                 LinkedList<Command> commands = this.parseCommands(null);
                 Command command = commands.getFirst();
 
-                Packet packet;
-                try {
-                    packet = new Packet(PacketType.Command, command);
-                    this.com.send(packet);
-                } catch (IOException e) {
-                    System.err.println("Cannot serialize packet: " + e);
-                }
+                Packet packet = new Packet(PacketType.Command, command);
+                this.com.send(packet);
 
                 this.com.receive();
 

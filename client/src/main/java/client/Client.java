@@ -1,5 +1,8 @@
 package client;
 
+import java.net.SocketException;
+import java.net.UnknownHostException;
+
 import client.net.ClientComUDP;
 import client.shell.Shell;
 import core.net.Com;
@@ -13,7 +16,7 @@ import core.net.Com;
  * - printing output.
  * Takes two mandatory input arguments:
  *  ip and port of the server.
- * 
+ *
  * @author ivatolm
  */
 public class Client {
@@ -21,7 +24,7 @@ public class Client {
     /**
      * This method is a start of the program.
      * Checks number of argument passed to program and runs interactive shell.
-     * 
+     *
      * @param args command line arguments
      */
     public static void main(String[] args) {
@@ -39,7 +42,16 @@ public class Client {
             return;
         }
 
-        Com com = new ClientComUDP(ip, port);
+        Com com;
+        try {
+            com = new ClientComUDP(ip, port);
+        } catch (SocketException e) {
+            System.err.println("Cannot create socket: " + e);
+            return;
+        } catch (UnknownHostException e) {
+            System.err.println("Cannot create socket. Unknown host: " + e);
+            return;
+        }
 
         Shell shell = new Shell(com);
         shell.run();
