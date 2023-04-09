@@ -3,11 +3,10 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <artifactId>6</artifactId>
-    <groupId>com.ivatolm.app</groupId>
+    <groupId>app</groupId>
     <version>1.0-SNAPSHOT</version>
   </parent>
 
-  <groupId>com.ivatolm</groupId>
   <artifactId>client</artifactId>
   <version>1.0-SNAPSHOT</version>
 
@@ -15,11 +14,16 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.compiler.source>1.7</maven.compiler.source>
-    <maven.compiler.target>1.7</maven.compiler.target>
+    <maven.compiler.source>8</maven.compiler.source>
+    <maven.compiler.target>8</maven.compiler.target>
   </properties>
 
   <dependencies>
+    <dependency>
+      <groupId>app</groupId>
+      <artifactId>core</artifactId>
+      <version>1.0-SNAPSHOT</version>
+    </dependency>
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
