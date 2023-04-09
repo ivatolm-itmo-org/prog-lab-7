@@ -56,8 +56,11 @@ public class Shell {
                 LinkedList<Command> commands = this.parseCommands(null);
                 Command command = commands.getFirst();
 
+                System.out.println(command);
+
                 Packet packet = new Packet(PacketType.Command, command);
                 this.com.send(packet);
+                System.out.println("Package sent!");
 
                 this.com.receive();
 

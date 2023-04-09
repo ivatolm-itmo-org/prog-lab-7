@@ -1,5 +1,7 @@
 package core.command.arguments;
 
+import java.io.Serializable;
+
 /**
  * Interface for parsing arguments.
  *
@@ -21,7 +23,7 @@ interface Parsable {
  *
  * @author ivatolm
  */
-public abstract class Argument implements Parsable {
+public abstract class Argument implements Parsable, Serializable {
 
     /** Name of the argument */
     private String name;

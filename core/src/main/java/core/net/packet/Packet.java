@@ -24,6 +24,7 @@ public class Packet implements Serializable {
      */
     public Packet(PacketType type, Object data) {
         this.type = type;
+        this.data = data;
     }
 
     /**

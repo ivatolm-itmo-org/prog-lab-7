@@ -1,9 +1,43 @@
 package server.net;
 
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.SocketException;
+import java.net.UnknownHostException;
+
+import org.apache.commons.lang3.SerializationUtils;
+
 import core.net.Com;
 import core.net.packet.Packet;
 
 public class ServerComUDP implements Com {
+    // Server ip
+    private String ip;
+
+    // Server port
+    private Integer port;
+
+    // Socket
+    private DatagramSocket socket;
+
+    // Address
+    private InetAddress address;
+
+    /**
+     * Constructs new {@code ClientComUDP} with provided arguments.
+     *
+     * @param ip server ip
+     * @param port server port
+     */
+    public ServerComUDP(String ip, Integer port) throws SocketException, UnknownHostException {
+        this.ip = ip;
+        this.port = port;
+
+        this.socket = new DatagramSocket(this.port);
+        this.address = InetAddress.getByName(this.ip);
+    }
 
     /**
      * Implements {@code isAlive} method of {@code Com}.
@@ -17,8 +51,15 @@ public class ServerComUDP implements Com {
      * Implements {@code send} method of {@code Com}.
      */
     @Override
-    public void send(Packet command) {
-        throw new UnsupportedOperationException("Unimplemented method 'send'");
+    public void send(Packet packet) {
+        byte[] data = SerializationUtils.serialize(packet);
+
+        DatagramPacket pkt = new DatagramPacket(data, data.length, this.address, this.port);
+        try {
+            this.socket.send(pkt);
+        } catch (IOException e) {
+            System.err.println("Cannot send packet: " + e);
+        }
     }
 
     /**
@@ -26,7 +67,17 @@ public class ServerComUDP implements Com {
      */
     @Override
     public Packet receive() {
-        throw new UnsupportedOperationException("Unimplemented method 'receive'");
+        byte[] data = new byte[1024];
+
+        DatagramPacket pkt = new DatagramPacket(data, data.length);
+        try {
+            this.socket.receive(pkt);
+        } catch (IOException e) {
+            System.err.println("Cannot receive packet: " + e);
+            return null;
+        }
+
+        return SerializationUtils.deserialize(data);
     }
-    
+
 }
