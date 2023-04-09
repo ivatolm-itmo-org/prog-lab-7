@@ -1,6 +1,9 @@
 package client.shell;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.LinkedList;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
@@ -52,41 +55,42 @@ public class Shell {
      */
     public void run() {
         try {
+            Packet request, response;
             while (true) {
-                LinkedList<Command> commands = this.parseCommands(null);
-                Command command = commands.getFirst();
+                Command command = this.parseCommands(null).getFirst();
 
-                System.out.println(command);
+                request = new Packet(PacketType.CommandReq, command);
+                this.com.send(request);
 
-                Packet packet = new Packet(PacketType.Command, command);
-                this.com.send(packet);
-                System.out.println("Package sent!");
+                boolean isRunning = true;
+                while (isRunning) {
+                    response = this.com.receive();
+                    switch (response.getType()) {
+                        case CommandResp:
+                            String output = (String) response.getData();
+                            System.out.println(output);
 
-                this.com.receive();
+                            isRunning = false;
+                            break;
+                        case ScriptReq:
+                            String filename = (String) response.getData();
+                            System.out.println("Server requested file: " + filename);
+                            LinkedList<Command> commands = this.parseScript(filename);
 
-                // try {
-                //     this.runner.addSubroutine(commands);
-                // } catch (RecursionFoundException e) {
-                //     System.err.println(e.getMessage());
-                //     continue;
-                // }
+                            if (commands == null) {
+                                // TODO: notify server about error
+                                commands = new LinkedList<>();
+                            }
 
-                // LinkedList<String> inputs;
-                // while ((inputs = this.runner.run()) != null) {
-                //     commands = this.parseCommands(inputs);
+                            request = new Packet(PacketType.ScriptResp, commands);
+                            this.com.send(request);
 
-                //     try {
-                //         this.runner.addSubroutine(commands);
-                //     } catch (RecursionFoundException e) {
-                //         System.err.println(e.getMessage());
-                //         break;
-                //     }
-                // }
-
-                // if (!this.runner.isRunning()) {
-                //     System.out.println("Exiting by 'Exit' command");
-                //     break;
-                // }
+                            System.out.println("Sending script...");
+                            break;
+                        default:
+                            break;
+                    }
+                }
             }
         } catch (NoSuchElementException e) {
             System.out.println("\nExiting by Ctrl-D (EOF)");
@@ -143,6 +147,53 @@ public class Shell {
                 String greeting = "Enter" + " " + "'" + cmdType.getArgument(argCnt).getGreetingMsg() + "'";
                 System.out.print(greeting);
             }
+        }
+    }
+
+    /**
+     * Parses script into list of {@code Command}-s.
+     * If input is null, greets user and parses the command.
+     * If parsing fails, then asks user to correct the input.
+     *
+     * @param filename filename of the script
+     * @return parsed {@code Command}-s
+     */
+    private LinkedList<Command> parseScript(String filename) {
+        LinkedList<String> source = new LinkedList<>();
+
+        try {
+            FileInputStream fstream = new FileInputStream(filename);
+            InputStreamReader istream = new InputStreamReader(fstream);
+
+            String input = "";
+            int data;
+            while ((data = istream.read()) != -1) {
+                input += (char) data;
+            }
+
+            Parser parser = new Parser();
+            try {
+                if (input.isBlank()) {
+                    return null;
+                } else {
+                    // intentionally not slimming input
+                    source = parser.split(input);
+                }
+            } catch (SimpleParseException e) {
+                System.err.println("Cannot parse script file.");
+                return null;
+            } finally {
+                istream.close();
+            }
+
+            return this.parseCommands(source);
+
+        } catch (FileNotFoundException e) {
+            System.err.println("Cannot open file.");
+            return null;
+        } catch (IOException e) {
+            System.err.println("Cannot read file.");
+            return null;
         }
     }
 

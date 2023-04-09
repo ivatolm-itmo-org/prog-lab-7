@@ -2,11 +2,13 @@ package server;
 
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.LinkedList;
 
 import core.command.Command;
 import core.models.humanBeing.HumanBeing;
 import core.net.Com;
 import core.net.packet.Packet;
+import core.net.packet.PacketType;
 import server.database.CSVDatabase;
 import server.interpreter.Interpreter;
 import server.net.ServerComUDP;
@@ -67,25 +69,54 @@ public class Server
         }
 
         System.out.println("Waiting for commands...");
+        Packet request, response;
         while (true) {
-            Packet packet = com.receive();
+            request = com.receive();
+
+            // No data received, waiting
+            if (request == null) {
+                System.out.println("Waiting...");
+
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    // it's ok if we were interrupted
+                }
+
+                continue;
+            }
+
             System.out.println("Command received!");
 
-            switch (packet.getType()) {
-                case Command:
+            switch (request.getType()) {
+                case CommandReq:
+                    Command command = (Command) request.getData();
                     try {
-                        runner.addCommand((Command) packet.getData());
-                        runner.run();
+                        runner.addCommand(command);
                     } catch (RecursionFoundException e) {
                         System.err.println("Recursion detected...");
                     }
                     break;
-                case ScriptRequest:
-                    break;
-                case ScriptResponse:
+                case ScriptResp:
+                    LinkedList<Command> commands = (LinkedList<Command>) request.getData();
+                    System.out.println(commands.size());
+                    try {
+                        runner.addSubroutine(commands);
+                    } catch (RecursionFoundException e) {
+                        System.err.println("Recursion detected...");
+                    }
                     break;
                 default:
                     break;
+            }
+
+            LinkedList<String> inputs = runner.run();
+            if (inputs != null) {
+                response = new Packet(PacketType.ScriptReq, inputs.getFirst());
+                com.send(response);
+            } else {
+                response = new Packet(PacketType.CommandResp, "Success!");
+                com.send(response);
             }
         }
     }

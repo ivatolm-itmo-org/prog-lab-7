@@ -22,8 +22,11 @@ public class ServerComUDP implements Com {
     // Socket
     private DatagramSocket socket;
 
-    // Address
-    private InetAddress address;
+    // Client address
+    private InetAddress clientAddress;
+
+    // Client port
+    private Integer clientPort;
 
     /**
      * Constructs new {@code ClientComUDP} with provided arguments.
@@ -36,7 +39,8 @@ public class ServerComUDP implements Com {
         this.port = port;
 
         this.socket = new DatagramSocket(this.port);
-        this.address = InetAddress.getByName(this.ip);
+        this.clientAddress = null;
+        this.clientPort = null;
     }
 
     /**
@@ -54,7 +58,15 @@ public class ServerComUDP implements Com {
     public void send(Packet packet) {
         byte[] data = SerializationUtils.serialize(packet);
 
-        DatagramPacket pkt = new DatagramPacket(data, data.length, this.address, this.port);
+        if (this.clientAddress == null || this.clientPort == null) {
+            System.err.println("Unknown destination");
+            return;
+        }
+
+        DatagramPacket pkt = new DatagramPacket(
+            data, data.length,
+            this.clientAddress, this.clientPort
+        );
         try {
             this.socket.send(pkt);
         } catch (IOException e) {
@@ -76,6 +88,9 @@ public class ServerComUDP implements Com {
             System.err.println("Cannot receive packet: " + e);
             return null;
         }
+
+        this.clientAddress = pkt.getAddress();
+        this.clientPort = pkt.getPort();
 
         return SerializationUtils.deserialize(data);
     }

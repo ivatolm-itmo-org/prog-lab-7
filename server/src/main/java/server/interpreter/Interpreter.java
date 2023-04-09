@@ -1,9 +1,5 @@
 package server.interpreter;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -361,42 +357,7 @@ public class Interpreter {
     private String[] executeScript(LinkedList<Argument> args) {
         String filename = (String) args.get(0).getValue();
 
-        try {
-            LinkedList<String> source = new LinkedList<>();
-
-            FileInputStream fstream = new FileInputStream(filename);
-            InputStreamReader istream = new InputStreamReader(fstream);
-
-            String input = "";
-            int data;
-            while ((data = istream.read()) != -1) {
-                input += (char) data;
-            }
-
-            // Parser parser = new Parser();
-            // try {
-            //     if (input.isBlank()) {
-            //         return null;
-            //     } else {
-            //         // intentionally not slimming input
-            //         source = parser.split(input);
-            //     }
-            // } catch (SimpleParseException e) {
-            //     System.out.println("Cannot parse script file");
-            //     return null;
-            // } finally {
-            //     istream.close();
-            // }
-
-            return source.toArray(new String[0]);
-
-        } catch (FileNotFoundException e) {
-            System.err.println("Cannot open file.");
-            return null;
-        } catch (IOException e) {
-            System.err.println("Cannot read file.");
-            return null;
-        }
+        return new String[] { filename };
     }
 
     /**
@@ -474,7 +435,7 @@ public class Interpreter {
         for (HumanBeing hb : Interpreter.collection) {
             Integer MOF = hb.getMinutesOfWaiting();
             MOF = MOF == null ? 0 : MOF;
-            
+
             if (MOF > minutesOfWaiting) {
                 counter++;
             }
@@ -517,7 +478,7 @@ public class Interpreter {
                 Integer aMOF = a.getMinutesOfWaiting();
                 Integer bMOF = b.getMinutesOfWaiting();
 
-                return (bMOF == null ? 0 : bMOF) - 
+                return (bMOF == null ? 0 : bMOF) -
                        (aMOF == null ? 0 : aMOF);
             }
         }
