@@ -4,6 +4,7 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 
 import client.net.ClientComUDP;
+import client.shell.ContentManager;
 import client.shell.Shell;
 import core.net.Com;
 
@@ -53,7 +54,9 @@ public class Client {
             return;
         }
 
-        Shell shell = new Shell(com);
+        ContentManager contentManager = new ContentManager("../res");
+
+        Shell shell = new Shell(com, contentManager);
         shell.run();
         shell.close();
     }
