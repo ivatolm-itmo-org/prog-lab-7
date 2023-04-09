@@ -2,7 +2,7 @@ package client;
 
 import client.net.ClientComUDP;
 import client.shell.Shell;
-import core.net.ClientCom;
+import core.net.Com;
 
 /**
  * Program for running client application.
@@ -39,7 +39,7 @@ public class Client {
             return;
         }
 
-        ClientCom com = new ClientComUDP(ip, port);
+        Com com = new ClientComUDP(ip, port);
 
         Shell shell = new Shell(com);
         shell.run();

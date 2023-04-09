@@ -1,6 +1,6 @@
 package core.models.car;
 
-import core.database.Serializable;
+import core.database.StrSerializable;
 import core.models.Validatable;
 import core.models.Validator;
 import core.utils.SimpleParseException;
@@ -10,7 +10,7 @@ import core.utils.SimpleParseException;
  *
  * @author ivatolm
  */
-public class Car implements Serializable, Validatable {
+public class Car implements StrSerializable, Validatable {
 
     /** Name field */
     @Validator(validator = CarNameValidator.class)
@@ -40,7 +40,7 @@ public class Car implements Serializable, Validatable {
     }
 
     /**
-     * Implements {@code serialize} for {@code Serializable}.
+     * Implements {@code serialize} for {@code StrSerializable}.
      * Serializes fields into {@code String} array.
      *
      * @return serialized object
@@ -54,7 +54,7 @@ public class Car implements Serializable, Validatable {
     }
 
     /**
-     * Implements {@code deserialize} for {@code Serializable}.
+     * Implements {@code deserialize} for {@code StrSerializable}.
      * Casts input values to target types. Overrides internal values with new ones.
      *
      * @param string serialized object

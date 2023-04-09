@@ -4,7 +4,7 @@ import java.time.LocalDate;
 import java.util.LinkedList;
 
 import core.database.DataBaseObject;
-import core.database.Serializable;
+import core.database.StrSerializable;
 import core.models.Validatable;
 import core.models.Validator;
 import core.models.car.Car;
@@ -20,7 +20,7 @@ import core.utils.SimpleParseException;
  *
  * @author ivatolm
  */
-public class HumanBeing implements Serializable, DataBaseObject, Comparable<HumanBeing>, Validatable {
+public class HumanBeing implements StrSerializable, DataBaseObject, Comparable<HumanBeing>, Validatable {
 
     /** Id field */
     @Validator(validator = HumanBeingIdValidator.class)
@@ -94,7 +94,7 @@ public class HumanBeing implements Serializable, DataBaseObject, Comparable<Huma
     }
 
     /**
-     * Implements {@code serialize} for {@code Serializable}.
+     * Implements {@code serialize} for {@code StrSerializable}.
      * Sequentially serializes fiels into {@code String} array. If field is
      * complex serializes it first.
      *
@@ -118,7 +118,7 @@ public class HumanBeing implements Serializable, DataBaseObject, Comparable<Huma
     }
 
     /**
-     * Implements {@code deserialize} for {@code Serializable}.
+     * Implements {@code deserialize} for {@code StrSerializable}.
      * Casts input values to target types. Overrides internal values with new ones.
      *
      * @param value serialized object

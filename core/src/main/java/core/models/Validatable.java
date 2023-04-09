@@ -4,7 +4,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 
 import core.command.arguments.ArgCheck;
-import core.database.Serializable;
+import core.database.StrSerializable;
 
 /**
  * Interface for validating objects.
@@ -38,8 +38,8 @@ public interface Validatable {
 
                     // Checking field value
                     boolean result;
-                    if (field.get(obj) instanceof Serializable) {
-                        Serializable f = (Serializable) field.get(obj);
+                    if (field.get(obj) instanceof StrSerializable) {
+                        StrSerializable f = (StrSerializable) field.get(obj);
                         result = check.check(f.serialize()[0]);
                     } else {
                         result = check.check(field.get(obj) == null ? null : "" + field.get(obj));

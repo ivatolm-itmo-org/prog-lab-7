@@ -1,5 +1,6 @@
 package client.shell;
 
+import java.io.IOException;
 import java.util.LinkedList;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
@@ -8,9 +9,9 @@ import client.parser.ArgumentCheckFailedException;
 import client.parser.Parser;
 import core.command.Command;
 import core.command.CommandType;
-import core.database.DataBase;
-import core.models.humanBeing.HumanBeing;
-import core.net.ClientCom;
+import core.net.Com;
+import core.net.packet.Packet;
+import core.net.packet.PacketType;
 import core.utils.SimpleParseException;
 
 /**
@@ -27,14 +28,14 @@ public class Shell {
     private Parser parser;
 
     /** Communicator */
-    private ClientCom com;
+    private Com com;
 
     /**
      * Constructs new {@code Shell} with provided arguments.
      *
      * @param filename database filename
      */
-    public Shell(ClientCom com) {
+    public Shell(Com com) {
         this.scanner = new Scanner(System.in);
         this.parser = new Parser();
         this.com = com;
@@ -53,6 +54,18 @@ public class Shell {
         try {
             while (true) {
                 LinkedList<Command> commands = this.parseCommands(null);
+                Command command = commands.getFirst();
+
+                Packet packet;
+                try {
+                    packet = new Packet(PacketType.Command, command);
+                    this.com.send(packet);
+                } catch (IOException e) {
+                    System.err.println("Cannot serialize packet: " + e);
+                }
+
+                this.com.receive();
+
                 // try {
                 //     this.runner.addSubroutine(commands);
                 // } catch (RecursionFoundException e) {

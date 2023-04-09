@@ -1,11 +1,9 @@
 package client.net;
 
-import java.util.LinkedList;
+import core.net.Com;
+import core.net.packet.Packet;
 
-import core.command.Command;
-import core.net.ClientCom;
-
-public class ClientComUDP implements ClientCom {
+public class ClientComUDP implements Com {
 
     // Server ip
     private String ip;
@@ -25,7 +23,7 @@ public class ClientComUDP implements ClientCom {
     }
 
     /**
-     * Implements {@code isAlive} method of {@code ClientCom}.
+     * Implements {@code isAlive} method of {@code Com}.
      */
     @Override
     public boolean isAlive() {
@@ -33,26 +31,18 @@ public class ClientComUDP implements ClientCom {
     }
 
     /**
-     * Implements {@code send} method of {@code ClientCom}.
+     * Implements {@code send} method of {@code Com}.
      */
     @Override
-    public void send(Command command) {
+    public void send(Packet command) {
         throw new UnsupportedOperationException("Unimplemented method 'send'");
     }
 
     /**
-     * Implements {@code sendScript} method of {@code ClientCom}.
+     * Implements {@code receive} method of {@code Com}.
      */
     @Override
-    public void sendScript(LinkedList<Command> commands) {
-        throw new UnsupportedOperationException("Unimplemented method 'sendScript'");
-    }
-
-    /**
-     * Implements {@code receive} method of {@code ClientCom}.
-     */
-    @Override
-    public String receive() {
+    public Packet receive() {
         throw new UnsupportedOperationException("Unimplemented method 'receive'");
     }
    

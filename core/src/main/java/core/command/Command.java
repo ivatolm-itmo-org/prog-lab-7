@@ -1,5 +1,6 @@
 package core.command;
 
+import java.io.Serializable;
 import java.util.LinkedList;
 
 import core.command.arguments.Argument;
@@ -9,7 +10,7 @@ import core.command.arguments.Argument;
  *
  * @author ivatolm
  */
-public class Command {
+public class Command implements Serializable {
 
     /** Type of the command */
     private CommandType type;

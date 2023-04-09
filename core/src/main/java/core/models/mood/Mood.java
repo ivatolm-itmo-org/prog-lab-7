@@ -3,7 +3,7 @@ package core.models.mood;
 // import core.NameNotFoundException;
 // import core.parser.SimpleParseException;
 
-import core.database.Serializable;
+import core.database.StrSerializable;
 import core.models.Validatable;
 import core.models.Validator;
 import core.utils.NameNotFoundException;
@@ -14,7 +14,7 @@ import core.utils.SimpleParseException;
  *
  * @author ivatolm
  */
-public enum Mood implements Serializable, Validatable {
+public enum Mood implements StrSerializable, Validatable {
 
     LONGING("longing"),
     GLOOM("gloom"),
@@ -76,7 +76,7 @@ public enum Mood implements Serializable, Validatable {
     }
 
     /**
-     * Implements {@code serialize} for {@code Serializable}.
+     * Implements {@code serialize} for {@code StrSerializable}.
      * Serializes fields into {@code String} array.
      *
      * @return serialized object
@@ -87,7 +87,7 @@ public enum Mood implements Serializable, Validatable {
     }
 
     /**
-     * Implements {@code deserialize} for {@code Serializable}.
+     * Implements {@code deserialize} for {@code StrSerializable}.
      * Casts input value to target type. Overrides internal value with a new one.
      *
      * @param string serialized object

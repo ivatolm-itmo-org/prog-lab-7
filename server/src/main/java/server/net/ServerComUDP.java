@@ -1,14 +1,12 @@
 package server.net;
 
-import java.util.LinkedList;
+import core.net.Com;
+import core.net.packet.Packet;
 
-import core.command.Command;
-import core.net.ServerCom;
-
-public class ServerComUDP implements ServerCom {
+public class ServerComUDP implements Com {
 
     /**
-     * Implements {@code isAlive} method of {@code ServerCom}.
+     * Implements {@code isAlive} method of {@code Com}.
      */
     @Override
     public boolean isAlive() {
@@ -16,27 +14,19 @@ public class ServerComUDP implements ServerCom {
     }
 
     /**
-     * Implements {@code send} method of {@code ServerCom}.
+     * Implements {@code send} method of {@code Com}.
      */
     @Override
-    public void send(String output) {
+    public void send(Packet command) {
         throw new UnsupportedOperationException("Unimplemented method 'send'");
     }
 
     /**
-     * Implements {@code receive} method of {@code ServerCom}.
+     * Implements {@code receive} method of {@code Com}.
      */
     @Override
-    public Command receive() {
+    public Packet receive() {
         throw new UnsupportedOperationException("Unimplemented method 'receive'");
-    }
-
-    /**
-     * Implements {@code receiveScript} method of {@code ServerCom}.
-     */
-    @Override
-    public LinkedList<Command> receiveScript(String filename) {
-        throw new UnsupportedOperationException("Unimplemented method 'receiveScript'");
     }
     
 }

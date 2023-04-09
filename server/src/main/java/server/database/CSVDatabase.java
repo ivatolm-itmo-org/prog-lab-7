@@ -15,7 +15,7 @@ import com.opencsv.CSVWriter;
 
 import core.database.DataBase;
 import core.database.DataBaseObject;
-import core.database.Serializable;
+import core.database.StrSerializable;
 import core.utils.SimpleParseException;
 
 /**
@@ -23,7 +23,7 @@ import core.utils.SimpleParseException;
  *
  * @author ivatolm
  */
-public class CSVDatabase<T extends Serializable & DataBaseObject> implements DataBase<T> {
+public class CSVDatabase<T extends StrSerializable & DataBaseObject> implements DataBase<T> {
 
     /**
      * Read note in {@code DataBase} interface for explanation.
@@ -54,7 +54,7 @@ public class CSVDatabase<T extends Serializable & DataBaseObject> implements Dat
 
     /**
      * Implements {@code write} for {@code DataBase}.
-     * Serializes data via {@code Serializable} interface and writes it to file.
+     * Serializes data via {@code StrSerializable} interface and writes it to file.
      * Prints error if such occures, but does not throw exception.
      *
      * TODO: throw exception if failure occures.
@@ -94,7 +94,7 @@ public class CSVDatabase<T extends Serializable & DataBaseObject> implements Dat
     /**
      * Implements {@code read} for {@code DataBase}.
      * Uses reflection to create instances of class T via {@code dummyObject}.
-     * Deserializes read data into them via {@code Serializable} interface.
+     * Deserializes read data into them via {@code StrSerializable} interface.
      * Prints error if such occures, but does not throw exception.
      *
      * TODO: throw exception if failure occures.

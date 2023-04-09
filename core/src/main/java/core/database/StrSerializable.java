@@ -7,7 +7,7 @@ import core.utils.SimpleParseException;
  *
  * @author ivatolm
  */
-public interface Serializable {
+public interface StrSerializable {
 
     /**
      * Serialize internal field into {@code String} array.
