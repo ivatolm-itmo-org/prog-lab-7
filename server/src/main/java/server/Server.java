@@ -1,18 +1,15 @@
 package server;
 
-import java.net.SocketException;
-import java.net.UnknownHostException;
-import java.util.LinkedList;
+import java.io.IOException;
 
-import core.command.Command;
 import core.models.humanBeing.HumanBeing;
 import core.net.Com;
-import core.net.packet.Packet;
-import core.net.packet.PacketType;
 import server.database.CSVDatabase;
+import server.handler.ComHandler;
+import server.handler.EventHandler;
+import server.handler.Shell;
 import server.interpreter.Interpreter;
 import server.net.ServerComUDP;
-import server.runner.RecursionFoundException;
 import server.runner.Runner;
 
 /**
@@ -60,64 +57,31 @@ public class Server
         Com com;
         try {
             com = new ServerComUDP(ip, port);
-        } catch (SocketException e) {
+        } catch (IOException e) {
             System.err.println("Cannot create socket: " + e);
-            return;
-        } catch (UnknownHostException e) {
-            System.err.println("Cannot create socket. Unknown host: " + e);
             return;
         }
 
-        System.out.println("Waiting for commands...");
-        Packet request, response;
-        while (true) {
-            request = com.receive();
+        ComHandler comHandler = new ComHandler(com, runner);
+        Shell shell = new Shell(runner);
 
-            // No data received, waiting
-            if (request == null) {
-                System.out.println("Waiting...");
+        EventHandler eventHandler = null;
+        try {
+            eventHandler = new EventHandler(comHandler, shell);
+        } catch (IOException e) {
+            System.err.println("Error occured while starting event handler: " + e);
+            return;
+        }
 
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    // it's ok if we were interrupted
-                }
+        Thread shellThread = new Thread(shell);
+        shellThread.start();
 
-                continue;
-            }
+        eventHandler.run();
 
-            System.out.println("Command received!");
-
-            switch (request.getType()) {
-                case CommandReq:
-                    Command command = (Command) request.getData();
-                    try {
-                        runner.addCommand(command);
-                    } catch (RecursionFoundException e) {
-                        System.err.println("Recursion detected...");
-                    }
-                    break;
-                case ScriptResp:
-                    LinkedList<Command> commands = (LinkedList<Command>) request.getData();
-                    System.out.println(commands.size());
-                    try {
-                        runner.addSubroutine(commands);
-                    } catch (RecursionFoundException e) {
-                        System.err.println("Recursion detected...");
-                    }
-                    break;
-                default:
-                    break;
-            }
-
-            LinkedList<String> inputs = runner.run();
-            if (inputs != null) {
-                response = new Packet(PacketType.ScriptReq, inputs.getFirst());
-                com.send(response);
-            } else {
-                response = new Packet(PacketType.CommandResp, "Success!");
-                com.send(response);
-            }
+        try {
+            shellThread.join();
+        } catch (InterruptedException e) {
+            System.err.println("Shell thread failed to join.");
         }
     }
 

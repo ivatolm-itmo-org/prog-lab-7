@@ -8,9 +8,9 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.LinkedList;
 
-import client.parser.ArgumentCheckFailedException;
-import client.parser.Parser;
 import core.command.Command;
+import core.parser.ArgumentCheckFailedException;
+import core.parser.Parser;
 import core.utils.SimpleParseException;
 
 /**

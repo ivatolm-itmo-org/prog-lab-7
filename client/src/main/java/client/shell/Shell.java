@@ -4,11 +4,11 @@ import java.util.LinkedList;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 
-import client.parser.ArgumentCheckFailedException;
-import client.parser.Parser;
 import core.command.Command;
 import core.command.CommandType;
 import core.net.Com;
+import core.parser.ArgumentCheckFailedException;
+import core.parser.Parser;
 import core.utils.SimpleParseException;
 
 /**

@@ -6,6 +6,7 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.nio.channels.SelectableChannel;
 
 import org.apache.commons.lang3.SerializationUtils;
 
@@ -78,6 +79,14 @@ public class ClientComUDP implements Com {
         }
 
         return SerializationUtils.deserialize(data);
+    }
+
+    /**
+     * Implements {@code getChannel} method of {@code Com}.
+     */
+    @Override
+    public SelectableChannel getChannel() {
+        return this.socket.getChannel();
     }
 
 }

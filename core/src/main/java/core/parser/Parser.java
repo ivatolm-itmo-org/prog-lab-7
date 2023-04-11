@@ -1,4 +1,4 @@
-package client.parser;
+package core.parser;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;

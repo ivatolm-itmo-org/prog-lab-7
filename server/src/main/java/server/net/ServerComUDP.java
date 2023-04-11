@@ -1,11 +1,11 @@
 package server.net;
 
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.SocketException;
-import java.net.UnknownHostException;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.DatagramChannel;
+import java.nio.channels.SelectableChannel;
 
 import org.apache.commons.lang3.SerializationUtils;
 
@@ -13,34 +13,24 @@ import core.net.Com;
 import core.net.packet.Packet;
 
 public class ServerComUDP implements Com {
-    // Server ip
-    private String ip;
-
-    // Server port
-    private Integer port;
-
-    // Socket
-    private DatagramSocket socket;
+    // Channel
+    private DatagramChannel channel;
 
     // Client address
-    private InetAddress clientAddress;
-
-    // Client port
-    private Integer clientPort;
+    private SocketAddress clientAddress;
 
     /**
      * Constructs new {@code ClientComUDP} with provided arguments.
      *
      * @param ip server ip
      * @param port server port
+     * @throws IOException if cannot open datagram channel
      */
-    public ServerComUDP(String ip, Integer port) throws SocketException, UnknownHostException {
-        this.ip = ip;
-        this.port = port;
-
-        this.socket = new DatagramSocket(this.port);
+    public ServerComUDP(String ip, Integer port) throws IOException {
+        InetSocketAddress address = new InetSocketAddress(ip, port);
+        this.channel = DatagramChannel.open();
+        this.channel.bind(address);
         this.clientAddress = null;
-        this.clientPort = null;
     }
 
     /**
@@ -57,18 +47,15 @@ public class ServerComUDP implements Com {
     @Override
     public void send(Packet packet) {
         byte[] data = SerializationUtils.serialize(packet);
+        ByteBuffer buffer = ByteBuffer.wrap(data);
 
-        if (this.clientAddress == null || this.clientPort == null) {
+        if (this.clientAddress == null) {
             System.err.println("Unknown destination");
             return;
         }
 
-        DatagramPacket pkt = new DatagramPacket(
-            data, data.length,
-            this.clientAddress, this.clientPort
-        );
         try {
-            this.socket.send(pkt);
+            this.channel.send(buffer, this.clientAddress);
         } catch (IOException e) {
             System.err.println("Cannot send packet: " + e);
         }
@@ -80,19 +67,24 @@ public class ServerComUDP implements Com {
     @Override
     public Packet receive() {
         byte[] data = new byte[1024];
+        ByteBuffer buffer = ByteBuffer.wrap(data);
 
-        DatagramPacket pkt = new DatagramPacket(data, data.length);
         try {
-            this.socket.receive(pkt);
+            this.clientAddress = this.channel.receive(buffer);
         } catch (IOException e) {
             System.err.println("Cannot receive packet: " + e);
             return null;
         }
 
-        this.clientAddress = pkt.getAddress();
-        this.clientPort = pkt.getPort();
-
         return SerializationUtils.deserialize(data);
+    }
+
+    /**
+     * Implements {@code getChannel} method of {@code Com}.
+     */
+    @Override
+    public SelectableChannel getChannel() {
+        return this.channel;
     }
 
 }

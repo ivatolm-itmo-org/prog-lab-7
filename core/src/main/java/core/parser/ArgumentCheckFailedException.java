@@ -1,4 +1,4 @@
-package client.parser;
+package core.parser;
 
 /**
  * Exception reperesenting situation of error occuring
