@@ -3,53 +3,65 @@ package client.shell;
 import java.util.LinkedList;
 
 import core.command.Command;
+import core.handler.ComHandler;
 import core.net.Com;
 import core.net.packet.Packet;
 import core.net.packet.PacketType;
 
 /**
- * Class for handling client side communication of client and server.
+ * Class for handling client side communication between client and server.
  *
  * @author ivatolm
  */
-public class ComHandler {
-
-    // Communicator for talking to server
-    private Com com;
+public class ClientComHandler extends ComHandler {
 
     // Content Manager
     private ContentManager contentManager;
+
+    // Commands to process
+    private LinkedList<Command> commands;
+
+    // Accumulated output from the commands
+    private LinkedList<String> accumulatedOutput;
 
     /**
      * Constructs new {@code ComHandler} with provided arguments.
      *
      * @param com communicator for talking to server
      */
-    public ComHandler(Com com, ContentManager contentManager) {
-        this.com = com;
+    public ClientComHandler(Com com, ContentManager contentManager) {
+        super(com);
         this.contentManager = contentManager;
+        this.accumulatedOutput = null;
     }
 
     /**
      * Sends commands to server for processing.
-     * Sends commands one-by-one and collects received
-     * output. If command requires other commands to be
-     * executed, then sends commands to server.
-     *
-     * @param commands commands for processing
-     * @return output of each command
+     * Collects received output and result of the command.
      */
-    public String[] processCommands(LinkedList<Command> commands) {
-        LinkedList<String> result = new LinkedList<>();
+    @Override
+    public void process() {
+        if (this.accumulatedOutput == null) {
+            this.accumulatedOutput = new LinkedList<>();
+        }
 
-        for (Command command : commands) {
+        for (Command command : this.commands) {
             Packet request = new Packet(PacketType.CommandReq, command);
             this.com.send(request);
 
             String output = null;
             boolean finished = false;
             while (!finished) {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {}
                 Packet response = this.com.receive();
+                System.out.println(response);
+                if (response == null) {
+                    finished = true;
+                    break;
+                }
+
                 switch (response.getType()) {
                     case CommandReq:
                         break;
@@ -64,13 +76,28 @@ public class ComHandler {
                 }
 
                 if (output != null) {
-                    result.add(output);
-                    finished = true;
+                    this.accumulatedOutput.add(output);
                 }
             }
         }
+    }
 
-        return result.toArray(new String[0]);
+    /**
+     * Sets commands for processing to {@code commands}.
+     */
+    public void setCommands(LinkedList<Command> commands) {
+        this.commands = commands;
+    }
+
+    /**
+     * Returns output of the processed commands.
+     *
+     * @return output of the commands
+     */
+    public LinkedList<String> getAccumulatedOutput() {
+        LinkedList<String> result = this.accumulatedOutput;
+        this.accumulatedOutput = null;
+        return result;
     }
 
     /**

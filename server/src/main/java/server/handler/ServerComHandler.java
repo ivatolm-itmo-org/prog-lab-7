@@ -1,9 +1,9 @@
 package server.handler;
 
-import java.nio.channels.SelectableChannel;
 import java.util.LinkedList;
 
 import core.command.Command;
+import core.handler.ComHandler;
 import core.net.Com;
 import core.net.packet.Packet;
 import core.net.packet.PacketType;
@@ -11,39 +11,32 @@ import server.runner.RecursionFoundException;
 import server.runner.Runner;
 
 /**
- * Class for handling server side communication of client and server.
+ * Class for handling server side communication between client and server.
  *
  * @author ivatolm
  */
-public class ComHandler {
-
-    // Communicator for talking to client
-    private Com com;
+public class ServerComHandler extends ComHandler {
 
     // Client program runner
     private Runner runner;
 
     /**
-     * Constructs new {@code ComHandler} with provided arguments.
+     * Constructs new {@code ServerComHandler} with provided arguments.
      *
      * @param com communicator for talking to client
      */
-    public ComHandler(Com com, Runner runner) {
-        this.com = com;
+    public ServerComHandler(Com com, Runner runner) {
+        super(com);
         this.runner = runner;
     }
 
     /**
-     * TODO: Rewrite description.
-     * Sends commands to server for processing.
-     * Sends commands one-by-one and collects received
-     * output. If command requires other commands to be
-     * executed, then sends commands to server.
-     *
-     * @param commands commands for processing
-     * @return output of each command
+     * Receives and processes commands from the client.
+     * Runs received command via {@code Runner} and sends
+     * output and result of it back to the client.
      */
-    public String[] process() {
+    @Override
+    public void process() {
         Packet response = this.com.receive();
         switch (response.getType()) {
             case CommandReq:
@@ -73,17 +66,6 @@ public class ComHandler {
             Packet request = new Packet(PacketType.CommandResp, output);
             this.com.send(request);
         }
-
-        return new String[] {};
-    }
-
-    /**
-     * Returns communication channel of the communicator.
-     *
-     * @return communicator's channel
-     */
-    public SelectableChannel getComChannel() {
-        return this.com.getChannel();
     }
 
     /**

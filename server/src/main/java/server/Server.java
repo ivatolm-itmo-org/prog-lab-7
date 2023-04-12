@@ -5,7 +5,7 @@ import java.io.IOException;
 import core.models.humanBeing.HumanBeing;
 import core.net.Com;
 import server.database.CSVDatabase;
-import server.handler.ComHandler;
+import server.handler.ServerComHandler;
 import server.handler.EventHandler;
 import server.handler.Shell;
 import server.interpreter.Interpreter;
@@ -62,7 +62,7 @@ public class Server
             return;
         }
 
-        ComHandler comHandler = new ComHandler(com, runner);
+        ServerComHandler comHandler = new ServerComHandler(com, runner);
         Shell shell = new Shell(runner);
 
         EventHandler eventHandler = null;

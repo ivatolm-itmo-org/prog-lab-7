@@ -25,7 +25,7 @@ public class Shell {
     private Parser parser;
 
     /** Communication handler */
-    private ComHandler comHandler;
+    private ClientComHandler comHandler;
 
     /**
      * Constructs new {@code Shell} with provided arguments.
@@ -35,7 +35,7 @@ public class Shell {
     public Shell(Com com, ContentManager contentManager) {
         this.scanner = new Scanner(System.in);
         this.parser = new Parser();
-        this.comHandler = new ComHandler(com, contentManager);
+        this.comHandler = new ClientComHandler(com, contentManager);
     }
 
     /**
@@ -49,7 +49,11 @@ public class Shell {
         try {
             while (true) {
                 LinkedList<Command> commands = this.parseCommands(null);
-                String[] output = this.comHandler.processCommands(commands);
+
+                this.comHandler.setCommands(commands);
+                this.comHandler.process();
+                LinkedList<String> output = this.comHandler.getAccumulatedOutput();
+
                 for (String commandOutput : output) {
                     System.out.println(commandOutput);
                 }

@@ -1,5 +1,6 @@
 package client;
 
+import java.io.IOException;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 
@@ -46,11 +47,8 @@ public class Client {
         Com com;
         try {
             com = new ClientComUDP(ip, port);
-        } catch (SocketException e) {
+        } catch (IOException e) {
             System.err.println("Cannot create socket: " + e);
-            return;
-        } catch (UnknownHostException e) {
-            System.err.println("Cannot create socket. Unknown host: " + e);
             return;
         }
 
