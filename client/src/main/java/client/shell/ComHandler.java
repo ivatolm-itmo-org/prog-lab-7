@@ -80,9 +80,16 @@ public class ComHandler {
      * @return output, as processing finished
      */
     private String handleCommandResp(Packet packet) {
-        String output = (String) packet.getData();
+        String result = "";
 
-        return output;
+        @SuppressWarnings("unchecked")
+        LinkedList<String> output = (LinkedList<String>) packet.getData();
+
+        for (String line : output) {
+            result += line + '\n';
+        }
+
+        return result;
     }
 
     /**

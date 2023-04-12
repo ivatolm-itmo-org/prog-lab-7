@@ -25,6 +25,12 @@ public class Runner {
     /** Program's subroutines */
     private Hashtable<Integer, LinkedList<Command>> subroutines;
 
+    /** Program's output */
+    private LinkedList<String> programOutput;
+
+    /** Program's result */
+    private LinkedList<String> programResult;
+
     /** Running flag */
     private Boolean isRunning = true;
 
@@ -40,6 +46,9 @@ public class Runner {
 
         this.callstack = new Stack<>();
         this.subroutines = new Hashtable<>();
+
+        this.programOutput = null;
+        this.programResult = null;
     }
 
     /**
@@ -52,26 +61,41 @@ public class Runner {
      * @return new inputs to parse or null, if nothing to parse or halted
      */
     public LinkedList<String> run() {
+        if (this.programOutput == null) {
+            this.programOutput = new LinkedList<>();
+        }
+
         while (!this.callstack.isEmpty()) {
             Integer subroutineId = this.callstack.pop();
-            LinkedList<Command> subroutine = subroutines.get(subroutineId);
-            subroutines.remove(subroutineId);
+            LinkedList<Command> subroutine = this.subroutines.get(subroutineId);
+            this.subroutines.remove(subroutineId);
 
             while (!subroutine.isEmpty()) {
                 Command command = subroutine.pop();
 
-                String[] newInputs = this.interpreter.exec(command);
+                this.interpreter.exec(command);
                 if (!this.interpreter.isRunning()) {
                     this.isRunning = false;
                     return null;
                 }
 
-                if (newInputs != null) {
+                String commandOutput = this.interpreter.getCommandOutput();
+                if (commandOutput != null) {
+                    this.programOutput.add(commandOutput);
+                }
+
+                String commandResult = this.interpreter.getCommandResult();
+                if (commandResult != null) {
                     // Saving current state
-                    subroutines.put(subroutineId, subroutine);
+                    this.subroutines.put(subroutineId, subroutine);
                     this.callstack.push(subroutineId);
 
-                    return new LinkedList<>(Arrays.asList(newInputs));
+                    if (this.programResult == null) {
+                        this.programResult = new LinkedList<>();
+                    }
+
+                    this.programResult.add(commandResult);
+                    return null;
                 }
             }
         }
@@ -131,6 +155,28 @@ public class Runner {
         }
 
         return hashCode;
+    }
+
+    /**
+     * Returns output produced by the last execution of the program.
+     *
+     * @return output of the last program execution
+     */
+    public LinkedList<String> getProgramOutput() {
+        LinkedList<String> result = this.programOutput;
+        this.programOutput = null;
+        return result;
+    }
+
+    /**
+     * Returns result produced by the last execution of the program.
+     *
+     * @return result of the last program execution
+     */
+    public LinkedList<String> getProgramResult() {
+        LinkedList<String> result = this.programResult;
+        this.programResult = null;
+        return result;
     }
 
     /**

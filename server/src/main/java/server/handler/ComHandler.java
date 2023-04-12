@@ -58,13 +58,19 @@ public class ComHandler {
                 break;
         }
 
-        LinkedList<String> dependencies = this.runner.run();
+        this.runner.run();
+
+        // If some dependency is required, request it
+        LinkedList<String> dependencies = this.runner.getProgramResult();
         if (dependencies != null) {
             String dependency = dependencies.getFirst();
             Packet request = new Packet(PacketType.ScriptReq, dependency);
             this.com.send(request);
-        } else {
-            Packet request = new Packet(PacketType.CommandResp, "Success!");
+        }
+
+        LinkedList<String> output = this.runner.getProgramOutput();
+        if (output != null) {
+            Packet request = new Packet(PacketType.CommandResp, output);
             this.com.send(request);
         }
 

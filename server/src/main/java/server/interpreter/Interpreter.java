@@ -34,6 +34,12 @@ public class Interpreter {
     /** History of interpreted commands */
     private LinkedList<Command> history;
 
+    /** Output produces by the command */
+    private String commandOutput;
+
+    /** Result of the command */
+    private String commandResult;
+
     /** Running flag */
     private Boolean isRunning = true;
 
@@ -178,7 +184,7 @@ public class Interpreter {
             result += "\n";
         }
 
-        System.out.println(result);
+        this.commandOutput = result;
 
         return null;
     }
@@ -195,7 +201,7 @@ public class Interpreter {
         result += "Creation date: " + (this.wasRead ? "unknown" : "recently") + "\n";
         result += "Size: " + Interpreter.collection.size() + "\n";
 
-        System.out.println(result);
+        this.commandOutput = result;
 
         return null;
     }
@@ -207,10 +213,13 @@ public class Interpreter {
      * @return list of commands for later interpretation or null
      */
     private String[] show(LinkedList<Argument> args) {
+        String result = "";
+
         for (HumanBeing hb : Interpreter.collection) {
-            System.out.println(hb);
-            System.out.println();
+            result += hb.toString() + '\n' + '\n';
         }
+
+        this.commandOutput = result;
 
         return null;
     }
@@ -357,6 +366,8 @@ public class Interpreter {
     private String[] executeScript(LinkedList<Argument> args) {
         String filename = (String) args.get(0).getValue();
 
+        this.commandResult = filename;
+
         return new String[] { filename };
     }
 
@@ -395,12 +406,15 @@ public class Interpreter {
      * @return list of commands for later interpretation or null
      */
     private String[] head(LinkedList<Argument> args) {
+        String result = "";
+
         if (Interpreter.collection.isEmpty()) {
             System.err.println("Cannot show first element, collection is empty.");
             return null;
         }
 
-        System.out.println(Interpreter.collection.getFirst());
+        result += Interpreter.collection.getFirst().toString() + '\n';
+        this.commandOutput = result;
 
         return null;
     }
@@ -412,11 +426,15 @@ public class Interpreter {
      * @return list of commands for later interpretation or null
      */
     private String[] history(LinkedList<Argument> args) {
+        String result = "";
+
         for (int i = 0; i < Math.min(12, this.history.size()); i++) {
             Command cmd = this.history.get(i);
 
-            System.out.println(cmd.getType().name());
+            result += cmd.getType().name() + '\n';
         }
+
+        this.commandOutput = result;
 
         return null;
     }
@@ -428,6 +446,8 @@ public class Interpreter {
      * @return list of commands for later interpretation or null
      */
     private String[] countGreaterThanMinutesOfWaiting(LinkedList<Argument> args) {
+        String result = "";
+
         Integer minutesOfWaiting = (Integer) args.get(0).getValue();
         minutesOfWaiting = minutesOfWaiting == null ? 0 : minutesOfWaiting;
 
@@ -441,7 +461,9 @@ public class Interpreter {
             }
         }
 
-        System.out.println("Result: " + counter);
+        result += counter + '\n';
+
+        this.commandOutput = result;
 
         return null;
     }
@@ -453,14 +475,16 @@ public class Interpreter {
      * @return list of commands for later interpretation or null
      */
     private String[] filterStartsWithName(LinkedList<Argument> args) {
-        String substring = (String) args.get(0).getValue();
+        String result = "";
 
+        String substring = (String) args.get(0).getValue();
         for (HumanBeing hb : Interpreter.collection) {
             if (hb.getName().indexOf(substring) >= 0) {
-                System.out.println(hb);
-                System.out.println();
+                result += hb.toString() + '\n' + '\n';
             }
         }
+
+        this.commandOutput = result;
 
         return null;
     }
@@ -472,6 +496,8 @@ public class Interpreter {
      * @return list of commands for later interpretation or null
      */
     private String[] printFieldDescendingMinutesOfWaiting(LinkedList<Argument> args) {
+        String result = "";
+
         class SortByMinutesOfWaiting implements Comparator<HumanBeing> {
             public int compare(HumanBeing a, HumanBeing b)
             {
@@ -487,9 +513,10 @@ public class Interpreter {
         Arrays.sort(hbs, new SortByMinutesOfWaiting());
 
         for (HumanBeing hb : hbs) {
-            System.out.println(hb);
-            System.out.println();
+            result += hb.toString() + '\n' + '\n';
         }
+
+        this.commandOutput = result;
 
         return null;
     }
@@ -530,6 +557,29 @@ public class Interpreter {
         }
 
         return false;
+    }
+
+    /**
+     * Returns output produced by the last command.
+     *
+     * @return output of the last command
+     */
+    public String getCommandOutput() {
+        String result = this.commandOutput;
+        this.commandOutput = null;
+        return result;
+    }
+
+    /**
+     * Returns some data that is not output produced
+     * by the last command.
+     *
+     * @return result of the last command
+     */
+    public String getCommandResult() {
+        String result = this.commandResult;
+        this.commandResult = null;
+        return result;
     }
 
     /**

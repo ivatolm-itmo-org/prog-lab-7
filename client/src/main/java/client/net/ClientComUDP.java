@@ -68,7 +68,7 @@ public class ClientComUDP implements Com {
      */
     @Override
     public Packet receive() {
-        byte[] data = new byte[1024];
+        byte[] data = new byte[16384];
 
         DatagramPacket pkt = new DatagramPacket(data, data.length);
         try {

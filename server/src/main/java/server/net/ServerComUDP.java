@@ -66,7 +66,7 @@ public class ServerComUDP implements Com {
      */
     @Override
     public Packet receive() {
-        byte[] data = new byte[1024];
+        byte[] data = new byte[16384];
         ByteBuffer buffer = ByteBuffer.wrap(data);
 
         try {
