@@ -1,6 +1,11 @@
 package client.shell;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.Pipe;
 import java.util.LinkedList;
+
+import org.apache.commons.lang3.SerializationUtils;
 
 import core.command.Command;
 import core.handler.ComHandler;
@@ -18,21 +23,18 @@ public class ClientComHandler extends ComHandler {
     // Content Manager
     private ContentManager contentManager;
 
-    // Commands to process
-    private LinkedList<Command> commands;
-
-    // Accumulated output from the commands
-    private LinkedList<String> accumulatedOutput;
+    // Communication channel with Shell
+    private Pipe shellPipe;
 
     /**
      * Constructs new {@code ComHandler} with provided arguments.
      *
      * @param com communicator for talking to server
      */
-    public ClientComHandler(Com com, ContentManager contentManager) {
+    public ClientComHandler(Com com, ContentManager contentManager, Pipe shellPipe) {
         super(com);
         this.contentManager = contentManager;
-        this.accumulatedOutput = null;
+        this.shellPipe = shellPipe;
     }
 
     /**
@@ -41,11 +43,21 @@ public class ClientComHandler extends ComHandler {
      */
     @Override
     public void process() {
-        if (this.accumulatedOutput == null) {
-            this.accumulatedOutput = new LinkedList<>();
+        ByteBuffer buffer;
+
+        // Reading commands from ShellHandler
+        buffer = ByteBuffer.wrap(new byte[1024]);
+        try {
+            this.shellPipe.source().read(buffer);
+        } catch (IOException e) {
+            System.err.println("Cannot read from the pipe: " + e);
+            return;
         }
 
-        for (Command command : this.commands) {
+        LinkedList<Command> commands = SerializationUtils.deserialize(buffer.array());
+
+        LinkedList<String> result = new LinkedList<>();
+        for (Command command : commands) {
             Packet request = new Packet(PacketType.CommandReq, command);
             this.com.send(request);
 
@@ -76,28 +88,20 @@ public class ClientComHandler extends ComHandler {
                 }
 
                 if (output != null) {
-                    this.accumulatedOutput.add(output);
+                    result.add(output);
                 }
             }
         }
-    }
 
-    /**
-     * Sets commands for processing to {@code commands}.
-     */
-    public void setCommands(LinkedList<Command> commands) {
-        this.commands = commands;
-    }
-
-    /**
-     * Returns output of the processed commands.
-     *
-     * @return output of the commands
-     */
-    public LinkedList<String> getAccumulatedOutput() {
-        LinkedList<String> result = this.accumulatedOutput;
-        this.accumulatedOutput = null;
-        return result;
+        // Sending output to ShellHandler
+        byte[] data = SerializationUtils.serialize(result);
+        buffer = ByteBuffer.wrap(data);
+        try {
+            this.shellPipe.sink().write(buffer);
+        } catch (IOException e) {
+            System.err.println("Cannot send commands to the pipe: " + e);
+            return;
+        }
     }
 
     /**

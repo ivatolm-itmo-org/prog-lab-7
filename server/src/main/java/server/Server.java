@@ -7,7 +7,7 @@ import core.net.Com;
 import server.database.CSVDatabase;
 import server.handler.ServerComHandler;
 import server.handler.EventHandler;
-import server.handler.Shell;
+import server.handler.ServerShellHandler;
 import server.interpreter.Interpreter;
 import server.net.ServerComUDP;
 import server.runner.Runner;
@@ -63,7 +63,7 @@ public class Server
         }
 
         ServerComHandler comHandler = new ServerComHandler(com, runner);
-        Shell shell = new Shell(runner);
+        ServerShellHandler shell = new ServerShellHandler(runner);
 
         EventHandler eventHandler = null;
         try {

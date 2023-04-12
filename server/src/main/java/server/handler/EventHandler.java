@@ -27,7 +27,7 @@ public class EventHandler {
     private ServerComHandler comHandler;
 
     // Shell
-    private Shell shell;
+    private ServerShellHandler shell;
 
     /**
      * Constructs new {@code EventHandler} with provided arguments.
@@ -36,7 +36,7 @@ public class EventHandler {
      * @param shell handler of shell
      * @throws IOException if cannot setup {@code Selector}
      */
-    public EventHandler(ServerComHandler comHandler, Shell shell) throws IOException {
+    public EventHandler(ServerComHandler comHandler, ServerShellHandler shell) throws IOException {
         this.comHandler = comHandler;
         this.shell = shell;
 

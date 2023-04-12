@@ -1,138 +1,128 @@
-package server.handler;
+package core.handler;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.Pipe;
-import java.io.IOException;
 import java.util.LinkedList;
-import java.util.NoSuchElementException;
 import java.util.Scanner;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import core.parser.ArgumentCheckFailedException;
-import core.parser.Parser;
 import core.command.Command;
 import core.command.CommandType;
+import core.parser.ArgumentCheckFailedException;
+import core.parser.Parser;
 import core.utils.SimpleParseException;
-import server.runner.RecursionFoundException;
-import server.runner.Runner;
 
 /**
  * Class providing user interactive shell.
  *
  * @author ivatolm
  */
-public class Shell implements Runnable {
+public abstract class ShellHandler implements Runnable {
 
     /** Command line scanner */
-    private Scanner scanner;
+    protected Scanner scanner;
 
     /** Command parser */
-    private Parser parser;
+    protected Parser parser;
 
-    /** User program runner */
-    private Runner runner;
+    /** Communication channel */
+    protected Pipe pipe;
 
-    /** Pipe for communication */
-    private Pipe pipe;
+    /** Thread running flag */
+    protected boolean running;
 
     /** Syncronization */
+    private Lock syncLock;
     private boolean firstWaiting;
     private boolean secondWaiting;
-    private Lock syncLock;
 
     /**
-     * Constructs new {@code Shell} with provided arguments.
+     * Constructs new {@code ShellHandler} with provided arguments.
      *
      * @param filename database filename
      */
-    public Shell(Runner runner) {
+    protected ShellHandler() {
         this.scanner = new Scanner(System.in);
         this.parser = new Parser();
-        this.runner = runner;
-        this.pipe = null;
+
+        this.running = true;
+
+        this.syncLock = new ReentrantLock();
         this.firstWaiting = false;
         this.secondWaiting = false;
-        this.syncLock = new ReentrantLock();
     }
 
     /**
-     * Runs interactive shell until EOF.
-     * Work cycle:
-     * 1. get user input
-     * 2. send command to the pipe
+     * Runs logic specific to application.
+     */
+    protected abstract void _run();
+
+    /**
+     * Implements {@code run} for {@code Runnable}.
      */
     @Override
-    public void run() {
+    public final void run() {
         if (this.pipe == null) {
             System.err.println("Sink channel was not set. Exiting...");
             return;
         }
 
-        try {
-            while (true) {
-                LinkedList<Command> commands = this.parseCommands(null);
+        while (running) {
+            synchronized (this.syncLock) {
 
-                synchronized (this.syncLock) {
+                this._run();
 
-                    byte[] data = new byte[] { 1 };
-                    ByteBuffer buffer = ByteBuffer.wrap(data);
-
-                    try {
-                        this.pipe.sink().write(buffer);
-                    } catch (IOException e) {
-                        System.err.println("Cannot send commands to the pipe: " + e);
-                        continue;
-                    }
-
-                    try {
-                        firstWaiting = true;
-                        while (firstWaiting) {
-                            this.syncLock.wait();
-                        }
-                    } catch (InterruptedException e) {
-                        System.err.println("Thread was interrupted while waiting: " + e);
-                        continue;
-                    }
-
-                    buffer.clear();
-                    try {
-                        this.pipe.source().read(buffer);
-                    } catch (IOException e) {
-                        System.err.println("Cannot read from the pipe: " + e);
-                    }
-
-                    try {
-                        this.runner.addSubroutine(commands);
-                    } catch (RecursionFoundException e) {
-                        System.err.println("Recursion detected. Skipping...");
-                        continue;
-                    }
-
-                    this.runner.run();
-
-                    System.out.println("P1 Notifying");
-                    secondWaiting = false;
-                    this.syncLock.notify();
-
-                }
             }
-        } catch (NoSuchElementException e) {
-            System.out.println("\nExiting by Ctrl-D (EOF)");
         }
     }
 
     /**
+     * Sends buffer and waits to be awakened (sync p.1).
      *
+     * @param buffer buffer to send to the pipe
      */
-    public void setPipe(Pipe pipe) {
-        this.pipe = pipe;
+    protected final void syncWait(ByteBuffer buffer) {
+        try {
+            this.pipe.sink().write(buffer);
+        } catch (IOException e) {
+            System.err.println("Cannot send commands to the pipe: " + e);
+            return;
+        }
+
+        try {
+            firstWaiting = true;
+            while (firstWaiting) {
+                this.syncLock.wait();
+            }
+        } catch (InterruptedException e) {
+            System.err.println("Thread was interrupted while waiting: " + e);
+            return;
+        }
+
+        buffer.clear();
+        try {
+            this.pipe.source().read(buffer);
+        } catch (IOException e) {
+            System.err.println("Cannot read from the pipe: " + e);
+        }
     }
 
     /**
-     *
+     * Notifies other thread (sync p.2).
      */
-    public void process() {
+    protected final void syncNotify() {
+        secondWaiting = false;
+        this.syncLock.notify();
+    }
+
+    /**
+     * Syncronizes with other thread.
+     * This method is invoked from {@code Selector} and
+     * syncronizes with {@code syncRun}.
+     */
+    public final void process() {
         synchronized (this.syncLock) {
 
             firstWaiting = false;
@@ -151,6 +141,15 @@ public class Shell implements Runnable {
     }
 
     /**
+     * Set communication pipe to {@code pipe}.
+     *
+     * @param pipe communication pipe
+     */
+    public void setPipe(Pipe pipe) {
+        this.pipe = pipe;
+    }
+
+    /**
      * Parses one or multiple {@code Command}-s from {@code inputs}.
      * If input is null, greets user and parses the command.
      * If parsing fails, then asks user to correct the input.
@@ -158,7 +157,7 @@ public class Shell implements Runnable {
      * @param inputs strings to parse {@code Command} from or null
      * @return parsed {@code Command}-s
      */
-    private LinkedList<Command> parseCommands(LinkedList<String> inputs) {
+    protected LinkedList<Command> parseCommands(LinkedList<String> inputs) {
         LinkedList<Command> result = new LinkedList<>();
 
         boolean promptRequired = inputs == null || inputs.isEmpty();
@@ -201,14 +200,6 @@ public class Shell implements Runnable {
                 System.out.print(greeting);
             }
         }
-    }
-
-    /**
-     * Closes shell.
-     * Closes internal connections.
-     */
-    public void close() {
-        this.scanner.close();
     }
 
 }

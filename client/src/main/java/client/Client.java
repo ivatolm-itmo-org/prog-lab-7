@@ -3,10 +3,14 @@ package client;
 import java.io.IOException;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.nio.channels.Pipe;
 
 import client.net.ClientComUDP;
+import client.shell.ClientComHandler;
+import client.shell.ClientShellHandler;
 import client.shell.ContentManager;
-import client.shell.Shell;
+import core.handler.ComHandler;
+import core.handler.ShellHandler;
 import core.net.Com;
 
 /**
@@ -44,6 +48,7 @@ public class Client {
             return;
         }
 
+
         Com com;
         try {
             com = new ClientComUDP(ip, port);
@@ -54,9 +59,26 @@ public class Client {
 
         ContentManager contentManager = new ContentManager("../res");
 
-        Shell shell = new Shell(com, contentManager);
-        shell.run();
-        shell.close();
+        Pipe com_shell_pipe;
+        try {
+            com_shell_pipe = Pipe.open();
+        } catch (IOException e) {
+            System.err.println("Cannot open pipe: " + e);
+            return;
+        }
+        ComHandler comHandler = new ClientComHandler(com, contentManager, com_shell_pipe);
+        ShellHandler shellHandler = new ClientShellHandler(com_shell_pipe);
+
+        Thread shellThread = new Thread(shellHandler);
+        shellThread.start();
+
+        comHandler.process();
+
+        try {
+            shellThread.join();
+        } catch (InterruptedException e) {
+            System.err.println("Shell thread failed to join.");
+        }
     }
 
 }
