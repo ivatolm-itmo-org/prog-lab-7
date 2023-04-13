@@ -106,6 +106,7 @@ public abstract class ShellHandler implements Runnable {
             this.pipe.source().read(buffer);
         } catch (IOException e) {
             System.err.println("Cannot read from the pipe: " + e);
+            return;
         }
     }
 

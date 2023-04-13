@@ -1,4 +1,4 @@
-package client.shell;
+package client.handler;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -7,6 +7,7 @@ import java.util.LinkedList;
 
 import org.apache.commons.lang3.SerializationUtils;
 
+import client.shell.ContentManager;
 import core.command.Command;
 import core.handler.ComHandler;
 import core.net.Com;
@@ -24,17 +25,21 @@ public class ClientComHandler extends ComHandler {
     private ContentManager contentManager;
 
     // Communication channel with Shell
-    private Pipe shellPipe;
+    private Pipe.SourceChannel sourceChannel;
+    private Pipe.SinkChannel sinkChannel;
 
     /**
      * Constructs new {@code ComHandler} with provided arguments.
      *
      * @param com communicator for talking to server
      */
-    public ClientComHandler(Com com, ContentManager contentManager, Pipe shellPipe) {
+    public ClientComHandler(Com com, ContentManager contentManager,
+                            Pipe.SourceChannel sourceChannel,
+                            Pipe.SinkChannel sinkChannel) {
         super(com);
         this.contentManager = contentManager;
-        this.shellPipe = shellPipe;
+        this.sourceChannel = sourceChannel;
+        this.sinkChannel = sinkChannel;
     }
 
     /**
@@ -46,9 +51,9 @@ public class ClientComHandler extends ComHandler {
         ByteBuffer buffer;
 
         // Reading commands from ShellHandler
-        buffer = ByteBuffer.wrap(new byte[1024]);
+        buffer = ByteBuffer.wrap(new byte[16384]);
         try {
-            this.shellPipe.source().read(buffer);
+            this.sourceChannel.read(buffer);
         } catch (IOException e) {
             System.err.println("Cannot read from the pipe: " + e);
             return;
@@ -97,7 +102,7 @@ public class ClientComHandler extends ComHandler {
         byte[] data = SerializationUtils.serialize(result);
         buffer = ByteBuffer.wrap(data);
         try {
-            this.shellPipe.sink().write(buffer);
+            this.sinkChannel.write(buffer);
         } catch (IOException e) {
             System.err.println("Cannot send commands to the pipe: " + e);
             return;

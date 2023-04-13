@@ -1,13 +1,12 @@
 package client;
 
 import java.io.IOException;
-import java.net.SocketException;
-import java.net.UnknownHostException;
 import java.nio.channels.Pipe;
 
+import client.handler.ClientComHandler;
+import client.handler.ClientShellHandler;
+import client.handler.EventHandler;
 import client.net.ClientComUDP;
-import client.shell.ClientComHandler;
-import client.shell.ClientShellHandler;
 import client.shell.ContentManager;
 import core.handler.ComHandler;
 import core.handler.ShellHandler;
@@ -59,20 +58,32 @@ public class Client {
 
         ContentManager contentManager = new ContentManager("../res");
 
-        Pipe com_shell_pipe;
+        Pipe com_shell_pipe, shell_com_pipe;
         try {
             com_shell_pipe = Pipe.open();
+            shell_com_pipe = Pipe.open();
         } catch (IOException e) {
             System.err.println("Cannot open pipe: " + e);
             return;
         }
-        ComHandler comHandler = new ClientComHandler(com, contentManager, com_shell_pipe);
-        ShellHandler shellHandler = new ClientShellHandler(com_shell_pipe);
+        ComHandler comHandler = new ClientComHandler(com, contentManager,
+            shell_com_pipe.source(), com_shell_pipe.sink());
+        ShellHandler shellHandler = new ClientShellHandler(
+            com_shell_pipe.source(), shell_com_pipe.sink());
+
+        EventHandler eventHandler = null;
+        try {
+            eventHandler = new EventHandler(comHandler, shellHandler,
+                com_shell_pipe.source(), shell_com_pipe.source());
+        } catch (IOException e) {
+            System.err.println("Error occured while starting event handler: " + e);
+            return;
+        }
 
         Thread shellThread = new Thread(shellHandler);
         shellThread.start();
 
-        comHandler.process();
+        eventHandler.run();
 
         try {
             shellThread.join();

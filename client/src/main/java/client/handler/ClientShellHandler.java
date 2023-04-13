@@ -1,4 +1,4 @@
-package client.shell;
+package client.handler;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -19,14 +19,17 @@ import core.handler.ShellHandler;
 public class ClientShellHandler extends ShellHandler {
 
     /** Communication channel with {@code Com} */
-    private Pipe comPipe;
+    private Pipe.SourceChannel sourceChannel;
+    private Pipe.SinkChannel sinkChannel;
 
     /**
      * Constructs new {@code Shell} with provided arguments.
      */
-    public ClientShellHandler(Pipe comPipe) {
+    public ClientShellHandler(Pipe.SourceChannel sourceChannel,
+                              Pipe.SinkChannel sinkChannel) {
         super();
-        this.comPipe = comPipe;
+        this.sourceChannel = sourceChannel;
+        this.sinkChannel = sinkChannel;
     }
 
     /**
@@ -39,13 +42,14 @@ public class ClientShellHandler extends ShellHandler {
     public void _run() {
         ByteBuffer buffer;
         try {
+            System.out.println("Parsing");
             LinkedList<Command> commands = this.parseCommands(null);
 
             // Sending commands to ComHandler
             byte[] commandsBytes = SerializationUtils.serialize(commands);
             buffer = ByteBuffer.wrap(commandsBytes);
             try {
-                this.comPipe.sink().write(buffer);
+                this.sinkChannel.write(buffer);
             } catch (IOException e) {
                 System.err.println("Cannot send commands to the pipe: " + e);
                 return;
@@ -55,9 +59,9 @@ public class ClientShellHandler extends ShellHandler {
             this.syncWait(ByteBuffer.wrap(new byte[] { 1 }));
 
             // Reading received command output
-            buffer.clear();
+            buffer = ByteBuffer.wrap(new byte[16384]);
             try {
-                this.comPipe.source().read(buffer);
+                this.sourceChannel.read(buffer);
             } catch (IOException e) {
                 System.err.println("Cannot read from the pipe: " + e);
                 return;
