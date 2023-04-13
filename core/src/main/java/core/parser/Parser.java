@@ -8,6 +8,7 @@ import core.command.Command;
 import core.command.CommandType;
 import core.command.arguments.ArgCheck;
 import core.command.arguments.Argument;
+import core.models.IdValidator;
 import core.utils.SimpleParseException;
 
 /**
@@ -25,6 +26,18 @@ public class Parser {
 
     /** List of parsed commands */
     private LinkedList<Command> result = new LinkedList<>();
+
+    /** Id validator */
+    private IdValidator idValidator;
+
+    /**
+     * Constructs new {@code Parser} with provided arguments.
+     *
+     * @param idValidator lambda for id validation
+     */
+    public Parser(IdValidator idValidator) {
+        this.idValidator = idValidator;
+    }
 
     /**
      * Parsing input string containing command or its arguments.
@@ -199,7 +212,7 @@ public class Parser {
             int argId = this.args.size();
             Argument argType = this.cmdType.getArgument(argId);
 
-            // Using reflection to get constuctor of the argument
+            // Using reflection to get constructor of the argument
             Constructor<?> constructor = null;
             try {
                 Constructor<?>[] constructors = argType.getClass().getConstructors();
@@ -230,6 +243,12 @@ public class Parser {
                     arg.parse(inputArg);
                 } catch (Exception e) {
                     arg.setValue(null);
+                }
+
+                if (argType.getName().equalsIgnoreCase("id")) {
+                    if (!this.idValidator.check(arg)) {
+                        throw new ArgumentCheckFailedException(argType.getErrorMsg());
+                    }
                 }
 
                 result.add(arg);

@@ -9,7 +9,9 @@ import java.util.NoSuchElementException;
 import org.apache.commons.lang3.SerializationUtils;
 
 import core.command.Command;
+import core.command.arguments.Argument;
 import core.handler.ShellHandler;
+import core.models.IdValidator;
 
 /**
  * Class providing user interactive shell.
@@ -26,10 +28,47 @@ public class ClientShellHandler extends ShellHandler {
      * Constructs new {@code Shell} with provided arguments.
      */
     public ClientShellHandler(Pipe.SourceChannel sourceChannel,
-                              Pipe.SinkChannel sinkChannel) {
+    Pipe.SinkChannel sinkChannel) {
         super();
+
         this.sourceChannel = sourceChannel;
         this.sinkChannel = sinkChannel;
+
+        IdValidator idValidator = ((Argument arg) -> {
+            ByteBuffer buffer;
+
+            // Sending commands to ComHandler
+            ClientEvent event = new ClientEvent(ClientEventType.ValidateId, arg);
+            byte[] commandsBytes = SerializationUtils.serialize(event);
+            buffer = ByteBuffer.wrap(commandsBytes);
+            try {
+                this.sinkChannel.write(buffer);
+            } catch (IOException e) {
+                System.err.println("Cannot send commands to the pipe: " + e);
+                return false;
+            }
+
+            // Sending notification to selector
+            this.syncWait(ByteBuffer.wrap(new byte[] { 1 }));
+
+            // Reading received command output
+            buffer = ByteBuffer.wrap(new byte[16384]);
+            try {
+                this.sourceChannel.read(buffer);
+            } catch (IOException e) {
+                System.err.println("Cannot read from the pipe: " + e);
+                return false;
+            }
+
+            boolean result = SerializationUtils.deserialize(buffer.array());
+
+            // Notifying selector that we are done
+            this.syncNotify();
+
+            return result;
+        });
+
+        this.setup(idValidator);
     }
 
     /**
@@ -42,11 +81,11 @@ public class ClientShellHandler extends ShellHandler {
     public void _run() {
         ByteBuffer buffer;
         try {
-            System.out.println("Parsing");
             LinkedList<Command> commands = this.parseCommands(null);
 
             // Sending commands to ComHandler
-            byte[] commandsBytes = SerializationUtils.serialize(commands);
+            ClientEvent event = new ClientEvent(ClientEventType.NewCommands, commands);
+            byte[] commandsBytes = SerializationUtils.serialize(event);
             buffer = ByteBuffer.wrap(commandsBytes);
             try {
                 this.sinkChannel.write(buffer);

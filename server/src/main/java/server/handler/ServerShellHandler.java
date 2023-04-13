@@ -5,7 +5,9 @@ import java.util.LinkedList;
 import java.util.NoSuchElementException;
 
 import core.command.Command;
+import core.command.arguments.Argument;
 import core.handler.ShellHandler;
+import core.models.IdValidator;
 import server.runner.RecursionFoundException;
 import server.runner.Runner;
 
@@ -24,7 +26,14 @@ public class ServerShellHandler extends ShellHandler {
      */
     public ServerShellHandler(Runner runner) {
         super();
+
         this.runner = runner;
+
+        IdValidator idValidator = (Argument arg) -> {
+            return false;
+        };
+
+        this.setup(idValidator);
     }
 
     /**

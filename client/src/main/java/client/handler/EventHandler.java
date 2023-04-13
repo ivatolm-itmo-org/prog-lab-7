@@ -79,7 +79,6 @@ public class EventHandler {
                     SelectionKey key = iter.next();
 
                     ChannelType channelType = (ChannelType) key.attachment();
-                    System.out.println(channelType);
                     switch (channelType) {
                         case Com_Shell:
                             if (key.isReadable()) {

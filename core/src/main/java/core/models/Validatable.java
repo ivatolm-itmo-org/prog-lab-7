@@ -4,6 +4,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 
 import core.command.arguments.ArgCheck;
+import core.command.arguments.LongArgument;
 import core.database.StrSerializable;
 
 /**
@@ -18,13 +19,13 @@ public interface Validatable {
      *
      * @return true if object is valid, else false
      */
-    static boolean validate(Object obj) {
+    static boolean validate(Object obj, IdValidator idValidator) {
         Class<?> clazz = obj.getClass();
 
         for (Field field : clazz.getDeclaredFields()) {
             field.setAccessible(true);
 
-            // Checking if field has an annotaion
+            // Checking if field has Validate annotation
             if (field.isAnnotationPresent(Validator.class)) {
                 // Getting annotation from the field
                 Validator validator = field.getAnnotation(Validator.class);
@@ -51,6 +52,20 @@ public interface Validatable {
 
                 } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
                         | InvocationTargetException | NoSuchMethodException | SecurityException e) {
+                    System.err.println(e);
+                    return false;
+                }
+            }
+
+            // Checking if field has ValidateAsId annotation
+            if (field.isAnnotationPresent(ValidateAsId.class)) {
+                try {
+                    Long f = (Long) field.get(obj);
+                    LongArgument arg = new LongArgument();
+                    arg.setValue(f);
+                    return idValidator.check(arg);
+
+                } catch (IllegalArgumentException | IllegalAccessException e) {
                     System.err.println(e);
                     return false;
                 }

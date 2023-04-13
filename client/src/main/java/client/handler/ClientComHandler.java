@@ -9,6 +9,7 @@ import org.apache.commons.lang3.SerializationUtils;
 
 import client.shell.ContentManager;
 import core.command.Command;
+import core.command.arguments.Argument;
 import core.handler.ComHandler;
 import core.net.Com;
 import core.net.packet.Packet;
@@ -59,7 +60,36 @@ public class ClientComHandler extends ComHandler {
             return;
         }
 
-        LinkedList<Command> commands = SerializationUtils.deserialize(buffer.array());
+        byte[] result = new byte[] { 1 };
+        ClientEvent event = SerializationUtils.deserialize(buffer.array());
+        switch (event.getType()) {
+            case NewCommands:
+                result = this.handleEventNewCommands(event);
+                break;
+            case ValidateId:
+                result = this.handleValidateId(event);
+                break;
+        }
+
+        // Sending output to ShellHandler
+        buffer = ByteBuffer.wrap(result);
+        try {
+            this.sinkChannel.write(buffer);
+        } catch (IOException e) {
+            System.err.println("Cannot send commands to the pipe: " + e);
+            return;
+        }
+    }
+
+    /**
+     * Sends new commands to the server and returns output.
+     *
+     * @param event event to process
+     * @return result of the handling
+     */
+    private byte[] handleEventNewCommands(ClientEvent event) {
+        @SuppressWarnings("unchecked")
+        LinkedList<Command> commands = (LinkedList<Command>) event.getData();
 
         LinkedList<String> result = new LinkedList<>();
         for (Command command : commands) {
@@ -70,25 +100,23 @@ public class ClientComHandler extends ComHandler {
             boolean finished = false;
             while (!finished) {
                 try {
-                    Thread.sleep(1000);
+                    Thread.sleep(100);
                 } catch (InterruptedException e) {}
                 Packet response = this.com.receive();
-                System.out.println(response);
                 if (response == null) {
                     finished = true;
                     break;
                 }
 
                 switch (response.getType()) {
-                    case CommandReq:
-                        break;
                     case CommandResp:
                         output = this.handleCommandResp(response);
                         break;
                     case ScriptReq:
                         output = this.handleScriptReq(response);
                         break;
-                    case ScriptResp:
+                    default:
+                        System.err.println("Unknown response type: " + response.getType());
                         break;
                 }
 
@@ -98,15 +126,43 @@ public class ClientComHandler extends ComHandler {
             }
         }
 
-        // Sending output to ShellHandler
-        byte[] data = SerializationUtils.serialize(result);
-        buffer = ByteBuffer.wrap(data);
-        try {
-            this.sinkChannel.write(buffer);
-        } catch (IOException e) {
-            System.err.println("Cannot send commands to the pipe: " + e);
-            return;
+        return SerializationUtils.serialize(result);
+    }
+
+    /**
+     * Sends validation request to server and returns result.
+     *
+     * @param event event to process
+     * @return result of the handling
+     */
+    private byte[] handleValidateId(ClientEvent event) {
+        Argument argument = (Argument) event.getData();
+        Packet request = new Packet(PacketType.ValidateIdReq, argument);
+        this.com.send(request);
+
+        boolean result = false;
+        boolean finished = false;
+        while (!finished) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {}
+            Packet response = this.com.receive();
+            if (response == null) {
+                finished = true;
+                break;
+            }
+
+            switch (response.getType()) {
+                case ValidateIdResp:
+                    result = this.handleValidateIdResp(response);
+                    break;
+                default:
+                    System.err.println("Unknown reposnse type: " + response.getType());
+                    break;
+            }
         }
+
+        return SerializationUtils.serialize(result);
     }
 
     /**
@@ -143,6 +199,18 @@ public class ClientComHandler extends ComHandler {
         this.com.send(response);
 
         return null;
+    }
+
+    /**
+     * Returns result of server id validation.
+     *
+     * @param packet packet to process
+     * @return result of validation
+     */
+    private boolean handleValidateIdResp(Packet packet) {
+        boolean result = (boolean) packet.getData();
+
+        return result;
     }
 
 }

@@ -6,6 +6,7 @@ import java.util.LinkedList;
 import core.database.DataBaseObject;
 import core.database.StrSerializable;
 import core.models.Validatable;
+import core.models.ValidateAsId;
 import core.models.Validator;
 import core.models.car.Car;
 import core.models.car.CarValidator;
@@ -23,6 +24,7 @@ import core.utils.SimpleParseException;
 public class HumanBeing implements StrSerializable, DataBaseObject, Comparable<HumanBeing>, Validatable {
 
     /** Id field */
+    @ValidateAsId
     @Validator(validator = HumanBeingIdValidator.class)
     private Long id;
 

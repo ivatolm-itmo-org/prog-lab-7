@@ -20,8 +20,6 @@ public class HumanBeingIdValidator implements ArgCheck {
             return false;
         }
 
-        // return Interpreter.HasItemWithId(id);
-
         return true;
     }
 

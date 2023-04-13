@@ -151,7 +151,7 @@ public enum CommandType {
                 "id",
                 new HumanBeingIdValidator(),
                 "id (long integer)",
-                "This argument must be long integer"
+                "This argument must be long integer and exist on the server"
             );
 
             for (int i = 0; i < a.length; i++) {

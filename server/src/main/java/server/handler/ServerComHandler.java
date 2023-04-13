@@ -3,10 +3,12 @@ package server.handler;
 import java.util.LinkedList;
 
 import core.command.Command;
+import core.command.arguments.Argument;
 import core.handler.ComHandler;
 import core.net.Com;
 import core.net.packet.Packet;
 import core.net.packet.PacketType;
+import server.interpreter.Interpreter;
 import server.runner.RecursionFoundException;
 import server.runner.Runner;
 
@@ -17,7 +19,7 @@ import server.runner.Runner;
  */
 public class ServerComHandler extends ComHandler {
 
-    // Client program runner
+    // Runner
     private Runner runner;
 
     /**
@@ -42,13 +44,17 @@ public class ServerComHandler extends ComHandler {
             case CommandReq:
                 this.handleCommandReq(response);
                 break;
-            case CommandResp:
-                break;
-            case ScriptReq:
-                break;
             case ScriptResp:
                 this.handleScriptResp(response);
                 break;
+            case ValidateIdReq:
+                boolean result = this.handleValidateReq(response);
+                Packet request = new Packet(PacketType.ValidateIdResp, result);
+                this.com.send(request);
+                return;
+            default:
+                System.err.println("Unknown response type: " + response.getType());
+                return;
         }
 
         this.runner.run();
@@ -109,6 +115,23 @@ public class ServerComHandler extends ComHandler {
             System.err.println("Recursion detected. Skipping...");
             return;
         }
+    }
+
+    /**
+     * Checks whether collection has item with received id.
+     *
+     * @param packet packet to process
+     * @return result of validation
+     */
+    private boolean handleValidateReq(Packet packet) {
+        Argument argument = (Argument) packet.getData();
+
+        if (argument == null) {
+            System.err.println("Received empty validation request. Skipping...");
+            return false;
+        }
+
+        return Interpreter.HasItemWithId(argument);
     }
 
 }

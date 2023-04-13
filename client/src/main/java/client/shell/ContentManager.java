@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 
 import core.command.Command;
+import core.command.arguments.Argument;
 import core.parser.ArgumentCheckFailedException;
 import core.parser.Parser;
 import core.utils.SimpleParseException;
@@ -76,7 +77,7 @@ public class ContentManager {
         if (content.isBlank()) {
             return new LinkedList<>();
         } else {
-            Parser parser = new Parser();
+            Parser parser = new Parser(((Argument arg) -> {return false;}));
 
             // intentionally not slimming input
             LinkedList<String> splittedContent;

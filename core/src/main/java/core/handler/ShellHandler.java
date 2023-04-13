@@ -10,6 +10,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import core.command.Command;
 import core.command.CommandType;
+import core.models.IdValidator;
 import core.parser.ArgumentCheckFailedException;
 import core.parser.Parser;
 import core.utils.SimpleParseException;
@@ -45,13 +46,20 @@ public abstract class ShellHandler implements Runnable {
      */
     protected ShellHandler() {
         this.scanner = new Scanner(System.in);
-        this.parser = new Parser();
-
         this.running = true;
 
         this.syncLock = new ReentrantLock();
         this.firstWaiting = false;
         this.secondWaiting = false;
+    }
+
+    /**
+     * Creates parser via {@idValidator}.
+     *
+     * @param idValidator validator for an id argument
+     */
+    public void setup(IdValidator idValidator) {
+        this.parser = new Parser(idValidator);
     }
 
     /**

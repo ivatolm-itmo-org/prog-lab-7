@@ -10,6 +10,7 @@ import core.command.CommandInfo;
 import core.command.CommandType;
 import core.command.arguments.Argument;
 import core.database.DataBase;
+import core.models.IdValidator;
 import core.models.Validatable;
 import core.models.car.Car;
 import core.models.coordinates.Coordinates;
@@ -43,6 +44,9 @@ public class Interpreter {
     /** Running flag */
     private Boolean isRunning = true;
 
+    /** Id validator */
+    private IdValidator idValidator;
+
     /**
      * Constructs instance of the class.
      *
@@ -62,6 +66,10 @@ public class Interpreter {
         }
 
         this.history = new LinkedList<>();
+
+        this.idValidator = (Argument arg) -> {
+            return Interpreter.HasItemWithId(arg);
+        };
     }
 
     /**
@@ -249,7 +257,7 @@ public class Interpreter {
 
         HumanBeing instance = new HumanBeing(res);
         Interpreter.collection.add(instance);
-        if (!Validatable.validate(instance)) {
+        if (!Validatable.validate(instance, this.idValidator)) {
             Interpreter.collection.remove(instance);
             System.err.println("Instance validation failed.");
         }
@@ -297,7 +305,7 @@ public class Interpreter {
                         args.get(11).getValue()));          // car
 
         HumanBeing instance = new HumanBeing(res);
-        if (Validatable.validate(instance)) {
+        if (Validatable.validate(instance, this.idValidator)) {
             Interpreter.collection.set(index, instance);
         } else {
             System.err.println("Instance validation failed.");

@@ -9,5 +9,7 @@ public enum PacketType {
     CommandReq,
     CommandResp,
     ScriptReq,
-    ScriptResp
+    ScriptResp,
+    ValidateIdReq,
+    ValidateIdResp
 }
