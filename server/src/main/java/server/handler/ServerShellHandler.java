@@ -8,6 +8,7 @@ import core.command.Command;
 import core.command.arguments.Argument;
 import core.handler.ShellHandler;
 import core.models.IdValidator;
+import server.interpreter.Interpreter;
 import server.runner.RecursionFoundException;
 import server.runner.Runner;
 
@@ -30,7 +31,7 @@ public class ServerShellHandler extends ShellHandler {
         this.runner = runner;
 
         IdValidator idValidator = (Argument arg) -> {
-            return false;
+            return Interpreter.HasItemWithId(arg);
         };
 
         this.setup(idValidator);
@@ -59,6 +60,15 @@ public class ServerShellHandler extends ShellHandler {
             }
 
             this.runner.run();
+
+            LinkedList<String> output = this.runner.getProgramOutput();
+            for (String commandOutput : output) {
+                System.out.println(commandOutput);
+            }
+            LinkedList<String> result = this.runner.getProgramResult();
+            if (result != null) {
+                System.out.println("Cannot resolve dependency: " + result.getFirst());
+            }
 
             this.syncNotify();
         } catch (NoSuchElementException e) {
