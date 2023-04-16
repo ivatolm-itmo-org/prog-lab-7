@@ -3,17 +3,19 @@ package core.handler;
 import java.nio.channels.SelectableChannel;
 import java.util.HashMap;
 
+import core.fsm.FSM;
+
 /**
  * Class for handling events.
  *
  * @author ivatolm
  */
-public abstract class Handler<E extends Enum<?>> {
+public abstract class Handler<E extends Enum<?>, S extends Enum<?>> extends FSM<S> {
 
-    // Input channels
+    /** Input channels */
     protected HashMap<E, SelectableChannel> inputChannels;
 
-    // Output channels
+    /** Output channels */
     protected HashMap<E, SelectableChannel> outputChannels;
 
     /**
@@ -21,9 +23,12 @@ public abstract class Handler<E extends Enum<?>> {
      *
      * @param inputChannels input channels of the handler
      * @param outputChannels output channels of the handler
+     * @param initState initial state of FSM
      */
     protected Handler(HashMap<E, SelectableChannel> inputChannels,
-                      HashMap<E, SelectableChannel> outputChannels) {
+                      HashMap<E, SelectableChannel> outputChannels,
+                      S initState) {
+        super(initState);
         this.inputChannels = inputChannels;
         this.outputChannels = outputChannels;
     }

@@ -8,7 +8,7 @@ import java.util.HashMap;
  *
  * @author ivatolm
  */
-public abstract class SocketHandler extends Handler<ChannelType> {
+public abstract class SocketHandler<S extends Enum<?>> extends Handler<ChannelType, S> {
 
     /** Socket channel */
     protected SelectableChannel channel;
@@ -18,10 +18,12 @@ public abstract class SocketHandler extends Handler<ChannelType> {
      *
      * @param inputChannels input channels of the handler
      * @param outputChannels output channels of the handler
+     * @param initState initial state of FSM
      */
     protected SocketHandler(HashMap<ChannelType, SelectableChannel> inputChannels,
-                            HashMap<ChannelType, SelectableChannel> outputChannels) {
-        super(inputChannels, outputChannels);
+                            HashMap<ChannelType, SelectableChannel> outputChannels,
+                            S initState) {
+        super(inputChannels, outputChannels, initState);
 
         this.inputChannels.put(ChannelType.Socket, channel);
     }

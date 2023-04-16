@@ -16,7 +16,7 @@ import core.utils.SimpleParseException;
  *
  * @author ivatolm
  */
-public abstract class ShellHandler extends Handler<ChannelType> {
+public abstract class ShellHandler<S extends Enum<?>> extends Handler<ChannelType, S> {
 
     // Command parser
     private Parser parser;
@@ -29,10 +29,12 @@ public abstract class ShellHandler extends Handler<ChannelType> {
      *
      * @param inputChannels input channels of the handler
      * @param outputChannels output channels of the handler
+     * @param initState initial state of FSM
      */
     protected ShellHandler(HashMap<ChannelType, SelectableChannel> inputChannels,
-                           HashMap<ChannelType, SelectableChannel> outputChannels) {
-        super(inputChannels, outputChannels);
+                           HashMap<ChannelType, SelectableChannel> outputChannels,
+                           S initState) {
+        super(inputChannels, outputChannels, initState);
     }
 
     /**

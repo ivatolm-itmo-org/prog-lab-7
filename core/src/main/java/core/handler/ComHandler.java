@@ -8,17 +8,19 @@ import java.util.HashMap;
  *
  * @author ivatolm
  */
-public abstract class ComHandler extends Handler<ChannelType> {
+public abstract class ComHandler<S extends Enum<?>> extends Handler<ChannelType, S> {
 
     /**
      * Constructs new {@code ComHandler} with provided arguments.
      *
      * @param inputChannels input channels of the handler
      * @param outputChannels output channels of the handler
+     * @param initState initial state of FSM
      */
     protected ComHandler(HashMap<ChannelType, SelectableChannel> inputChannels,
-                         HashMap<ChannelType, SelectableChannel> outputChannels) {
-        super(inputChannels, outputChannels);
+                         HashMap<ChannelType, SelectableChannel> outputChannels,
+                         S initState) {
+        super(inputChannels, outputChannels, initState);
     }
 
 }
