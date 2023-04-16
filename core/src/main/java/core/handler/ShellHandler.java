@@ -1,12 +1,8 @@
 package core.handler;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.Pipe;
+import java.nio.channels.SelectableChannel;
+import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.Scanner;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 import core.command.Command;
 import core.command.CommandType;
@@ -20,37 +16,23 @@ import core.utils.SimpleParseException;
  *
  * @author ivatolm
  */
-public abstract class ShellHandler implements Runnable {
+public abstract class ShellHandler extends Handler<ChannelType> {
 
-    /** Command line scanner */
-    protected Scanner scanner;
+    // Command parser
+    private Parser parser;
 
-    /** Command parser */
-    protected Parser parser;
-
-    /** Communication channel */
-    protected Pipe pipe;
-
-    /** Thread running flag */
-    protected boolean running;
-
-    /** Syncronization */
-    private Lock syncLock;
-    private boolean firstWaiting;
-    private boolean secondWaiting;
+    // Accumulated result of parsing
+    private LinkedList<Command> parsingResult;
 
     /**
      * Constructs new {@code ShellHandler} with provided arguments.
      *
-     * @param filename database filename
+     * @param inputChannels input channels of the handler
+     * @param outputChannels output channels of the handler
      */
-    protected ShellHandler() {
-        this.scanner = new Scanner(System.in);
-        this.running = true;
-
-        this.syncLock = new ReentrantLock();
-        this.firstWaiting = false;
-        this.secondWaiting = false;
+    protected ShellHandler(HashMap<ChannelType, SelectableChannel> inputChannels,
+                           HashMap<ChannelType, SelectableChannel> outputChannels) {
+        super(inputChannels, outputChannels);
     }
 
     /**
@@ -63,118 +45,26 @@ public abstract class ShellHandler implements Runnable {
     }
 
     /**
-     * Runs logic specific to application.
-     */
-    protected abstract void _run();
-
-    /**
-     * Implements {@code run} for {@code Runnable}.
+     * Implements {@code process} for {@code Handler}.
      */
     @Override
-    public final void run() {
-        if (this.pipe == null) {
-            System.err.println("Sink channel was not set. Exiting...");
-            return;
-        }
-
-        while (running) {
-            synchronized (this.syncLock) {
-
-                this._run();
-
-            }
-        }
-    }
-
-    /**
-     * Sends buffer and waits to be awakened (sync p.1).
-     *
-     * @param buffer buffer to send to the pipe
-     */
-    protected final void syncWait(ByteBuffer buffer) {
-        try {
-            this.pipe.sink().write(buffer);
-        } catch (IOException e) {
-            System.err.println("Cannot send commands to the pipe: " + e);
-            return;
-        }
-
-        try {
-            firstWaiting = true;
-            while (firstWaiting) {
-                this.syncLock.wait();
-            }
-        } catch (InterruptedException e) {
-            System.err.println("Thread was interrupted while waiting: " + e);
-            return;
-        }
-
-        buffer.clear();
-        try {
-            this.pipe.source().read(buffer);
-        } catch (IOException e) {
-            System.err.println("Cannot read from the pipe: " + e);
-            return;
-        }
-    }
-
-    /**
-     * Notifies other thread (sync p.2).
-     */
-    protected final void syncNotify() {
-        secondWaiting = false;
-        this.syncLock.notify();
-    }
-
-    /**
-     * Syncronizes with other thread.
-     * This method is invoked from {@code Selector} and
-     * syncronizes with {@code syncRun}.
-     */
-    public final void process() {
-        synchronized (this.syncLock) {
-
-            firstWaiting = false;
-            this.syncLock.notify();
-
-            try {
-                secondWaiting = true;
-                while (secondWaiting) {
-                    this.syncLock.wait();
-                }
-            } catch (InterruptedException e) {
-                System.err.println("Thread was interrupted while waiting: " + e);
-            }
-
-        }
-    }
-
-    /**
-     * Set communication pipe to {@code pipe}.
-     *
-     * @param pipe communication pipe
-     */
-    public void setPipe(Pipe pipe) {
-        this.pipe = pipe;
-    }
+    public abstract void process(ChannelType channel);
 
     /**
      * Parses one or multiple {@code Command}-s from {@code inputs}.
-     * If input is null, greets user and parses the command.
-     * If parsing fails, then asks user to correct the input.
+     * If input is null or parsing fails, waits for being called again
+     * with further user input.
+     * Accumulated result of parsing is stored in {@code parsingResult}
      *
      * @param inputs strings to parse {@code Command} from or null
-     * @return parsed {@code Command}-s
      */
-    protected LinkedList<Command> parseCommands(LinkedList<String> inputs) {
-        LinkedList<Command> result = new LinkedList<>();
-
+    protected void parseCommands(LinkedList<String> inputs) {
         boolean promptRequired = inputs == null || inputs.isEmpty();
         while (true) {
             String input;
             if (promptRequired) {
                 System.out.print(": ");
-                input = this.scanner.nextLine();
+                return;
             } else {
                 input = inputs.pop();
             }
@@ -184,10 +74,10 @@ public abstract class ShellHandler implements Runnable {
             try {
                 boolean hasParsedCommands = this.parser.parse(input);
                 if (hasParsedCommands == true) {
-                    result.addAll(this.parser.getResult());
+                    this.parsingResult.addAll(this.parser.getResult());
 
                     if (promptRequired) {
-                        return result;
+                        return;
                     }
                 }
 
@@ -209,6 +99,18 @@ public abstract class ShellHandler implements Runnable {
                 System.out.print(greeting);
             }
         }
+    }
+
+    /**
+     * Returns accumulated parsing result or null if there isn't one.
+     * Consumes result.
+     *
+     * @return parsed commands
+     */
+    protected LinkedList<Command> getParsingResult() {
+        LinkedList<Command> result = this.parsingResult;
+        this.parsingResult = null;
+        return result;
     }
 
 }
