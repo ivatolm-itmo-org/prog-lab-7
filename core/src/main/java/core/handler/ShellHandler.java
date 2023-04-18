@@ -6,7 +6,7 @@ import java.util.LinkedList;
 
 import core.command.Command;
 import core.command.CommandType;
-import core.models.IdValidator;
+import core.command.arguments.Argument;
 import core.parser.ArgumentCheckFailedException;
 import core.parser.Parser;
 import core.utils.SimpleParseException;
@@ -24,6 +24,12 @@ public abstract class ShellHandler<S extends Enum<?>> extends Handler<ChannelTyp
     // Accumulated result of parsing
     private LinkedList<Command> parsingResult;
 
+    // Argument for id validation
+    private Argument argForIdValidation;
+
+    // Id validation result
+    private Boolean argIdValidationResult;
+
     /**
      * Constructs new {@code ShellHandler} with provided arguments.
      *
@@ -35,15 +41,8 @@ public abstract class ShellHandler<S extends Enum<?>> extends Handler<ChannelTyp
                            HashMap<ChannelType, SelectableChannel> outputChannels,
                            S initState) {
         super(inputChannels, outputChannels, initState);
-    }
-
-    /**
-     * Creates parser via {@idValidator}.
-     *
-     * @param idValidator validator for an id argument
-     */
-    public void setup(IdValidator idValidator) {
-        this.parser = new Parser(idValidator);
+        this.argForIdValidation = null;
+        this.argIdValidationResult = null;
     }
 
     /**
@@ -56,11 +55,32 @@ public abstract class ShellHandler<S extends Enum<?>> extends Handler<ChannelTyp
      * Parses one or multiple {@code Command}-s from {@code inputs}.
      * If input is null or parsing fails, waits for being called again
      * with further user input.
-     * Accumulated result of parsing is stored in {@code parsingResult}
+     * Accumulated result of parsing is stored in {@code parsingResult}.
+     * If id argument validation is required than sets {@code argForIdValidation} to
+     * argument to be validated, which can be accessed via {@code getArgForIdValidation}.
      *
      * @param inputs strings to parse {@code Command} from or null
      */
     protected void parseCommands(LinkedList<String> inputs) {
+        if (this.argForIdValidation != null) {
+            if (this.argIdValidationResult != null) {
+                this.argForIdValidation = null;
+
+                try {
+                    this.parser.setIdValidationResult(this.argIdValidationResult);
+                } catch (ArgumentCheckFailedException e) {
+                    System.err.println(e.getMessage());
+                    CommandType cmdType = this.parser.getCurrentCommandType();
+                    int argCnt = this.parser.getCurrentArgumentsCnt();
+
+                    String greeting = "Enter" + " " + "'" + cmdType.getArgument(argCnt).getGreetingMsg() + "'";
+                    System.out.print(greeting);
+                }
+            } else {
+                return;
+            }
+        }
+
         boolean promptRequired = inputs == null || inputs.isEmpty();
         while (true) {
             String input;
@@ -90,7 +110,14 @@ public abstract class ShellHandler<S extends Enum<?>> extends Handler<ChannelTyp
 
             } catch (ArgumentCheckFailedException e) {
                 System.err.println(e.getMessage());
-                promptRequired = true;
+                if (this.parser.needIdValidation()) {
+                    Argument arg = this.parser.getArgForIdValidation();
+                    this.argForIdValidation = arg;
+                    this.argIdValidationResult = null;
+                    return;
+                } else {
+                    promptRequired = true;
+                }
             }
 
             if (promptRequired) {
@@ -101,6 +128,46 @@ public abstract class ShellHandler<S extends Enum<?>> extends Handler<ChannelTyp
                 System.out.print(greeting);
             }
         }
+    }
+
+    /**
+     * Sets argument id validation result.
+     *
+     * @param result of argument id validation
+     */
+    protected void setArgIdValidationResult(boolean result) {
+        this.argIdValidationResult = result;
+    }
+
+    /**
+     * Returns argument for id validation.
+     *
+     * @return argument to be validated
+     */
+    protected Argument getArgForIdValidation() {
+        return this.argForIdValidation;
+    }
+
+    /**
+     * Returns need of validating argument id.
+     *
+     * @return true if needed, else false
+     */
+    protected boolean hasArgForIdValidation() {
+        return this.argForIdValidation == null;
+    }
+
+    /**
+     * Returns status of parsing result.
+     *
+     * @return true if has result, else false
+     */
+    protected boolean hasParsingResult() {
+        if (this.parsingResult == null) {
+            return false;
+        }
+
+        return this.parsingResult.isEmpty();
     }
 
     /**

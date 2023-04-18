@@ -7,8 +7,8 @@ package core.fsm;
  */
 public abstract class FSM<E extends Enum<?>> {
 
-    /** Current state */
-    protected E state;
+    // Current state
+    private E state;
 
     /**
      * Constructs new {@code FSM} with provided arguments.
@@ -26,6 +26,15 @@ public abstract class FSM<E extends Enum<?>> {
      */
     protected final void nextState(E state) {
         this.state = state;
+    }
+
+    /**
+     * Returns current state
+     *
+     * @return current state
+     */
+    protected E getState() {
+        return this.state;
     }
 
     /**

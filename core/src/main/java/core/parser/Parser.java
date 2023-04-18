@@ -8,7 +8,6 @@ import core.command.Command;
 import core.command.CommandType;
 import core.command.arguments.ArgCheck;
 import core.command.arguments.Argument;
-import core.models.IdValidator;
 import core.utils.SimpleParseException;
 
 /**
@@ -27,17 +26,10 @@ public class Parser {
     /** List of parsed commands */
     private LinkedList<Command> result = new LinkedList<>();
 
-    /** Id validator */
-    private IdValidator idValidator;
+    /** Argument for id validation */
+    private Argument argForIdValidation = null;
 
-    /**
-     * Constructs new {@code Parser} with provided arguments.
-     *
-     * @param idValidator lambda for id validation
-     */
-    public Parser(IdValidator idValidator) {
-        this.idValidator = idValidator;
-    }
+    private LinkedList<String> remainingSlices = null;
 
     /**
      * Parsing input string containing command or its arguments.
@@ -54,6 +46,11 @@ public class Parser {
         String slimmedString = this.slim(input);
         LinkedList<String> slices = this.split(slimmedString);
 
+        // Feeding in slices from before
+        if (this.remainingSlices != null) {
+            slices.addAll(0, this.remainingSlices);
+        }
+
         // Allowing empty args
         if (slices.isEmpty()) {
             slices.add(null);
@@ -67,11 +64,7 @@ public class Parser {
 
         // New arguments
         if (this.cmdType.getArgsCount() - this.args.size() > 0) {
-            LinkedList<Argument> arguments = this.parseArguments(slices);
-
-            for (Argument arg : arguments) {
-                this.args.add(arg);
-            }
+            this.remainingSlices = this.parseArguments(slices);
         }
 
         // Checking if there are no args left to wait for
@@ -202,9 +195,7 @@ public class Parser {
      * @return parsed arguments
      * @throws ArgumentCheckFailedException if argument check failed
      */
-    private LinkedList<Argument> parseArguments(LinkedList<String> slices) throws ArgumentCheckFailedException {
-        LinkedList<Argument> result = new LinkedList<>();
-
+    private LinkedList<String> parseArguments(LinkedList<String> slices) throws ArgumentCheckFailedException {
         int argCnt = Math.min(this.cmdType.getArgsCount() - this.args.size(),
                               slices.size());
 
@@ -246,18 +237,54 @@ public class Parser {
                 }
 
                 if (argType.getName().equalsIgnoreCase("id")) {
-                    if (!this.idValidator.check(arg)) {
-                        throw new ArgumentCheckFailedException(argType.getErrorMsg());
-                    }
+                    this.argForIdValidation = arg;
+                    return new LinkedList<>(slices.subList(i + 1, slices.size()));
+                } else {
+                    this.args.add(arg);
                 }
-
-                result.add(arg);
             } else {
                 throw new ArgumentCheckFailedException(argType.getErrorMsg());
             }
         }
 
-        return result;
+        return null;
+    }
+
+    /**
+     * Sets {@code idValidationResult} to {@code status}.
+     * If check passed, then adds argument to the list of parsed.
+     *
+     * @param result result of validation
+     * @throws ArgumentCheckFailedException if argument check failed
+     */
+    public void setIdValidationResult(boolean result) throws ArgumentCheckFailedException {
+        if (result) {
+            this.args.add(this.argForIdValidation);
+        } else {
+            int argId = this.args.size();
+            Argument argType = this.cmdType.getArgument(argId);
+            throw new ArgumentCheckFailedException(argType.getErrorMsg());
+        }
+
+        this.argForIdValidation = null;
+    }
+
+    /**
+     * Returns argument for id validation.
+     *
+     * @return argument if there is one, else null
+     */
+    public Argument getArgForIdValidation() {
+        return this.argForIdValidation;
+    }
+
+    /**
+     * Returns id validation state.
+     *
+     * @return true if validation needed, else false
+     */
+    public boolean needIdValidation() {
+        return this.argForIdValidation == null;
     }
 
     /**

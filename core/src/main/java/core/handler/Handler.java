@@ -2,6 +2,7 @@ package core.handler;
 
 import java.nio.channels.SelectableChannel;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import core.fsm.FSM;
 
@@ -18,6 +19,9 @@ public abstract class Handler<E extends Enum<?>, S extends Enum<?>> extends FSM<
     /** Output channels */
     protected HashMap<E, SelectableChannel> outputChannels;
 
+    /** Ready channels */
+    protected HashSet<E> readyChannels;
+
     /**
      * Constructs new {@code Handler} with provided arguments.
      *
@@ -31,6 +35,7 @@ public abstract class Handler<E extends Enum<?>, S extends Enum<?>> extends FSM<
         super(initState);
         this.inputChannels = inputChannels;
         this.outputChannels = outputChannels;
+        this.readyChannels = new HashSet<>();
     }
 
     /**
