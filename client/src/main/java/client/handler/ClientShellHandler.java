@@ -1,123 +1,230 @@
 package client.handler;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.Pipe;
+import java.nio.channels.SelectableChannel;
+import java.nio.channels.Pipe.SinkChannel;
+import java.nio.channels.Pipe.SourceChannel;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.NoSuchElementException;
-
-import org.apache.commons.lang3.SerializationUtils;
 
 import core.command.Command;
 import core.command.arguments.Argument;
+import core.handler.ChannelType;
 import core.handler.ShellHandler;
 import core.models.IdValidator;
+import core.utils.NBChannelController;
+
+enum ClientShellHandlerState {
+    Waiting,
+    InputParsingStart,
+    InputParsingProcessing,
+    InputParsingFinish,
+    ComIdValidationStart,
+    ComIdValidationWaiting,
+    ComIdValidationFinish,
+    ComReceiveOutput
+}
 
 /**
  * Class providing user interactive shell.
  *
  * @author ivatolm
  */
-public class ClientShellHandler extends ShellHandler {
+public class ClientShellHandler extends ShellHandler<ClientShellHandlerState> {
 
-    /** Communication channel with {@code Com} */
-    private Pipe.SourceChannel sourceChannel;
-    private Pipe.SinkChannel sinkChannel;
+    // Input from the System.in
+    private String input;
+
+    // Id for validation
+    private Argument idArgForValidation;
 
     /**
-     * Constructs new {@code Shell} with provided arguments.
+     * Constructs new {@code ClientShellHandler} with provided arguments.
+     *
+     * @param inputChannels input channels of the handler
+     * @param outputChannels output channels of the handler
      */
-    public ClientShellHandler(Pipe.SourceChannel sourceChannel,
-    Pipe.SinkChannel sinkChannel) {
-        super();
+    public ClientShellHandler(HashMap<ChannelType, SelectableChannel> inputChannels,
+                              HashMap<ChannelType, SelectableChannel> outputChannels) {
+        super(inputChannels, outputChannels, ClientShellHandlerState.Waiting);
 
-        this.sourceChannel = sourceChannel;
-        this.sinkChannel = sinkChannel;
-
-        IdValidator idValidator = ((Argument arg) -> {
-            ByteBuffer buffer;
-
-            // Sending commands to ComHandler
-            ClientEvent event = new ClientEvent(ClientEventType.ValidateId, arg);
-            byte[] commandsBytes = SerializationUtils.serialize(event);
-            buffer = ByteBuffer.wrap(commandsBytes);
-            try {
-                this.sinkChannel.write(buffer);
-            } catch (IOException e) {
-                System.err.println("Cannot send commands to the pipe: " + e);
-                return false;
-            }
-
-            // Sending notification to selector
-            this.syncWait(ByteBuffer.wrap(new byte[] { 1 }));
-
-            // Reading received command output
-            buffer = ByteBuffer.wrap(new byte[16384]);
-            try {
-                this.sourceChannel.read(buffer);
-            } catch (IOException e) {
-                System.err.println("Cannot read from the pipe: " + e);
-                return false;
-            }
-
-            boolean result = SerializationUtils.deserialize(buffer.array());
-
-            // Notifying selector that we are done
-            this.syncNotify();
-
-            return result;
-        });
-
-        this.setup(idValidator);
+        this.input = null;
+        this.idArgForValidation = null;
     }
 
-    /**
-     * Runs interactive shell until EOF.
-     * Work cycle:
-     * 1. get user input
-     * 2. send command to the pipe
-     */
     @Override
-    public void _run() {
-        ByteBuffer buffer;
-        try {
-            LinkedList<Command> commands = this.parseCommands(null);
-
-            // Sending commands to ComHandler
-            ClientEvent event = new ClientEvent(ClientEventType.NewCommands, commands);
-            byte[] commandsBytes = SerializationUtils.serialize(event);
-            buffer = ByteBuffer.wrap(commandsBytes);
-            try {
-                this.sinkChannel.write(buffer);
-            } catch (IOException e) {
-                System.err.println("Cannot send commands to the pipe: " + e);
-                return;
+    public void process(ChannelType channel) {
+        switch (channel) {
+            case Input:
+                // receive input from the channel
+                // parse input for commands
+                // if parsing requires id validation,
+                //   then send command handler a request
+                // else
+                //   send commands to com handler
+            case Com:
+                // receive input from the channel
+                // if received output
+                //   print output
+                // else
+                //   continue parsing with received response
+                this.readyChannels.add(channel);
+                break;
+            default:
+                System.err.println("Unexpected channel.");
+                break;
             }
 
-            // Sending notification to selector
-            this.syncWait(ByteBuffer.wrap(new byte[] { 1 }));
+        this.handleEvents();
+    }
 
-            // Reading received command output
-            buffer = ByteBuffer.wrap(new byte[16384]);
-            try {
-                this.sourceChannel.read(buffer);
-            } catch (IOException e) {
-                System.err.println("Cannot read from the pipe: " + e);
-                return;
-            }
-
-            LinkedList<String> output = SerializationUtils.deserialize(buffer.array());
-            for (String commandOutput : output) {
-                System.out.println(commandOutput);
-            }
-
-            // Notifying selector that we are done
-            this.syncNotify();
-
-        } catch (NoSuchElementException e) {
-            System.out.println("\nExiting by Ctrl-D (EOF)");
-            this.running = false;
+    @Override
+    protected void handleEvents() {
+        switch (this.getState()) {
+            case Waiting:
+                this.handleWaitingState();
+                break;
+            case InputParsingStart:
+                this.handleInputParsingStart();
+                break;
+            case InputParsingProcessing:
+                this.handleInputParsingProcessing();
+                break;
+            case InputParsingFinish:
+                this.handleInputParsingFinish();
+                break;
+            case ComIdValidationStart:
+                this.handleComIdValidationStart();
+                break;
+            case ComIdValidationWaiting:
+                this.handleComIdValidationWaiting();
+                break;
+            case ComIdValidationFinish:
+                this.handleComIdValidationFinish();
+                break;
+            case ComReceiveOutput:
+                this.handleComReceiveOutput();
+                break;
         }
+    }
+
+    private void handleWaitingState() {
+        if (this.readyChannels.isEmpty()) {
+            return;
+        }
+
+        if (!this.readyChannels.contains(ChannelType.Input)) {
+            this.nextState(ClientShellHandlerState.InputParsingStart);
+        }
+    }
+
+    private void handleInputParsingStart() {
+        SourceChannel inputChannel = (SourceChannel) this.inputChannels.get(ChannelType.Input);
+        try {
+            this.input = (String) NBChannelController.read(inputChannel);
+        } catch (IOException e) {
+            System.err.println("Cannot read from the channel.");
+            this.nextState(ClientShellHandlerState.Waiting);
+            return;
+        }
+
+        this.nextState(ClientShellHandlerState.InputParsingProcessing);
+    }
+
+    private void handleInputParsingProcessing() {
+        this.parseCommands(new LinkedList<>(Arrays.asList(input)));
+
+        if (this.hasArgForIdValidation()) {
+            Argument arg = this.getArgForIdValidation();
+            this.idArgForValidation = arg;
+            this.nextState(ClientShellHandlerState.ComIdValidationStart);
+        } else {
+            this.nextState(ClientShellHandlerState.InputParsingFinish);
+        }
+    }
+
+    private void handleInputParsingFinish() {
+        if (this.hasParsingResult()) {
+            LinkedList<Command> commands = this.getParsingResult();
+            SinkChannel comChannel = (SinkChannel) this.outputChannels.get(ChannelType.Com);
+
+            try {
+                NBChannelController.write(comChannel, commands);
+            } catch (IOException e) {
+                System.err.println("Cannot write to the channel.");
+                this.nextState(ClientShellHandlerState.Waiting);
+                return;
+            }
+
+            this.nextState(ClientShellHandlerState.ComReceiveOutput);
+        } else {
+            this.nextState(ClientShellHandlerState.Waiting);
+        }
+    }
+
+    private void handleComIdValidationStart() {
+        if (this.idArgForValidation != null) {
+            SinkChannel comChannel = (SinkChannel) this.outputChannels.get(ChannelType.Com);
+
+            try {
+                NBChannelController.write(comChannel, this.idArgForValidation);
+            } catch (IOException e) {
+                System.err.println("Cannot write to the channel.");
+                this.nextState(ClientShellHandlerState.Waiting);
+                return;
+            }
+
+            this.nextState(ClientShellHandlerState.ComIdValidationWaiting);
+        } else {
+            this.nextState(ClientShellHandlerState.InputParsingProcessing);
+        }
+    }
+
+    private void handleComIdValidationWaiting() {
+        if (this.readyChannels.isEmpty()) {
+            return;
+        }
+
+        if (!this.readyChannels.contains(ChannelType.Com)) {
+            this.nextState(ClientShellHandlerState.ComIdValidationFinish);
+        }
+    }
+
+    private void handleComIdValidationFinish() {
+        SourceChannel comChannel = (SourceChannel) this.inputChannels.get(ChannelType.Com);
+        boolean result;
+        try {
+            result = (boolean) NBChannelController.read(comChannel);
+        } catch (IOException e) {
+            System.err.println("Cannot read from the channel.");
+            this.nextState(ClientShellHandlerState.Waiting);
+            return;
+        }
+
+        this.setArgIdValidationResult(result);
+
+        this.nextState(ClientShellHandlerState.InputParsingProcessing);
+    }
+
+    private void handleComReceiveOutput() {
+        SourceChannel comChannel = (SourceChannel) this.inputChannels.get(ChannelType.Com);
+        LinkedList<String> result;
+        try {
+            @SuppressWarnings("unchecked")
+            LinkedList<String> output = (LinkedList<String>) NBChannelController.read(comChannel);
+            result = output;
+        } catch (IOException e) {
+            System.err.println("Cannot read from the channel.");
+            this.nextState(ClientShellHandlerState.Waiting);
+            return;
+        }
+
+        for (String line : result) {
+            System.out.println(line);
+        }
+
+        this.nextState(ClientShellHandlerState.Waiting);
     }
 
 }
