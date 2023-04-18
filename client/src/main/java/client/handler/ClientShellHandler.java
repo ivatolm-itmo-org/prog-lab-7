@@ -8,11 +8,12 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 
+import client.event.ClientEvent;
+import client.event.ClientEventType;
 import core.command.Command;
 import core.command.arguments.Argument;
 import core.handler.ChannelType;
 import core.handler.ShellHandler;
-import core.models.IdValidator;
 import core.utils.NBChannelController;
 
 enum ClientShellHandlerState {
@@ -146,11 +147,12 @@ public class ClientShellHandler extends ShellHandler<ClientShellHandlerState> {
 
     private void handleInputParsingFinish() {
         if (this.hasParsingResult()) {
-            LinkedList<Command> commands = this.getParsingResult();
             SinkChannel comChannel = (SinkChannel) this.outputChannels.get(ChannelType.Com);
+            LinkedList<Command> commands = this.getParsingResult();
+            ClientEvent event = new ClientEvent(ClientEventType.NewCommandsReq, commands);
 
             try {
-                NBChannelController.write(comChannel, commands);
+                NBChannelController.write(comChannel, event);
             } catch (IOException e) {
                 System.err.println("Cannot write to the channel.");
                 this.nextState(ClientShellHandlerState.Waiting);
@@ -166,9 +168,10 @@ public class ClientShellHandler extends ShellHandler<ClientShellHandlerState> {
     private void handleComIdValidationStart() {
         if (this.idArgForValidation != null) {
             SinkChannel comChannel = (SinkChannel) this.outputChannels.get(ChannelType.Com);
+            ClientEvent event = new ClientEvent(ClientEventType.IdValidationReq, this.idArgForValidation);
 
             try {
-                NBChannelController.write(comChannel, this.idArgForValidation);
+                NBChannelController.write(comChannel, event);
             } catch (IOException e) {
                 System.err.println("Cannot write to the channel.");
                 this.nextState(ClientShellHandlerState.Waiting);
@@ -193,38 +196,48 @@ public class ClientShellHandler extends ShellHandler<ClientShellHandlerState> {
 
     private void handleComIdValidationFinish() {
         SourceChannel comChannel = (SourceChannel) this.inputChannels.get(ChannelType.Com);
-        boolean result;
+        ClientEvent event;
         try {
-            result = (boolean) NBChannelController.read(comChannel);
+            event = (ClientEvent) NBChannelController.read(comChannel);
         } catch (IOException e) {
             System.err.println("Cannot read from the channel.");
             this.nextState(ClientShellHandlerState.Waiting);
             return;
         }
 
-        this.setArgIdValidationResult(result);
+        if (event.getType() == ClientEventType.IdValidationResp) {
+            boolean result = (boolean) event.getData();
+            this.setArgIdValidationResult(result);
+        } else {
+            this.nextState(ClientShellHandlerState.Waiting);
+        }
 
         this.nextState(ClientShellHandlerState.InputParsingProcessing);
     }
 
     private void handleComReceiveOutput() {
         SourceChannel comChannel = (SourceChannel) this.inputChannels.get(ChannelType.Com);
-        LinkedList<String> result;
+        ClientEvent event;
         try {
-            @SuppressWarnings("unchecked")
-            LinkedList<String> output = (LinkedList<String>) NBChannelController.read(comChannel);
-            result = output;
+            event = (ClientEvent) NBChannelController.read(comChannel);
         } catch (IOException e) {
             System.err.println("Cannot read from the channel.");
             this.nextState(ClientShellHandlerState.Waiting);
             return;
         }
 
-        for (String line : result) {
-            System.out.println(line);
-        }
+        if (event.getType() == ClientEventType.NewCommandsResp) {
+            @SuppressWarnings("unchecked")
+            LinkedList<String> result = (LinkedList<String>) event.getData();
 
-        this.nextState(ClientShellHandlerState.Waiting);
+            for (String line : result) {
+                System.out.println(line);
+            }
+
+            this.nextState(ClientShellHandlerState.Waiting);
+        } else {
+            this.nextState(ClientShellHandlerState.Waiting);
+        }
     }
 
 }
