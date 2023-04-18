@@ -8,5 +8,6 @@ package core.handler;
 public enum ChannelType {
     Input,
     Com,
+    Shell,
     Socket
 }

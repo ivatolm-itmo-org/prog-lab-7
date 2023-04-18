@@ -1,216 +1,295 @@
 package client.handler;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.Pipe;
+import java.nio.channels.SelectableChannel;
+import java.nio.channels.Pipe.SinkChannel;
+import java.nio.channels.Pipe.SourceChannel;
+import java.util.HashMap;
 import java.util.LinkedList;
 
-import org.apache.commons.lang3.SerializationUtils;
-
+import client.event.ClientEvent;
+import client.event.ClientEventType;
 import client.shell.ContentManager;
 import core.command.Command;
 import core.command.arguments.Argument;
+import core.handler.ChannelType;
 import core.handler.ComHandler;
-import core.net.Com;
-import core.net.packet.Packet;
-import core.net.packet.PacketType;
+import core.utils.NBChannelController;
+
+enum ClientComHandlerState {
+    Waiting,
+    ShellRequest,
+    NewCommandsReqStart,
+    NewCommandsReqProcessing,
+    NewCommandsReqFinish,
+    IdValidationReqStart,
+    IdValidationReqFinish,
+    SocketResponse,
+    NewCommandsResp,
+    ScriptReq,
+    SocketReq,
+    SocketResp
+}
 
 /**
  * Class for handling client side communication between client and server.
  *
  * @author ivatolm
  */
-public class ClientComHandler extends ComHandler {
+public class ClientComHandler extends ComHandler<ClientComHandlerState> {
 
     // Content Manager
     private ContentManager contentManager;
 
-    // Communication channel with Shell
-    private Pipe.SourceChannel sourceChannel;
-    private Pipe.SinkChannel sinkChannel;
+    // Currently processed event
+    private ClientEvent event;
+
+    // Currently processed commands
+    private LinkedList<Command> commands;
+
+    // State management for subroutines
+    private ClientComHandlerState fromState;
+    private ClientComHandlerState toState;
+
 
     /**
-     * Constructs new {@code ComHandler} with provided arguments.
+     * Constructs new {@code ClientComHandler} with provided arguments.
      *
-     * @param com communicator for talking to server
+     * @param inputChannels input channels of the handler
+     * @param outputChannels output channels of the handler
+     * @param contentManager content manager
      */
-    public ClientComHandler(Com com, ContentManager contentManager,
-                            Pipe.SourceChannel sourceChannel,
-                            Pipe.SinkChannel sinkChannel) {
-        super(com);
+    public ClientComHandler(HashMap<ChannelType, SelectableChannel> inputChannels,
+                            HashMap<ChannelType, SelectableChannel> outputChannels,
+                            ContentManager contentManager) {
+        super(inputChannels, outputChannels, ClientComHandlerState.Waiting);
+
         this.contentManager = contentManager;
-        this.sourceChannel = sourceChannel;
-        this.sinkChannel = sinkChannel;
     }
 
-    /**
-     * Sends commands to server for processing.
-     * Collects received output and result of the command.
-     */
     @Override
-    public void process() {
-        ByteBuffer buffer;
+    public void process(ChannelType channel) {
+        switch (channel) {
+            case Shell:
+            case Socket:
+                this.readyChannels.add(channel);
+                break;
+            default:
+                System.err.println("Unexpected channel.");
+                break;
+            }
 
-        // Reading commands from ShellHandler
-        buffer = ByteBuffer.wrap(new byte[16384]);
-        try {
-            this.sourceChannel.read(buffer);
-        } catch (IOException e) {
-            System.err.println("Cannot read from the pipe: " + e);
+        this.handleEvents();
+    }
+
+    @Override
+    protected void handleEvents() {
+        switch (this.getState()) {
+            case Waiting:
+                this.handleWaitingState();
+                break;
+            case ShellRequest:
+                this.handleShellRequest();
+                break;
+            case NewCommandsReqStart:
+                this.handleNewCommandsReqStart();
+                break;
+            case NewCommandsReqProcessing:
+                this.handleNewCommandsReqProcessing();
+                break;
+            case NewCommandsReqFinish:
+                this.handleNewCommandsReqFinish();
+                break;
+            case IdValidationReqStart:
+                this.handleIdValidationReqStart();
+                break;
+            case IdValidationReqFinish:
+                this.handleIdValidationReqFinish();
+                break;
+            case SocketResponse:
+                this.handleSocketResponse();
+                break;
+            case NewCommandsResp:
+                this.handleNewCommandsResp();
+                break;
+            case ScriptReq:
+                this.handleScriptReq();
+                break;
+            case SocketReq:
+                this.handleSocketReq();
+                break;
+            case SocketResp:
+                this.handleSocketResp();
+                break;
+        }
+    }
+
+    private void handleWaitingState() {
+        if (this.readyChannels.isEmpty()) {
             return;
         }
 
-        byte[] result = new byte[] { 1 };
-        ClientEvent event = SerializationUtils.deserialize(buffer.array());
-        switch (event.getType()) {
-            case NewCommands:
-                result = this.handleEventNewCommands(event);
-                break;
-            case ValidateId:
-                result = this.handleValidateId(event);
-                break;
+        if (!this.readyChannels.contains(ChannelType.Shell)) {
+            this.nextState(ClientComHandlerState.ShellRequest);
         }
+    }
 
-        // Sending output to ShellHandler
-        buffer = ByteBuffer.wrap(result);
+    private void handleShellRequest() {
+        SourceChannel shellChannel = (SourceChannel) this.inputChannels.get(ChannelType.Shell);
+
         try {
-            this.sinkChannel.write(buffer);
+            this.event = (ClientEvent) NBChannelController.read(shellChannel);
         } catch (IOException e) {
-            System.err.println("Cannot send commands to the pipe: " + e);
+            System.err.println("Cannot read from the channel.");
+            this.nextState(ClientComHandlerState.Waiting);
             return;
         }
-    }
 
-    /**
-     * Sends new commands to the server and returns output.
-     *
-     * @param event event to process
-     * @return result of the handling
-     */
-    private byte[] handleEventNewCommands(ClientEvent event) {
-        @SuppressWarnings("unchecked")
-        LinkedList<Command> commands = (LinkedList<Command>) event.getData();
-
-        LinkedList<String> result = new LinkedList<>();
-        for (Command command : commands) {
-            Packet request = new Packet(PacketType.CommandReq, command);
-            this.com.send(request);
-
-            String output = null;
-            boolean finished = false;
-            while (!finished) {
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {}
-                Packet response = this.com.receive();
-                if (response == null) {
-                    finished = true;
-                    break;
-                }
-
-                switch (response.getType()) {
-                    case CommandResp:
-                        output = this.handleCommandResp(response);
-                        break;
-                    case ScriptReq:
-                        output = this.handleScriptReq(response);
-                        break;
-                    default:
-                        System.err.println("Unknown response type: " + response.getType());
-                        break;
-                }
-
-                if (output != null) {
-                    result.add(output);
-                }
-            }
-        }
-
-        return SerializationUtils.serialize(result);
-    }
-
-    /**
-     * Sends validation request to server and returns result.
-     *
-     * @param event event to process
-     * @return result of the handling
-     */
-    private byte[] handleValidateId(ClientEvent event) {
-        Argument argument = (Argument) event.getData();
-        Packet request = new Packet(PacketType.ValidateIdReq, argument);
-        this.com.send(request);
-
-        boolean result = false;
-        boolean finished = false;
-        while (!finished) {
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {}
-            Packet response = this.com.receive();
-            if (response == null) {
-                finished = true;
+        switch (this.event.getType()) {
+            case NewCommandsReq:
+                this.nextState(ClientComHandlerState.NewCommandsReqStart);
+                return;
+            case IdValidationReq:
+                this.nextState(ClientComHandlerState.IdValidationReqStart);
+                return;
+            default:
                 break;
-            }
-
-            switch (response.getType()) {
-                case ValidateIdResp:
-                    result = this.handleValidateIdResp(response);
-                    break;
-                default:
-                    System.err.println("Unknown reposnse type: " + response.getType());
-                    break;
-            }
         }
 
-        return SerializationUtils.serialize(result);
+        this.nextState(ClientComHandlerState.Waiting);
     }
 
-    /**
-     * Prints received output of the command.
-     *
-     * @param packet packet to process
-     * @return output, as processing finished
-     */
-    private String handleCommandResp(Packet packet) {
-        String result = "";
+    private void handleNewCommandsReqStart() {
+        @SuppressWarnings("unchecked")
+        LinkedList<Command> commands = (LinkedList<Command>) this.event.getData();
+
+        this.commands = commands;
+        this.nextState(ClientComHandlerState.NewCommandsReqProcessing);
+    }
+
+    private void handleNewCommandsReqProcessing() {
+        if (this.fromState == this.toState) {
+            this.fromState = this.getState();
+            this.toState = this.getState();
+            this.nextState(ClientComHandlerState.SocketResponse);
+            return;
+        }
+
+        if (this.commands.isEmpty()) {
+            this.fromState = null;
+            this.toState = null;
+            this.nextState(ClientComHandlerState.NewCommandsReqFinish);
+            return;
+        }
+
+        Command command = this.commands.pop();
+        this.event = new ClientEvent(ClientEventType.SendDataReq, command);
+
+        this.fromState = this.getState();
+        this.toState = ClientComHandlerState.NewCommandsReqProcessing;
+        this.nextState(ClientComHandlerState.SocketReq);
+    }
+
+    private void handleNewCommandsReqFinish() {
+        this.nextState(ClientComHandlerState.Waiting);
+    }
+
+    private void handleIdValidationReqStart() {
+        Argument argument = (Argument) this.event.getData();
+
+        this.event = new ClientEvent(ClientEventType.SendDataReq, argument);
+
+        this.fromState = this.getState();
+        this.toState = ClientComHandlerState.IdValidationReqFinish;
+        this.nextState(ClientComHandlerState.SocketReq);
+    }
+
+    private void handleIdValidationReqFinish() {
+        SinkChannel shellChannel = (SinkChannel) this.outputChannels.get(ChannelType.Shell);
+
+        boolean result = (boolean) this.event.getData();
+        this.event = new ClientEvent(ClientEventType.IdValidationResp, result);
+
+        try {
+            NBChannelController.write(shellChannel, this.event);
+        } catch (IOException e) {
+            System.err.println("Cannot write to the channel.");
+            this.nextState(ClientComHandlerState.Waiting);
+            return;
+        }
+
+        this.nextState(ClientComHandlerState.Waiting);
+    }
+
+    private void handleSocketResponse() {
+        this.fromState = this.getState();
+
+        switch (this.event.getType()) {
+            case NewCommandsResp:
+                this.nextState(ClientComHandlerState.NewCommandsResp);
+                break;
+            case ScritpReq:
+                this.nextState(ClientComHandlerState.ScriptReq);
+                break;
+            default:
+                this.nextState(this.toState);
+                break;
+        }
+    }
+
+    private void handleNewCommandsResp() {
+        SinkChannel shellChannel = (SinkChannel) this.outputChannels.get(ChannelType.Shell);
 
         @SuppressWarnings("unchecked")
-        LinkedList<String> output = (LinkedList<String>) packet.getData();
+        LinkedList<String> output = (LinkedList<String>) this.event.getData();
+        this.event = new ClientEvent(ClientEventType.NewCommandsResp, output);
 
-        for (String line : output) {
-            result += line + '\n';
+        try {
+            NBChannelController.write(shellChannel, this.event);
+        } catch (IOException e) {
+            System.err.println("Cannot write to the channel.");
+            this.nextState(ClientComHandlerState.Waiting);
+            return;
         }
 
-        return result;
+        this.nextState(this.toState);
     }
 
-    /**
-     * Sends requested script to the server.
-     *
-     * @param packet packet to process
-     * @return null, as processing is not finished
-     */
-    private String handleScriptReq(Packet packet) {
-        String filename = (String) packet.getData();
+    private void handleScriptReq() {
+        String filename = (String) this.event.getData();
 
-        LinkedList<Command> cmds = this.contentManager.get(filename);
+        LinkedList<Command> commands = this.contentManager.get(filename);
 
-        Packet response = new Packet(PacketType.ScriptResp, cmds);
-        this.com.send(response);
-
-        return null;
+        this.event = new ClientEvent(ClientEventType.SendDataReq, commands);
+        this.nextState(ClientComHandlerState.SocketReq);
     }
 
-    /**
-     * Returns result of server id validation.
-     *
-     * @param packet packet to process
-     * @return result of validation
-     */
-    private boolean handleValidateIdResp(Packet packet) {
-        boolean result = (boolean) packet.getData();
+    private void handleSocketReq() {
+        SinkChannel socketChannel = (SinkChannel) this.outputChannels.get(ChannelType.Socket);
 
-        return result;
+        try {
+            NBChannelController.write(socketChannel, this.event);
+        } catch (IOException e) {
+            System.err.println("Cannot write to the channel.");
+            this.nextState(ClientComHandlerState.Waiting);
+            return;
+        }
+
+        this.nextState(ClientComHandlerState.SocketResp);
+    }
+
+    private void handleSocketResp() {
+        SourceChannel socketChannel = (SourceChannel) this.inputChannels.get(ChannelType.Socket);
+
+        try {
+            this.event = (ClientEvent) NBChannelController.read(socketChannel);
+        } catch (IOException e) {
+            System.err.println("Cannot read from the channel.");
+            this.nextState(ClientComHandlerState.Waiting);
+            return;
+        }
+
+        this.nextState(this.toState);
     }
 
 }

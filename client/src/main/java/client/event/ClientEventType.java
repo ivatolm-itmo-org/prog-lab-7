@@ -9,5 +9,7 @@ public enum ClientEventType {
     IdValidationReq,
     IdValidationResp,
     NewCommandsReq,
-    NewCommandsResp
+    NewCommandsResp,
+    ScritpReq,
+    SendDataReq,
 }

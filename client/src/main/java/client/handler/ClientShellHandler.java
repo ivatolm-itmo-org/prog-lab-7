@@ -221,7 +221,7 @@ public class ClientShellHandler extends ShellHandler<ClientShellHandlerState> {
         try {
             event = (ClientEvent) NBChannelController.read(comChannel);
         } catch (IOException e) {
-            System.err.println("Cannot read from the channel.");
+            // System.err.println("Cannot read from the channel.");
             this.nextState(ClientShellHandlerState.Waiting);
             return;
         }
@@ -234,7 +234,7 @@ public class ClientShellHandler extends ShellHandler<ClientShellHandlerState> {
                 System.out.println(line);
             }
 
-            this.nextState(ClientShellHandlerState.Waiting);
+            this.nextState(ClientShellHandlerState.ComReceiveOutput);
         } else {
             this.nextState(ClientShellHandlerState.Waiting);
         }
