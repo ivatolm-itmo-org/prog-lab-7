@@ -7,6 +7,9 @@ import java.nio.channels.Pipe.SourceChannel;
 import java.util.HashMap;
 import java.util.LinkedList;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import client.event.ClientEvent;
 import client.event.ClientEventType;
 import client.shell.ContentManager;
@@ -17,18 +20,30 @@ import core.handler.ComHandler;
 import core.utils.NBChannelController;
 
 enum ClientComHandlerState {
-    Waiting,
-    ShellRequest,
-    NewCommandsReqStart,
-    NewCommandsReqProcessing,
-    NewCommandsReqFinish,
-    IdValidationReqStart,
-    IdValidationReqFinish,
-    SocketResponse,
-    NewCommandsResp,
-    ScriptReq,
-    SocketReq,
-    SocketResp
+    Waiting(true),
+    ShellRequest(false),
+    NewCommandsReqStart(false),
+    NewCommandsReqProcessing(false),
+    NewCommandsReqFinish(false),
+    IdValidationReqStart(false),
+    IdValidationReqFinish(false),
+    SocketResponse(false),
+    NewCommandsResp(false),
+    ScriptReq(false),
+    SocketReq(false),
+    SocketRespWaiting(true),
+    SocketResp(false)
+    ;
+
+    private boolean isWaiting = false;
+
+    ClientComHandlerState(boolean isWaiting) {
+        this.isWaiting = isWaiting;
+    }
+
+    boolean isWaiting() {
+        return this.isWaiting;
+    }
 }
 
 /**
@@ -37,6 +52,9 @@ enum ClientComHandlerState {
  * @author ivatolm
  */
 public class ClientComHandler extends ComHandler<ClientComHandlerState> {
+
+    // Logger
+    private static final Logger logger = LoggerFactory.getLogger(ClientComHandler.class);
 
     // Content Manager
     private ContentManager contentManager;
@@ -69,6 +87,8 @@ public class ClientComHandler extends ComHandler<ClientComHandlerState> {
 
     @Override
     public void process(ChannelType channel) {
+        logger.trace("New event from " + channel);
+
         switch (channel) {
             case Shell:
             case Socket:
@@ -77,51 +97,61 @@ public class ClientComHandler extends ComHandler<ClientComHandlerState> {
             default:
                 System.err.println("Unexpected channel.");
                 break;
-            }
+        }
 
         this.handleEvents();
     }
 
     @Override
     protected void handleEvents() {
-        switch (this.getState()) {
-            case Waiting:
-                this.handleWaitingState();
-                break;
-            case ShellRequest:
-                this.handleShellRequest();
-                break;
-            case NewCommandsReqStart:
-                this.handleNewCommandsReqStart();
-                break;
-            case NewCommandsReqProcessing:
-                this.handleNewCommandsReqProcessing();
-                break;
-            case NewCommandsReqFinish:
-                this.handleNewCommandsReqFinish();
-                break;
-            case IdValidationReqStart:
-                this.handleIdValidationReqStart();
-                break;
-            case IdValidationReqFinish:
-                this.handleIdValidationReqFinish();
-                break;
-            case SocketResponse:
-                this.handleSocketResponse();
-                break;
-            case NewCommandsResp:
-                this.handleNewCommandsResp();
-                break;
-            case ScriptReq:
-                this.handleScriptReq();
-                break;
-            case SocketReq:
-                this.handleSocketReq();
-                break;
-            case SocketResp:
-                this.handleSocketResp();
-                break;
-        }
+        logger.trace("State " + this.getState());
+        do {
+            ClientComHandlerState stState = this.getState();
+
+            switch (this.getState()) {
+                case Waiting:
+                    this.handleWaitingState();
+                    break;
+                case ShellRequest:
+                    this.handleShellRequest();
+                    break;
+                case NewCommandsReqStart:
+                    this.handleNewCommandsReqStart();
+                    break;
+                case NewCommandsReqProcessing:
+                    this.handleNewCommandsReqProcessing();
+                    break;
+                case NewCommandsReqFinish:
+                    this.handleNewCommandsReqFinish();
+                    break;
+                case IdValidationReqStart:
+                    this.handleIdValidationReqStart();
+                    break;
+                case IdValidationReqFinish:
+                    this.handleIdValidationReqFinish();
+                    break;
+                case SocketResponse:
+                    this.handleSocketResponse();
+                    break;
+                case NewCommandsResp:
+                    this.handleNewCommandsResp();
+                    break;
+                case ScriptReq:
+                    this.handleScriptReq();
+                    break;
+                case SocketReq:
+                    this.handleSocketReq();
+                    break;
+                case SocketRespWaiting:
+                    this.handleSocketRespWaiting();
+                    break;
+                case SocketResp:
+                    this.handleSocketResp();
+                    break;
+            }
+
+            logger.trace("State: " + stState + " -> " + this.getState());
+        } while (!this.getState().isWaiting());
     }
 
     private void handleWaitingState() {
@@ -129,7 +159,7 @@ public class ClientComHandler extends ComHandler<ClientComHandlerState> {
             return;
         }
 
-        if (!this.readyChannels.contains(ChannelType.Shell)) {
+        if (this.readyChannels.contains(ChannelType.Shell)) {
             this.nextState(ClientComHandlerState.ShellRequest);
         }
     }
@@ -164,6 +194,7 @@ public class ClientComHandler extends ComHandler<ClientComHandlerState> {
         LinkedList<Command> commands = (LinkedList<Command>) this.event.getData();
 
         this.commands = commands;
+        this.fromState = this.getState();
         this.nextState(ClientComHandlerState.NewCommandsReqProcessing);
     }
 
@@ -275,7 +306,17 @@ public class ClientComHandler extends ComHandler<ClientComHandlerState> {
             return;
         }
 
-        this.nextState(ClientComHandlerState.SocketResp);
+        this.nextState(ClientComHandlerState.SocketRespWaiting);
+    }
+
+    private void handleSocketRespWaiting() {
+        if (this.readyChannels.isEmpty()) {
+            return;
+        }
+
+        if (this.readyChannels.contains(ChannelType.Socket)) {
+            this.nextState(ClientComHandlerState.SocketResp);
+        }
     }
 
     private void handleSocketResp() {

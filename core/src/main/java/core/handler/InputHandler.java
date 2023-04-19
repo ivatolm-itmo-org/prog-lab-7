@@ -1,11 +1,10 @@
 package core.handler;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.channels.Pipe;
 import java.util.Scanner;
 
-import org.apache.commons.lang3.SerializationUtils;
+import core.utils.NBChannelController;
 
 /**
  * Class providing asyncronous input from System.in
@@ -36,11 +35,9 @@ public class InputHandler implements Runnable {
     public void run() {
         while (true) {
             String value = this.scanner.nextLine();
-            byte[] valueBytes = SerializationUtils.serialize(value);
-            ByteBuffer buffer = ByteBuffer.wrap(valueBytes);
 
             try {
-                this.outputChannel.write(buffer);
+                NBChannelController.write(this.outputChannel, value);
             } catch (IOException e) {
                 System.err.println("Cannot write to buffer: " + e);
             }

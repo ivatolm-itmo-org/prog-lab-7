@@ -8,6 +8,9 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import core.handler.ChannelType;
 
 /**
@@ -16,6 +19,9 @@ import core.handler.ChannelType;
  * @author ivatolm
  */
 public class EventHandler {
+
+    // Logger
+    private static final Logger logger = LoggerFactory.getLogger(EventHandler.class);
 
     // Channel selector
     private Selector selector;
@@ -40,18 +46,30 @@ public class EventHandler {
 
         this.selector = Selector.open();
 
+        logger.debug("Registering shell input channels:");
         HashMap<ChannelType, SelectableChannel> shellIC = this.shellHandler.getInputChannels();
         for (HashMap.Entry<ChannelType, SelectableChannel> item : shellIC.entrySet()) {
             SelectableChannel channel = item.getValue();
             channel.configureBlocking(false);
-            channel.register(selector, SelectionKey.OP_READ, item.getKey());
+            channel.register(
+                selector,
+                SelectionKey.OP_READ,
+                new Object[] { ChannelType.Shell, item.getKey() }
+            );
+            logger.debug(ChannelType.Shell + " <- " + item.getKey());
         }
 
+        logger.debug("Registering com input channels:");
         HashMap<ChannelType, SelectableChannel> comIC = this.comHandler.getInputChannels();
         for (HashMap.Entry<ChannelType, SelectableChannel> item : comIC.entrySet()) {
             SelectableChannel channel = item.getValue();
             channel.configureBlocking(false);
-            channel.register(selector, SelectionKey.OP_READ, item.getKey());
+            channel.register(
+                selector,
+                SelectionKey.OP_READ,
+                new Object[] { ChannelType.Com, item.getKey() }
+            );
+            logger.debug(ChannelType.Com + " <- " + item.getKey());
         }
     }
 
@@ -61,24 +79,32 @@ public class EventHandler {
     public void run() {
         while (true) {
             try {
+                logger.trace("Selecting channels...");
                 this.selector.select();
                 Set<SelectionKey> selectedKeys = this.selector.selectedKeys();
+                logger.debug("Selected channels count: " + selectedKeys.size());
 
                 Iterator<SelectionKey> iter = selectedKeys.iterator();
                 while (iter.hasNext()) {
                     SelectionKey key = iter.next();
 
-                    ChannelType channelType = (ChannelType) key.attachment();
-                    switch (channelType) {
+                    Object[] attachments = (Object[]) key.attachment();
+                    ChannelType handler = (ChannelType) attachments[0];
+                    ChannelType channelType = (ChannelType) attachments[1];
+                    logger.trace("Event on " + channelType + " for " + handler);
+
+                    switch (handler) {
                         case Shell:
                             if (key.isReadable()) {
                                 this.shellHandler.process(channelType);
                             }
+                            break;
 
                         case Com:
                             if (key.isReadable()) {
                                 this.comHandler.process(channelType);
                             }
+                            break;
 
                         default:
                             break;

@@ -41,6 +41,8 @@ public abstract class ShellHandler<S extends Enum<?>> extends Handler<ChannelTyp
                            HashMap<ChannelType, SelectableChannel> outputChannels,
                            S initState) {
         super(inputChannels, outputChannels, initState);
+        this.parser = new Parser();
+        this.parsingResult = null;
         this.argForIdValidation = null;
         this.argIdValidationResult = null;
     }
@@ -95,7 +97,18 @@ public abstract class ShellHandler<S extends Enum<?>> extends Handler<ChannelTyp
 
             try {
                 boolean hasParsedCommands = this.parser.parse(input);
+                if (this.parser.needIdValidation()) {
+                    Argument arg = this.parser.getArgForIdValidation();
+                    this.argForIdValidation = arg;
+                    this.argIdValidationResult = null;
+                    return;
+                }
+
                 if (hasParsedCommands == true) {
+                    if (this.parsingResult == null) {
+                        this.parsingResult = new LinkedList<>();
+                    }
+
                     this.parsingResult.addAll(this.parser.getResult());
 
                     if (promptRequired) {
@@ -110,14 +123,7 @@ public abstract class ShellHandler<S extends Enum<?>> extends Handler<ChannelTyp
 
             } catch (ArgumentCheckFailedException e) {
                 System.err.println(e.getMessage());
-                if (this.parser.needIdValidation()) {
-                    Argument arg = this.parser.getArgForIdValidation();
-                    this.argForIdValidation = arg;
-                    this.argIdValidationResult = null;
-                    return;
-                } else {
-                    promptRequired = true;
-                }
+                promptRequired = true;
             }
 
             if (promptRequired) {
@@ -154,7 +160,7 @@ public abstract class ShellHandler<S extends Enum<?>> extends Handler<ChannelTyp
      * @return true if needed, else false
      */
     protected boolean hasArgForIdValidation() {
-        return this.argForIdValidation == null;
+        return this.argForIdValidation != null;
     }
 
     /**
@@ -167,7 +173,7 @@ public abstract class ShellHandler<S extends Enum<?>> extends Handler<ChannelTyp
             return false;
         }
 
-        return this.parsingResult.isEmpty();
+        return !this.parsingResult.isEmpty();
     }
 
     /**

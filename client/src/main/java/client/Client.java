@@ -55,11 +55,12 @@ public class Client {
         //     return;
         // }
 
-        Pipe input_shell, shell_com, com_shell;
+        Pipe input_shell, shell_com, com_shell, com_socket;
         try {
             input_shell = Pipe.open();
             shell_com = Pipe.open();
             com_shell = Pipe.open();
+            com_socket = Pipe.open();
         } catch (IOException e) {
             System.err.println("Cannot open pipe: " + e);
             return;
@@ -85,6 +86,7 @@ public class Client {
             }},
             new HashMap<ChannelType, SelectableChannel>() {{
                 put(ChannelType.Shell, com_shell.sink());
+                put(ChannelType.Socket, com_socket.sink());
             }},
             new ContentManager("../res")
         );
