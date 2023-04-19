@@ -1,15 +1,14 @@
 package client.handler;
 
 import java.io.IOException;
-import java.nio.channels.Pipe;
 import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Set;
 
-import core.handler.ComHandler;
-import core.handler.ShellHandler;
+import core.handler.ChannelType;
 
 /**
  * Class for handling application events via other handlers.
@@ -18,51 +17,42 @@ import core.handler.ShellHandler;
  */
 public class EventHandler {
 
-    enum ChannelType {
-        Network,
-        Shell,
-        Com_Shell,
-        Shell_Com
-    };
-
     // Channel selector
     private Selector selector;
 
     // Network handler
-    private ComHandler comHandler;
+    private ClientComHandler comHandler;
 
     // Shell handler
-    private ShellHandler shellHandler;
+    private ClientShellHandler shellHandler;
 
     /**
      * Constructs new {@code EventHandler} with provided arguments.
      *
      * @param comHandler handler of communicator
-     * @param shell handler of shell
+     * @param shellHandler handler of shell
      * @throws IOException if cannot setup {@code Selector}
      */
-    public EventHandler(ComHandler comHandler,
-                        ShellHandler shell,
-                        Pipe.SourceChannel com_shell_pipe,
-                        Pipe.SourceChannel shell_com_pipe) throws IOException {
+    public EventHandler(ClientShellHandler shellHandler,
+                        ClientComHandler comHandler) throws IOException {
+        this.shellHandler = shellHandler;
         this.comHandler = comHandler;
-        this.shellHandler = shell;
 
         this.selector = Selector.open();
 
-        // Shell
-        Pipe pipe = Pipe.open();
-        this.shellHandler.setPipe(pipe);
+        HashMap<ChannelType, SelectableChannel> shellIC = this.shellHandler.getInputChannels();
+        for (HashMap.Entry<ChannelType, SelectableChannel> item : shellIC.entrySet()) {
+            SelectableChannel channel = item.getValue();
+            channel.configureBlocking(false);
+            channel.register(selector, SelectionKey.OP_READ, item.getKey());
+        }
 
-        // Com => Shell channel
-        SelectableChannel com_shell_channel = com_shell_pipe;
-        com_shell_channel.configureBlocking(false);
-        com_shell_channel.register(selector, SelectionKey.OP_READ, ChannelType.Com_Shell);
-
-        // Shell => Com channel
-        SelectableChannel shell_com_channel = shell_com_pipe;
-        shell_com_channel.configureBlocking(false);
-        shell_com_channel.register(selector, SelectionKey.OP_READ, ChannelType.Shell_Com);
+        HashMap<ChannelType, SelectableChannel> comIC = this.comHandler.getInputChannels();
+        for (HashMap.Entry<ChannelType, SelectableChannel> item : comIC.entrySet()) {
+            SelectableChannel channel = item.getValue();
+            channel.configureBlocking(false);
+            channel.register(selector, SelectionKey.OP_READ, item.getKey());
+        }
     }
 
     /**
@@ -80,14 +70,14 @@ public class EventHandler {
 
                     ChannelType channelType = (ChannelType) key.attachment();
                     switch (channelType) {
-                        case Com_Shell:
+                        case Shell:
                             if (key.isReadable()) {
-                                this.onReadShell();
+                                this.shellHandler.process(channelType);
                             }
 
-                        case Shell_Com:
+                        case Com:
                             if (key.isReadable()) {
-                                this.onReadNetwork();
+                                this.comHandler.process(channelType);
                             }
 
                         default:
@@ -101,20 +91,6 @@ public class EventHandler {
                 e.printStackTrace();
             }
         }
-    }
-
-    /**
-     * Tells {@code comHandler} to process incoming data.
-     */
-    private void onReadNetwork() {
-        this.comHandler.process();
-    }
-
-    /**
-     * Tells {@code shellHandler} to process incoming data.
-     */
-    private void onReadShell() {
-        this.shellHandler.process();
     }
 
 }

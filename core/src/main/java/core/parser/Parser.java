@@ -284,7 +284,7 @@ public class Parser {
      * @return true if validation needed, else false
      */
     public boolean needIdValidation() {
-        return this.argForIdValidation == null;
+        return this.argForIdValidation != null;
     }
 
     /**

@@ -2,15 +2,15 @@ package client;
 
 import java.io.IOException;
 import java.nio.channels.Pipe;
+import java.nio.channels.SelectableChannel;
+import java.util.HashMap;
 
 import client.handler.ClientComHandler;
 import client.handler.ClientShellHandler;
 import client.handler.EventHandler;
-import client.net.ClientComUDP;
 import client.shell.ContentManager;
-import core.handler.ComHandler;
-import core.handler.ShellHandler;
-import core.net.Com;
+import core.handler.ChannelType;
+import core.handler.InputHandler;
 
 /**
  * Program for running client application.
@@ -38,57 +38,74 @@ public class Client {
             return;
         }
 
-        String ip = args[0];
-        Integer port = null;
+        // String ip = args[0];
+        // Integer port = null;
+        // try {
+        //     port = Integer.parseInt(args[1]);
+        // } catch (NumberFormatException e) {
+        //     System.out.println("Cannot parse port from argument: " + args[1]);
+        //     return;
+        // }
+
+        // Com com;
+        // try {
+        //     com = new ClientSocketHandler(ip, port);
+        // } catch (IOException e) {
+        //     System.err.println("Cannot create socket: " + e);
+        //     return;
+        // }
+
+        Pipe input_shell, shell_com, com_shell;
         try {
-            port = Integer.parseInt(args[1]);
-        } catch (NumberFormatException e) {
-            System.out.println("Cannot parse port from argument: " + args[1]);
-            return;
-        }
-
-
-        Com com;
-        try {
-            com = new ClientComUDP(ip, port);
-        } catch (IOException e) {
-            System.err.println("Cannot create socket: " + e);
-            return;
-        }
-
-        ContentManager contentManager = new ContentManager("../res");
-
-        Pipe com_shell_pipe, shell_com_pipe;
-        try {
-            com_shell_pipe = Pipe.open();
-            shell_com_pipe = Pipe.open();
+            input_shell = Pipe.open();
+            shell_com = Pipe.open();
+            com_shell = Pipe.open();
         } catch (IOException e) {
             System.err.println("Cannot open pipe: " + e);
             return;
         }
-        ComHandler comHandler = new ClientComHandler(com, contentManager,
-            shell_com_pipe.source(), com_shell_pipe.sink());
-        ShellHandler shellHandler = new ClientShellHandler(
-            com_shell_pipe.source(), shell_com_pipe.sink());
+
+        InputHandler inputHandler = new InputHandler(
+            input_shell.sink()
+        );
+
+        ClientShellHandler shellHandler = new ClientShellHandler(
+            new HashMap<ChannelType, SelectableChannel>() {{
+                put(ChannelType.Input, input_shell.source());
+                put(ChannelType.Com, com_shell.source());
+            }},
+            new HashMap<ChannelType, SelectableChannel>() {{
+                put(ChannelType.Com, shell_com.sink());
+            }}
+        );
+
+        ClientComHandler comHandler = new ClientComHandler(
+            new HashMap<ChannelType, SelectableChannel>() {{
+                put(ChannelType.Shell, shell_com.source());
+            }},
+            new HashMap<ChannelType, SelectableChannel>() {{
+                put(ChannelType.Shell, com_shell.sink());
+            }},
+            new ContentManager("../res")
+        );
 
         EventHandler eventHandler = null;
         try {
-            eventHandler = new EventHandler(comHandler, shellHandler,
-                com_shell_pipe.source(), shell_com_pipe.source());
+            eventHandler = new EventHandler(shellHandler, comHandler);
         } catch (IOException e) {
             System.err.println("Error occured while starting event handler: " + e);
             return;
         }
 
-        Thread shellThread = new Thread(shellHandler);
-        shellThread.start();
+        Thread inputHandlerThread = new Thread(inputHandler);
+        inputHandlerThread.start();
 
         eventHandler.run();
 
         try {
-            shellThread.join();
+            inputHandlerThread.join();
         } catch (InterruptedException e) {
-            System.err.println("Shell thread failed to join.");
+            System.err.println("Input thread failed to join.");
         }
     }
 
