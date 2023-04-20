@@ -49,7 +49,7 @@ enum ClientShellHandlerState {
 public class ClientShellHandler extends ShellHandler<ClientShellHandlerState> {
 
     // Logger
-    private static final Logger logger = LoggerFactory.getLogger(ClientShellHandler.class);
+    private static final Logger logger = LoggerFactory.getLogger("ShellHandler");
 
     // Input from the System.in
     private String input;
@@ -207,6 +207,12 @@ public class ClientShellHandler extends ShellHandler<ClientShellHandlerState> {
                 return;
             }
 
+            try {
+                this.filterSubscriptions(ChannelType.Com);
+            } catch (IOException e) {
+                logger.warn(e.getMessage());
+            }
+
             this.nextState(ClientShellHandlerState.ComIdValidationWaiting);
         } else {
             this.nextState(ClientShellHandlerState.InputParsingProcessing);
@@ -237,8 +243,10 @@ public class ClientShellHandler extends ShellHandler<ClientShellHandlerState> {
         if (event.getType() == ClientEventType.IdValidationResp) {
             boolean result = (boolean) event.getData();
             this.setArgIdValidationResult(result);
+
+            this.filterSubscriptions();
         } else {
-            this.nextState(ClientShellHandlerState.Waiting);
+            return;
         }
 
         this.nextState(ClientShellHandlerState.InputParsingProcessing);

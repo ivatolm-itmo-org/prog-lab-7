@@ -54,7 +54,7 @@ enum ClientComHandlerState {
 public class ClientComHandler extends ComHandler<ClientComHandlerState> {
 
     // Logger
-    private static final Logger logger = LoggerFactory.getLogger(ClientComHandler.class);
+    private static final Logger logger = LoggerFactory.getLogger("ComHandler");
 
     // Content Manager
     private ContentManager contentManager;
@@ -104,7 +104,7 @@ public class ClientComHandler extends ComHandler<ClientComHandlerState> {
 
     @Override
     protected void handleEvents() {
-        logger.trace("State " + this.getState());
+        logger.trace("State: " + this.getState());
         do {
             ClientComHandlerState stState = this.getState();
 
@@ -306,6 +306,11 @@ public class ClientComHandler extends ComHandler<ClientComHandlerState> {
             return;
         }
 
+        try {
+            this.filterSubscriptions(ChannelType.Socket);
+        } catch (IOException e) {
+            logger.warn(e.getMessage());
+        }
         this.nextState(ClientComHandlerState.SocketRespWaiting);
     }
 
@@ -330,6 +335,7 @@ public class ClientComHandler extends ComHandler<ClientComHandlerState> {
             return;
         }
 
+        this.filterSubscriptions();
         this.nextState(this.toState);
     }
 

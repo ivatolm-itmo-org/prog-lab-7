@@ -33,10 +33,13 @@ public class Client {
      * @param args command line arguments
      */
     public static void main(String[] args) {
+        Thread.currentThread().setName("client");
+
         if (args.length != 2) {
             System.err.println("Wrong number of input arguments.");
             return;
         }
+
 
         // String ip = args[0];
         // Integer port = null;
@@ -55,12 +58,13 @@ public class Client {
         //     return;
         // }
 
-        Pipe input_shell, shell_com, com_shell, com_socket;
+        Pipe input_shell, shell_com, com_shell, com_socket, socket_com;
         try {
             input_shell = Pipe.open();
             shell_com = Pipe.open();
             com_shell = Pipe.open();
             com_socket = Pipe.open();
+            socket_com = Pipe.open();
         } catch (IOException e) {
             System.err.println("Cannot open pipe: " + e);
             return;
@@ -83,6 +87,7 @@ public class Client {
         ClientComHandler comHandler = new ClientComHandler(
             new HashMap<ChannelType, SelectableChannel>() {{
                 put(ChannelType.Shell, shell_com.source());
+                put(ChannelType.Socket, socket_com.source());
             }},
             new HashMap<ChannelType, SelectableChannel>() {{
                 put(ChannelType.Shell, com_shell.sink());

@@ -1,5 +1,6 @@
 package core.handler;
 
+import java.io.IOException;
 import java.nio.channels.SelectableChannel;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -19,6 +20,9 @@ public abstract class Handler<E extends Enum<?>, S extends Enum<?>> extends FSM<
     /** Output channels */
     protected HashMap<E, SelectableChannel> outputChannels;
 
+    /** Input channels subscriptions */
+    protected HashMap<E, SelectableChannel> subscriptions;
+
     /** Ready channels */
     protected HashSet<E> readyChannels;
 
@@ -35,6 +39,7 @@ public abstract class Handler<E extends Enum<?>, S extends Enum<?>> extends FSM<
         super(initState);
         this.inputChannels = inputChannels;
         this.outputChannels = outputChannels;
+        this.subscriptions = this.inputChannels;
         this.readyChannels = new HashSet<>();
     }
 
@@ -47,13 +52,74 @@ public abstract class Handler<E extends Enum<?>, S extends Enum<?>> extends FSM<
     public abstract void process(E channel);
 
     /**
-     * Returns input channels that {@code Selector} will
-     * catch events on.
+     * Filters {@code inputChannels} to all avaliable
+     * input channels.
+     */
+    protected void filterSubscriptions() {
+        this.subscriptions = this.inputChannels;
+    }
+
+    /**
+     * Filters {@code inputChannels} to only use {@code type}
+     * input channel.
+     *
+     * @param filter new subscription
+     * @throws IOException if input channel doesn't exist
+     */
+    protected void filterSubscriptions(E type) throws IOException {
+        if (type == null) {
+            this.subscriptions = this.inputChannels;
+        } else {
+            this.subscriptions = new HashMap<>();
+            SelectableChannel ic = this.inputChannels.get(type);
+            if (ic == null) {
+                throw new IOException("Cannot subscribe to channel. Channel doesn't exist: " + type);
+            } else {
+                this.subscriptions.put(type, ic);
+            }
+        }
+    }
+
+    /**
+     * Filters {@code inputChannels} to only use {@code filter}
+     * input channels.
+     *
+     * @param filter new subscriptions
+     * @throws IOException if input channel doesn't exist
+     */
+    protected void filterSubscriptions(E[] filter) throws IOException {
+        if (filter == null) {
+            this.subscriptions = this.inputChannels;
+        } else {
+            this.subscriptions = new HashMap<>();
+            for (E type : filter) {
+                SelectableChannel ic = this.inputChannels.get(type);
+                if (ic == null) {
+                    throw new IOException("Cannot subscribe to channel. Channel doesn't exist: " + type);
+                } else {
+                    this.subscriptions.put(type, ic);
+                }
+            }
+        }
+    }
+
+    /**
+     * Returns all input channels that of the handler.
      *
      * @return input channels of the handler
      */
     public HashMap<E, SelectableChannel> getInputChannels() {
         return this.inputChannels;
+    }
+
+    /**
+     * Returns input channels that {@code Selector} will
+     * catch events on.
+     *
+     * @return subscriptions of the handler
+     */
+    public HashMap<E, SelectableChannel> getSubscriptions() {
+        return this.subscriptions;
     }
 
 }

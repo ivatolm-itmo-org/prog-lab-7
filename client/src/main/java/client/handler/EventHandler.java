@@ -7,6 +7,7 @@ import java.nio.channels.Selector;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.Map.Entry;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +22,7 @@ import core.handler.ChannelType;
 public class EventHandler {
 
     // Logger
-    private static final Logger logger = LoggerFactory.getLogger(EventHandler.class);
+    private static final Logger logger = LoggerFactory.getLogger("EventHandler");
 
     // Channel selector
     private Selector selector;
@@ -46,31 +47,28 @@ public class EventHandler {
 
         this.selector = Selector.open();
 
-        logger.debug("Registering shell input channels:");
+        logger.debug("Registering channels:");
+        logger.debug("  " + "Shell:");
         HashMap<ChannelType, SelectableChannel> shellIC = this.shellHandler.getInputChannels();
-        for (HashMap.Entry<ChannelType, SelectableChannel> item : shellIC.entrySet()) {
-            SelectableChannel channel = item.getValue();
-            channel.configureBlocking(false);
-            channel.register(
-                selector,
-                SelectionKey.OP_READ,
-                new Object[] { ChannelType.Shell, item.getKey() }
-            );
-            logger.debug(ChannelType.Shell + " <- " + item.getKey());
-        }
+        this.registerChannels(ChannelType.Shell, shellIC);
 
-        logger.debug("Registering com input channels:");
+        logger.debug("  " + "Com:");
         HashMap<ChannelType, SelectableChannel> comIC = this.comHandler.getInputChannels();
-        for (HashMap.Entry<ChannelType, SelectableChannel> item : comIC.entrySet()) {
-            SelectableChannel channel = item.getValue();
-            channel.configureBlocking(false);
-            channel.register(
-                selector,
-                SelectionKey.OP_READ,
-                new Object[] { ChannelType.Com, item.getKey() }
-            );
-            logger.debug(ChannelType.Com + " <- " + item.getKey());
-        }
+        this.registerChannels(ChannelType.Com, comIC);
+    }
+
+    public void updateSubscriptions() {
+        logger.debug("Updating subscriptions...");
+
+        logger.debug("  " + "Shell:");
+        HashMap<ChannelType, SelectableChannel> shellIC = this.shellHandler.getInputChannels();
+        HashMap<ChannelType, SelectableChannel> shellSubsIC = this.shellHandler.getSubscriptions();
+        this.updateChannelSubscriptions(ChannelType.Shell, shellIC, shellSubsIC);
+
+        logger.debug("  " + "Com:");
+        HashMap<ChannelType, SelectableChannel> comIC = this.comHandler.getInputChannels();
+        HashMap<ChannelType, SelectableChannel> comSubsIC = this.comHandler.getSubscriptions();
+        this.updateChannelSubscriptions(ChannelType.Com, comIC, comSubsIC);
     }
 
     /**
@@ -109,12 +107,63 @@ public class EventHandler {
                         default:
                             break;
                     }
+
+                    this.updateSubscriptions();
+                    break;
                 }
 
                 selectedKeys.clear();
 
             } catch (IOException e) {
                 e.printStackTrace();
+            }
+        }
+    }
+
+    private void updateChannelSubscriptions(ChannelType type,
+                                            HashMap<ChannelType, SelectableChannel> ic,
+                                            HashMap<ChannelType, SelectableChannel> subs) {
+        Set<Entry<ChannelType, SelectableChannel>> icES = ic.entrySet();
+        Set<Entry<ChannelType, SelectableChannel>> subsES = subs.entrySet();
+
+        for (HashMap.Entry<ChannelType, SelectableChannel> item : icES) {
+            SelectableChannel channel = item.getValue();
+            SelectionKey key = channel.keyFor(this.selector);
+
+            if (key == null) {
+                logger.warn("Cannot subscribe " + type + " to channel: " + item.getKey());
+                continue;
+            }
+
+            if (subsES.contains(item)) {
+                if ((key.interestOps() & SelectionKey.OP_READ) != SelectionKey.OP_READ) {
+                    logger.debug("    " + type + " === " + item.getKey());
+                    key.interestOps(SelectionKey.OP_READ);
+                }
+            } else {
+                if ((key.interestOps() & SelectionKey.OP_READ) == SelectionKey.OP_READ) {
+                    logger.debug("    " + type + " =!= " + item.getKey());
+                    key.interestOps(0);
+                }
+            }
+        }
+    }
+
+    private void registerChannels(ChannelType type, HashMap<ChannelType, SelectableChannel> ic) {
+        for (HashMap.Entry<ChannelType, SelectableChannel> item : ic.entrySet()) {
+            SelectableChannel channel = item.getValue();
+
+            try {
+                channel.configureBlocking(false);
+                channel.register(
+                    selector,
+                    SelectionKey.OP_READ,
+                    new Object[] { type, item.getKey() }
+                );
+
+                logger.debug("    " + type + " <== " + item.getKey());
+            } catch (IOException e) {
+                logger.warn("Cannot subscribe " + type + " to channel: " + item.getKey());
             }
         }
     }
