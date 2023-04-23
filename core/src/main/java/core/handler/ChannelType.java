@@ -10,5 +10,5 @@ public enum ChannelType {
     Com,
     Shell,
     Socket,
-    Server
+    Network
 }

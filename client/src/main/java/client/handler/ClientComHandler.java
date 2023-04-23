@@ -73,7 +73,7 @@ public class ClientComHandler extends ComHandler<ClientComHandlerState> {
 
         switch (channel) {
             case Shell:
-            case Server:
+            case Network:
                 this.readyChannels.add(channel);
                 break;
             default:
@@ -146,7 +146,7 @@ public class ClientComHandler extends ComHandler<ClientComHandlerState> {
     private void handleNewEvent() {
         if (this.event == null) {
             try {
-                this.filterSubscriptions(ChannelType.Server);
+                this.filterSubscriptions(ChannelType.Network);
             } catch (IOException e) {
                 this.nextState(ClientComHandlerState.Error);
                 return;
@@ -184,7 +184,7 @@ public class ClientComHandler extends ComHandler<ClientComHandlerState> {
     private void handleIVStart() {
         ClientEvent reqIV = new ClientEvent(ClientEventType.IdValidation, this.event.getData());
 
-        SinkChannel channel = (SinkChannel) this.outputChannels.get(ChannelType.Server);
+        SinkChannel channel = (SinkChannel) this.outputChannels.get(ChannelType.Network);
         try {
             NBChannelController.write(channel, reqIV);
         } catch (IOException e) {
@@ -199,7 +199,7 @@ public class ClientComHandler extends ComHandler<ClientComHandlerState> {
     private void handleNCStart() {
         ClientEvent reqNC = new ClientEvent(ClientEventType.NewCommands, this.event.getData());
 
-        SinkChannel channel = (SinkChannel) this.outputChannels.get(ChannelType.Server);
+        SinkChannel channel = (SinkChannel) this.outputChannels.get(ChannelType.Network);
         try {
             NBChannelController.write(channel, reqNC);
         } catch (IOException e) {
@@ -212,7 +212,7 @@ public class ClientComHandler extends ComHandler<ClientComHandlerState> {
     }
 
     private void handleExistingRequest() {
-        SourceChannel channel = (SourceChannel) this.inputChannels.get(ChannelType.Server);
+        SourceChannel channel = (SourceChannel) this.inputChannels.get(ChannelType.Network);
         ClientEvent response = null;
         try {
             response = (ClientEvent) NBChannelController.read(channel);
@@ -278,7 +278,7 @@ public class ClientComHandler extends ComHandler<ClientComHandlerState> {
 
         ClientEvent respNCSR = new ClientEvent(ClientEventType.ScriptRequest, commands);
 
-        SinkChannel channel = (SinkChannel) this.outputChannels.get(ChannelType.Server);
+        SinkChannel channel = (SinkChannel) this.outputChannels.get(ChannelType.Network);
         try {
             NBChannelController.write(channel, respNCSR);
         } catch (IOException e) {

@@ -169,7 +169,7 @@ public class ServerShellHandler extends ShellHandler<ServerShellHandlerState> {
         if (this.hasParsingResult()) {
             SinkChannel comChannel = (SinkChannel) this.outputChannels.get(ChannelType.Com);
             LinkedList<Command> commands = this.getParsingResult();
-            ServerEvent event = new ServerEvent(ServerEventType.NewCommandsReq, commands);
+            ServerEvent event = new ServerEvent(ServerEventType.NewCommands, commands);
 
             try {
                 NBChannelController.write(comChannel, event);
@@ -186,7 +186,7 @@ public class ServerShellHandler extends ShellHandler<ServerShellHandlerState> {
     private void handleComIdValidationStart() {
         if (this.idArgForValidation != null) {
             SinkChannel comChannel = (SinkChannel) this.outputChannels.get(ChannelType.Com);
-            ServerEvent event = new ServerEvent(ServerEventType.IdValidationReq, this.idArgForValidation);
+            ServerEvent event = new ServerEvent(ServerEventType.IdValidation, this.idArgForValidation);
 
             try {
                 NBChannelController.write(comChannel, event);
@@ -229,7 +229,7 @@ public class ServerShellHandler extends ShellHandler<ServerShellHandlerState> {
             return;
         }
 
-        if (event.getType() == ServerEventType.IdValidationResp) {
+        if (event.getType() == ServerEventType.IdValidation) {
             boolean result = (boolean) event.getData();
             this.setArgIdValidationResult(result);
 
@@ -252,7 +252,7 @@ public class ServerShellHandler extends ShellHandler<ServerShellHandlerState> {
             return;
         }
 
-        if (event.getType() == ServerEventType.NewCommandsResp) {
+        if (event.getType() == ServerEventType.NewCommands) {
             @SuppressWarnings("unchecked")
             LinkedList<String> result = (LinkedList<String>) event.getData();
 

@@ -6,10 +6,8 @@ package server.event;
  * @author ivatolm
  */
 public enum ServerEventType {
-    IdValidationReq,
-    IdValidationResp,
-    NewCommandsReq,
-    NewCommandsResp,
-    ScritpReq,
-    SendDataReq,
+    IdValidation,
+    NewCommands,
+    ScriptRequest,
+    OutputResponse
 }

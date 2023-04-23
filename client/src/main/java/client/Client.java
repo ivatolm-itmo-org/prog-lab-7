@@ -87,11 +87,11 @@ public class Client {
         ClientComHandler comHandler = new ClientComHandler(
             new HashMap<ChannelType, SelectableChannel>() {{
                 put(ChannelType.Shell, shell_com.source());
-                put(ChannelType.Server, socket_com.source());
+                put(ChannelType.Network, socket_com.source());
             }},
             new HashMap<ChannelType, SelectableChannel>() {{
                 put(ChannelType.Shell, com_shell.sink());
-                put(ChannelType.Server, com_socket.sink());
+                put(ChannelType.Network, com_socket.sink());
             }},
             new ContentManager("../res")
         );
