@@ -9,5 +9,6 @@ public enum ChannelType {
     Input,
     Com,
     Shell,
-    Socket
+    Socket,
+    Server
 }

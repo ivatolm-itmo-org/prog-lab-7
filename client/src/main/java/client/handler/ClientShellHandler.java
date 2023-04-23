@@ -77,18 +77,7 @@ public class ClientShellHandler extends ShellHandler<ClientShellHandlerState> {
 
         switch (channel) {
             case Input:
-                // receive input from the channel
-                // parse input for commands
-                // if parsing requires id validation,
-                //   then send command handler a request
-                // else
-                //   send commands to com handler
             case Com:
-                // receive input from the channel
-                // if received output
-                //   print output
-                // else
-                //   continue parsing with received response
                 this.readyChannels.add(channel);
                 break;
             default:
@@ -180,7 +169,7 @@ public class ClientShellHandler extends ShellHandler<ClientShellHandlerState> {
         if (this.hasParsingResult()) {
             SinkChannel comChannel = (SinkChannel) this.outputChannels.get(ChannelType.Com);
             LinkedList<Command> commands = this.getParsingResult();
-            ClientEvent event = new ClientEvent(ClientEventType.NewCommandsReq, commands);
+            ClientEvent event = new ClientEvent(ClientEventType.NewCommands, commands);
 
             try {
                 NBChannelController.write(comChannel, event);
@@ -197,7 +186,7 @@ public class ClientShellHandler extends ShellHandler<ClientShellHandlerState> {
     private void handleComIdValidationStart() {
         if (this.idArgForValidation != null) {
             SinkChannel comChannel = (SinkChannel) this.outputChannels.get(ChannelType.Com);
-            ClientEvent event = new ClientEvent(ClientEventType.IdValidationReq, this.idArgForValidation);
+            ClientEvent event = new ClientEvent(ClientEventType.IdValidation, this.idArgForValidation);
 
             try {
                 NBChannelController.write(comChannel, event);
@@ -240,7 +229,7 @@ public class ClientShellHandler extends ShellHandler<ClientShellHandlerState> {
             return;
         }
 
-        if (event.getType() == ClientEventType.IdValidationResp) {
+        if (event.getType() == ClientEventType.IdValidation) {
             boolean result = (boolean) event.getData();
             this.setArgIdValidationResult(result);
 
@@ -263,7 +252,7 @@ public class ClientShellHandler extends ShellHandler<ClientShellHandlerState> {
             return;
         }
 
-        if (event.getType() == ClientEventType.NewCommandsResp) {
+        if (event.getType() == ClientEventType.NewCommands) {
             @SuppressWarnings("unchecked")
             LinkedList<String> result = (LinkedList<String>) event.getData();
 

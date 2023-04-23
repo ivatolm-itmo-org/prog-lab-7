@@ -14,36 +14,23 @@ import client.event.ClientEvent;
 import client.event.ClientEventType;
 import client.shell.ContentManager;
 import core.command.Command;
-import core.command.arguments.Argument;
 import core.handler.ChannelType;
 import core.handler.ComHandler;
 import core.utils.NBChannelController;
 
 enum ClientComHandlerState {
-    Waiting(true),
-    ShellRequest(false),
-    NewCommandsReqStart(false),
-    NewCommandsReqProcessing(false),
-    NewCommandsReqFinish(false),
-    IdValidationReqStart(false),
-    IdValidationReqFinish(false),
-    SocketResponse(false),
-    NewCommandsResp(false),
-    ScriptReq(false),
-    SocketReq(false),
-    SocketRespWaiting(true),
-    SocketResp(false)
-    ;
-
-    private boolean isWaiting = false;
-
-    ClientComHandlerState(boolean isWaiting) {
-        this.isWaiting = isWaiting;
-    }
-
-    boolean isWaiting() {
-        return this.isWaiting;
-    }
+    Waiting,
+    NewEvent,
+    NewRequest,
+    IVStart,
+    NCStart,
+    ExistingRequest,
+    IVProcessing,
+    NCProcessing,
+    NCProcessingSR,
+    NCProcessingOR,
+    FinishRequest,
+    Error
 }
 
 /**
@@ -59,16 +46,11 @@ public class ClientComHandler extends ComHandler<ClientComHandlerState> {
     // Content Manager
     private ContentManager contentManager;
 
+    // State communication data
+    private Object stateData;
+
     // Currently processed event
     private ClientEvent event;
-
-    // Currently processed commands
-    private LinkedList<Command> commands;
-
-    // State management for subroutines
-    private ClientComHandlerState fromState;
-    private ClientComHandlerState toState;
-
 
     /**
      * Constructs new {@code ClientComHandler} with provided arguments.
@@ -91,7 +73,7 @@ public class ClientComHandler extends ComHandler<ClientComHandlerState> {
 
         switch (channel) {
             case Shell:
-            case Socket:
+            case Server:
                 this.readyChannels.add(channel);
                 break;
             default:
@@ -112,46 +94,43 @@ public class ClientComHandler extends ComHandler<ClientComHandlerState> {
                 case Waiting:
                     this.handleWaitingState();
                     break;
-                case ShellRequest:
-                    this.handleShellRequest();
+                case NewEvent:
+                    this.handleNewEvent();
                     break;
-                case NewCommandsReqStart:
-                    this.handleNewCommandsReqStart();
+                case NewRequest:
+                    this.handleNewRequest();
                     break;
-                case NewCommandsReqProcessing:
-                    this.handleNewCommandsReqProcessing();
+                case IVStart:
+                    this.handleIVStart();
                     break;
-                case NewCommandsReqFinish:
-                    this.handleNewCommandsReqFinish();
+                case NCStart:
+                    this.handleNCStart();
                     break;
-                case IdValidationReqStart:
-                    this.handleIdValidationReqStart();
+                case ExistingRequest:
+                    this.handleExistingRequest();
                     break;
-                case IdValidationReqFinish:
-                    this.handleIdValidationReqFinish();
+                case IVProcessing:
+                    this.handleIVProcessing();
                     break;
-                case SocketResponse:
-                    this.handleSocketResponse();
+                case NCProcessing:
+                    this.handleNCProcessing();
                     break;
-                case NewCommandsResp:
-                    this.handleNewCommandsResp();
+                case NCProcessingSR:
+                    this.handleNCProcessingSR();
                     break;
-                case ScriptReq:
-                    this.handleScriptReq();
+                case NCProcessingOR:
+                    this.handleNCProcessingOR();
                     break;
-                case SocketReq:
-                    this.handleSocketReq();
+                case FinishRequest:
+                    this.handleFinishRequest();
                     break;
-                case SocketRespWaiting:
-                    this.handleSocketRespWaiting();
-                    break;
-                case SocketResp:
-                    this.handleSocketResp();
+                case Error:
+                    this.handleError();
                     break;
             }
 
             logger.trace("State: " + stState + " -> " + this.getState());
-        } while (!this.getState().isWaiting());
+        } while (this.getState() != ClientComHandlerState.Waiting);
     }
 
     private void handleWaitingState() {
@@ -160,183 +139,188 @@ public class ClientComHandler extends ComHandler<ClientComHandlerState> {
         }
 
         if (this.readyChannels.contains(ChannelType.Shell)) {
-            this.nextState(ClientComHandlerState.ShellRequest);
+            this.nextState(ClientComHandlerState.NewEvent);
         }
     }
 
-    private void handleShellRequest() {
-        SourceChannel shellChannel = (SourceChannel) this.inputChannels.get(ChannelType.Shell);
+    private void handleNewEvent() {
+        if (this.event == null) {
+            try {
+                this.filterSubscriptions(ChannelType.Server);
+            } catch (IOException e) {
+                this.nextState(ClientComHandlerState.Error);
+                return;
+            }
 
+            this.nextState(ClientComHandlerState.NewRequest);
+        } else {
+            this.nextState(ClientComHandlerState.ExistingRequest);
+        }
+    }
+
+    private void handleNewRequest() {
+        SourceChannel channel = (SourceChannel) this.inputChannels.get(ChannelType.Shell);
         try {
-            this.event = (ClientEvent) NBChannelController.read(shellChannel);
+            this.event = (ClientEvent) NBChannelController.read(channel);
         } catch (IOException e) {
             System.err.println("Cannot read from the channel.");
-            this.nextState(ClientComHandlerState.Waiting);
+            this.nextState(ClientComHandlerState.Error);
             return;
         }
 
         switch (this.event.getType()) {
-            case NewCommandsReq:
-                this.nextState(ClientComHandlerState.NewCommandsReqStart);
-                return;
-            case IdValidationReq:
-                this.nextState(ClientComHandlerState.IdValidationReqStart);
-                return;
-            default:
+            case IdValidation:
+                this.nextState(ClientComHandlerState.IVStart);
                 break;
-        }
-
-        this.nextState(ClientComHandlerState.Waiting);
-    }
-
-    private void handleNewCommandsReqStart() {
-        @SuppressWarnings("unchecked")
-        LinkedList<Command> commands = (LinkedList<Command>) this.event.getData();
-
-        this.commands = commands;
-        this.fromState = this.getState();
-        this.nextState(ClientComHandlerState.NewCommandsReqProcessing);
-    }
-
-    private void handleNewCommandsReqProcessing() {
-        if (this.fromState == this.toState) {
-            this.fromState = this.getState();
-            this.toState = this.getState();
-            this.nextState(ClientComHandlerState.SocketResponse);
-            return;
-        }
-
-        if (this.commands.isEmpty()) {
-            this.fromState = null;
-            this.toState = null;
-            this.nextState(ClientComHandlerState.NewCommandsReqFinish);
-            return;
-        }
-
-        Command command = this.commands.pop();
-        this.event = new ClientEvent(ClientEventType.SendDataReq, command);
-
-        this.fromState = this.getState();
-        this.toState = ClientComHandlerState.NewCommandsReqProcessing;
-        this.nextState(ClientComHandlerState.SocketReq);
-    }
-
-    private void handleNewCommandsReqFinish() {
-        this.nextState(ClientComHandlerState.Waiting);
-    }
-
-    private void handleIdValidationReqStart() {
-        Argument argument = (Argument) this.event.getData();
-
-        this.event = new ClientEvent(ClientEventType.SendDataReq, argument);
-
-        this.fromState = this.getState();
-        this.toState = ClientComHandlerState.IdValidationReqFinish;
-        this.nextState(ClientComHandlerState.SocketReq);
-    }
-
-    private void handleIdValidationReqFinish() {
-        SinkChannel shellChannel = (SinkChannel) this.outputChannels.get(ChannelType.Shell);
-
-        boolean result = (boolean) this.event.getData();
-        this.event = new ClientEvent(ClientEventType.IdValidationResp, result);
-
-        try {
-            NBChannelController.write(shellChannel, this.event);
-        } catch (IOException e) {
-            System.err.println("Cannot write to the channel.");
-            this.nextState(ClientComHandlerState.Waiting);
-            return;
-        }
-
-        this.nextState(ClientComHandlerState.Waiting);
-    }
-
-    private void handleSocketResponse() {
-        this.fromState = this.getState();
-
-        switch (this.event.getType()) {
-            case NewCommandsResp:
-                this.nextState(ClientComHandlerState.NewCommandsResp);
-                break;
-            case ScritpReq:
-                this.nextState(ClientComHandlerState.ScriptReq);
+            case NewCommands:
+                this.nextState(ClientComHandlerState.NCStart);
                 break;
             default:
-                this.nextState(this.toState);
+                this.nextState(ClientComHandlerState.Error);
                 break;
         }
     }
 
-    private void handleNewCommandsResp() {
-        SinkChannel shellChannel = (SinkChannel) this.outputChannels.get(ChannelType.Shell);
+    private void handleIVStart() {
+        ClientEvent reqIV = new ClientEvent(ClientEventType.IdValidation, this.event.getData());
 
-        @SuppressWarnings("unchecked")
-        LinkedList<String> output = (LinkedList<String>) this.event.getData();
-        this.event = new ClientEvent(ClientEventType.NewCommandsResp, output);
-
+        SinkChannel channel = (SinkChannel) this.outputChannels.get(ChannelType.Server);
         try {
-            NBChannelController.write(shellChannel, this.event);
+            NBChannelController.write(channel, reqIV);
         } catch (IOException e) {
             System.err.println("Cannot write to the channel.");
-            this.nextState(ClientComHandlerState.Waiting);
+            this.nextState(ClientComHandlerState.Error);
             return;
         }
 
-        this.nextState(this.toState);
+        this.nextState(ClientComHandlerState.Waiting);
     }
 
-    private void handleScriptReq() {
-        String filename = (String) this.event.getData();
+    private void handleNCStart() {
+        ClientEvent reqNC = new ClientEvent(ClientEventType.NewCommands, this.event.getData());
 
+        SinkChannel channel = (SinkChannel) this.outputChannels.get(ChannelType.Server);
+        try {
+            NBChannelController.write(channel, reqNC);
+        } catch (IOException e) {
+            System.err.println("Cannot write to the channel.");
+            this.nextState(ClientComHandlerState.Error);
+            return;
+        }
+
+        this.nextState(ClientComHandlerState.Waiting);
+    }
+
+    private void handleExistingRequest() {
+        SourceChannel channel = (SourceChannel) this.inputChannels.get(ChannelType.Server);
+        ClientEvent response = null;
+        try {
+            response = (ClientEvent) NBChannelController.read(channel);
+        } catch (IOException e) {
+            System.err.println("Cannot read from the channel.");
+            this.nextState(ClientComHandlerState.Error);
+            return;
+        }
+
+        this.stateData = response;
+
+        switch (response.getType()) {
+            case IdValidation:
+                this.nextState(ClientComHandlerState.IVProcessing);
+                break;
+            case NewCommands:
+                this.nextState(ClientComHandlerState.NCProcessing);
+                break;
+            default:
+                this.nextState(ClientComHandlerState.Error);
+                break;
+        }
+    }
+
+    private void handleIVProcessing() {
+        boolean result = (boolean) this.stateData;
+
+        ClientEvent respIV = new ClientEvent(ClientEventType.IdValidation, result);
+
+        SinkChannel channel = (SinkChannel) this.outputChannels.get(ChannelType.Shell);
+        try {
+            NBChannelController.write(channel, respIV);
+        } catch (IOException e) {
+            System.err.println("Cannot write to the channel.");
+            this.nextState(ClientComHandlerState.Error);
+            return;
+        }
+
+        this.nextState(ClientComHandlerState.FinishRequest);
+    }
+
+    private void handleNCProcessing() {
+        ClientEvent response = (ClientEvent) this.stateData;
+
+        this.stateData = response.getData();
+
+        switch (response.getType()) {
+            case ScriptRequest:
+                this.nextState(ClientComHandlerState.NCProcessingSR);
+                break;
+            case OutputResponse:
+                this.nextState(ClientComHandlerState.NCProcessingOR);
+                break;
+            default:
+                this.nextState(ClientComHandlerState.Error);
+                break;
+        }
+    }
+
+    private void handleNCProcessingSR() {
+        String filename = (String) this.stateData;
         LinkedList<Command> commands = this.contentManager.get(filename);
 
-        this.event = new ClientEvent(ClientEventType.SendDataReq, commands);
-        this.nextState(ClientComHandlerState.SocketReq);
-    }
+        ClientEvent respNCSR = new ClientEvent(ClientEventType.ScriptRequest, commands);
 
-    private void handleSocketReq() {
-        SinkChannel socketChannel = (SinkChannel) this.outputChannels.get(ChannelType.Socket);
-
+        SinkChannel channel = (SinkChannel) this.outputChannels.get(ChannelType.Server);
         try {
-            NBChannelController.write(socketChannel, this.event);
+            NBChannelController.write(channel, respNCSR);
         } catch (IOException e) {
             System.err.println("Cannot write to the channel.");
-            this.nextState(ClientComHandlerState.Waiting);
+            this.nextState(ClientComHandlerState.Error);
             return;
         }
 
-        try {
-            this.filterSubscriptions(ChannelType.Socket);
-        } catch (IOException e) {
-            logger.warn(e.getMessage());
-        }
-        this.nextState(ClientComHandlerState.SocketRespWaiting);
+        this.nextState(ClientComHandlerState.Waiting);
     }
 
-    private void handleSocketRespWaiting() {
-        if (this.readyChannels.isEmpty()) {
+    private void handleNCProcessingOR() {
+        @SuppressWarnings("unchecked")
+        LinkedList<String> output = (LinkedList<String>) this.stateData;
+
+        ClientEvent respIV = new ClientEvent(ClientEventType.NewCommands, output);
+
+        SinkChannel channel = (SinkChannel) this.outputChannels.get(ChannelType.Shell);
+        try {
+            NBChannelController.write(channel, respIV);
+        } catch (IOException e) {
+            System.err.println("Cannot write to the channel.");
+            this.nextState(ClientComHandlerState.Error);
             return;
         }
 
-        if (this.readyChannels.contains(ChannelType.Socket)) {
-            this.nextState(ClientComHandlerState.SocketResp);
-        }
+        this.nextState(ClientComHandlerState.FinishRequest);
     }
 
-    private void handleSocketResp() {
-        SourceChannel socketChannel = (SourceChannel) this.inputChannels.get(ChannelType.Socket);
-
-        try {
-            this.event = (ClientEvent) NBChannelController.read(socketChannel);
-        } catch (IOException e) {
-            System.err.println("Cannot read from the channel.");
-            this.nextState(ClientComHandlerState.Waiting);
-            return;
-        }
+    private void handleFinishRequest() {
+        this.event = null;
+        this.stateData = null;
 
         this.filterSubscriptions();
-        this.nextState(this.toState);
+
+        this.nextState(ClientComHandlerState.Waiting);
+    }
+
+    private void handleError() {
+        logger.warn("Error occured while processing the last state. Resetting...");
+
+        this.nextState(ClientComHandlerState.FinishRequest);
     }
 
 }

@@ -6,10 +6,8 @@ package client.event;
  * @author ivatolm
  */
 public enum ClientEventType {
-    IdValidationReq,
-    IdValidationResp,
-    NewCommandsReq,
-    NewCommandsResp,
-    ScritpReq,
-    SendDataReq,
+    IdValidation,
+    NewCommands,
+    ScriptRequest,
+    OutputResponse
 }
