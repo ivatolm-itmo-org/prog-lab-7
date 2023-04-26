@@ -3,7 +3,10 @@ package client;
 import java.io.IOException;
 import java.nio.channels.Pipe;
 import java.nio.channels.SelectableChannel;
-import java.util.HashMap;
+import java.util.LinkedList;
+
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 
 import client.handler.ClientComHandler;
 import client.handler.ClientShellHandler;
@@ -75,23 +78,23 @@ public class Client {
         );
 
         ClientShellHandler shellHandler = new ClientShellHandler(
-            new HashMap<ChannelType, SelectableChannel>() {{
-                put(ChannelType.Input, input_shell.source());
-                put(ChannelType.Com, com_shell.source());
+            new LinkedList<Pair<ChannelType, SelectableChannel>>() {{
+                add(new ImmutablePair<>(ChannelType.Input, input_shell.source()));
+                add(new ImmutablePair<>(ChannelType.Com, com_shell.source()));
             }},
-            new HashMap<ChannelType, SelectableChannel>() {{
-                put(ChannelType.Com, shell_com.sink());
+            new LinkedList<Pair<ChannelType, SelectableChannel>>() {{
+                add(new ImmutablePair<>(ChannelType.Com, shell_com.sink()));
             }}
         );
 
         ClientComHandler comHandler = new ClientComHandler(
-            new HashMap<ChannelType, SelectableChannel>() {{
-                put(ChannelType.Shell, shell_com.source());
-                put(ChannelType.Network, socket_com.source());
+            new LinkedList<Pair<ChannelType, SelectableChannel>>() {{
+                add(new ImmutablePair<>(ChannelType.Shell, shell_com.source()));
+                add(new ImmutablePair<>(ChannelType.Network, socket_com.source()));
             }},
-            new HashMap<ChannelType, SelectableChannel>() {{
-                put(ChannelType.Shell, com_shell.sink());
-                put(ChannelType.Network, com_socket.sink());
+            new LinkedList<Pair<ChannelType, SelectableChannel>>() {{
+                add(new ImmutablePair<>(ChannelType.Shell, com_shell.sink()));
+                add(new ImmutablePair<>(ChannelType.Network, com_socket.sink()));
             }},
             new ContentManager("../res")
         );

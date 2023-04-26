@@ -5,9 +5,9 @@ import java.nio.channels.SelectableChannel;
 import java.nio.channels.Pipe.SinkChannel;
 import java.nio.channels.Pipe.SourceChannel;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.LinkedList;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,8 +63,8 @@ public class ClientShellHandler extends ShellHandler<ClientShellHandlerState> {
      * @param inputChannels input channels of the handler
      * @param outputChannels output channels of the handler
      */
-    public ClientShellHandler(HashMap<ChannelType, SelectableChannel> inputChannels,
-                              HashMap<ChannelType, SelectableChannel> outputChannels) {
+    public ClientShellHandler(LinkedList<Pair<ChannelType, SelectableChannel>> inputChannels,
+                              LinkedList<Pair<ChannelType, SelectableChannel>> outputChannels) {
         super(inputChannels, outputChannels, ClientShellHandlerState.Waiting);
 
         this.input = null;
@@ -138,7 +138,7 @@ public class ClientShellHandler extends ShellHandler<ClientShellHandlerState> {
     }
 
     private void handleInputParsingStart() {
-        SourceChannel inputChannel = (SourceChannel) this.inputChannels.get(ChannelType.Input);
+        SourceChannel inputChannel = (SourceChannel) this.getFirstInputChannel(ChannelType.Input);
         try {
             this.input = (String) NBChannelController.read(inputChannel);
         } catch (IOException e) {
@@ -167,7 +167,7 @@ public class ClientShellHandler extends ShellHandler<ClientShellHandlerState> {
 
     private void handleInputParsingFinish() {
         if (this.hasParsingResult()) {
-            SinkChannel comChannel = (SinkChannel) this.outputChannels.get(ChannelType.Com);
+            SinkChannel comChannel = (SinkChannel) this.getFirstOutputChannel(ChannelType.Com);
             LinkedList<Command> commands = this.getParsingResult();
             ClientEvent event = new ClientEvent(ClientEventType.NewCommands, commands);
 
@@ -185,7 +185,7 @@ public class ClientShellHandler extends ShellHandler<ClientShellHandlerState> {
 
     private void handleComIdValidationStart() {
         if (this.idArgForValidation != null) {
-            SinkChannel comChannel = (SinkChannel) this.outputChannels.get(ChannelType.Com);
+            SinkChannel comChannel = (SinkChannel) this.getFirstOutputChannel(ChannelType.Com);
             ClientEvent event = new ClientEvent(ClientEventType.IdValidation, this.idArgForValidation);
 
             try {
@@ -219,7 +219,7 @@ public class ClientShellHandler extends ShellHandler<ClientShellHandlerState> {
     }
 
     private void handleComIdValidationFinish() {
-        SourceChannel comChannel = (SourceChannel) this.inputChannels.get(ChannelType.Com);
+        SourceChannel comChannel = (SourceChannel) this.getFirstInputChannel(ChannelType.Com);
         ClientEvent event;
         try {
             event = (ClientEvent) NBChannelController.read(comChannel);
@@ -242,7 +242,7 @@ public class ClientShellHandler extends ShellHandler<ClientShellHandlerState> {
     }
 
     private void handleComReceiveOutput() {
-        SourceChannel comChannel = (SourceChannel) this.inputChannels.get(ChannelType.Com);
+        SourceChannel comChannel = (SourceChannel) this.getFirstInputChannel(ChannelType.Com);
         ClientEvent event;
         try {
             event = (ClientEvent) NBChannelController.read(comChannel);

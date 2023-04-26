@@ -1,8 +1,9 @@
 package core.handler;
 
 import java.nio.channels.SelectableChannel;
-import java.util.HashMap;
 import java.util.LinkedList;
+
+import org.apache.commons.lang3.tuple.Pair;
 
 import core.command.Command;
 import core.command.CommandType;
@@ -37,8 +38,8 @@ public abstract class ShellHandler<S extends Enum<?>> extends Handler<ChannelTyp
      * @param outputChannels output channels of the handler
      * @param initState initial state of FSM
      */
-    protected ShellHandler(HashMap<ChannelType, SelectableChannel> inputChannels,
-                           HashMap<ChannelType, SelectableChannel> outputChannels,
+    protected ShellHandler(LinkedList<Pair<ChannelType, SelectableChannel>> inputChannels,
+                           LinkedList<Pair<ChannelType, SelectableChannel>> outputChannels,
                            S initState) {
         super(inputChannels, outputChannels, initState);
         this.parser = new Parser();

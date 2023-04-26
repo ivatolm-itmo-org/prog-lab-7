@@ -4,9 +4,9 @@ import java.io.IOException;
 import java.nio.channels.SelectableChannel;
 import java.nio.channels.Pipe.SinkChannel;
 import java.nio.channels.Pipe.SourceChannel;
-import java.util.HashMap;
 import java.util.LinkedList;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,8 +60,8 @@ public class ServerComHandler extends ComHandler<ServerComHandlerState> {
      * @param outputChannels output channels of the handler
      * @param runner program runner
      */
-    public ServerComHandler(HashMap<ChannelType, SelectableChannel> inputChannels,
-                            HashMap<ChannelType, SelectableChannel> outputChannels,
+    public ServerComHandler(LinkedList<Pair<ChannelType, SelectableChannel>> inputChannels,
+                            LinkedList<Pair<ChannelType, SelectableChannel>> outputChannels,
                             Runner runner) {
         super(inputChannels, outputChannels, ServerComHandlerState.Waiting);
 
@@ -153,7 +153,7 @@ public class ServerComHandler extends ComHandler<ServerComHandlerState> {
     }
 
     private void handleNewRequest() {
-        SourceChannel channel = (SourceChannel) this.inputChannels.get(ChannelType.Network);
+        SourceChannel channel = (SourceChannel) this.getFirstInputChannel(ChannelType.Network);
         try {
             this.event = (ServerEvent) NBChannelController.read(channel);
         } catch (IOException e) {
@@ -194,7 +194,7 @@ public class ServerComHandler extends ComHandler<ServerComHandlerState> {
     }
 
     private void handleExistingRequest() {
-        SourceChannel channel = (SourceChannel) this.inputChannels.get(ChannelType.Network);
+        SourceChannel channel = (SourceChannel) this.getFirstInputChannel(ChannelType.Network);
         ServerEvent response = null;
         try {
             response = (ServerEvent) NBChannelController.read(channel);
@@ -222,7 +222,7 @@ public class ServerComHandler extends ComHandler<ServerComHandlerState> {
         boolean result = Interpreter.HasItemWithId(id);
         ServerEvent respIV = new ServerEvent(ServerEventType.IdValidation, result);
 
-        SinkChannel channel = (SinkChannel) this.outputChannels.get(ChannelType.Network);
+        SinkChannel channel = (SinkChannel) this.getFirstOutputChannel(ChannelType.Network);
         try {
             NBChannelController.write(channel, respIV);
         } catch (IOException e) {
@@ -277,7 +277,7 @@ public class ServerComHandler extends ComHandler<ServerComHandlerState> {
             }
         }
 
-        SinkChannel channel = (SinkChannel) this.outputChannels.get(ChannelType.Network);
+        SinkChannel channel = (SinkChannel) this.getFirstOutputChannel(ChannelType.Network);
         try {
             NBChannelController.write(channel, respNC);
         } catch (IOException e) {

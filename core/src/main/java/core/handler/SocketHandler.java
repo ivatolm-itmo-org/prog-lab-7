@@ -1,7 +1,9 @@
 package core.handler;
 
 import java.nio.channels.SelectableChannel;
-import java.util.HashMap;
+import java.util.LinkedList;
+
+import org.apache.commons.lang3.tuple.Pair;
 
 import core.net.Com;
 
@@ -23,8 +25,8 @@ public abstract class SocketHandler<C extends SelectableChannel, S extends Enum<
      * @param initState initial state of FSM
      * @param networkCom network communicator
      */
-    protected SocketHandler(HashMap<ChannelType, SelectableChannel> inputChannels,
-                            HashMap<ChannelType, SelectableChannel> outputChannels,
+    protected SocketHandler(LinkedList<Pair<ChannelType, SelectableChannel>> inputChannels,
+                            LinkedList<Pair<ChannelType, SelectableChannel>> outputChannels,
                             S initState,
                             Com networkCom) {
         super(inputChannels, outputChannels, initState);

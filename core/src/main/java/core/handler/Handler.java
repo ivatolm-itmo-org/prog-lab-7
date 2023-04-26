@@ -2,8 +2,9 @@ package core.handler;
 
 import java.io.IOException;
 import java.nio.channels.SelectableChannel;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedList;
+
+import org.apache.commons.lang3.tuple.Pair;
 
 import core.fsm.FSM;
 
@@ -15,16 +16,16 @@ import core.fsm.FSM;
 public abstract class Handler<E extends Enum<?>, S extends Enum<?>> extends FSM<S> {
 
     /** Input channels */
-    protected HashMap<E, SelectableChannel> inputChannels;
+    protected LinkedList<Pair<E, SelectableChannel>> inputChannels;
 
     /** Output channels */
-    protected HashMap<E, SelectableChannel> outputChannels;
+    protected LinkedList<Pair<E, SelectableChannel>> outputChannels;
 
     /** Input channels subscriptions */
-    protected HashMap<E, SelectableChannel> subscriptions;
+    protected LinkedList<Pair<E, SelectableChannel>> subscriptions;
 
     /** Ready channels */
-    protected HashSet<E> readyChannels;
+    protected LinkedList<E> readyChannels;
 
     /**
      * Constructs new {@code Handler} with provided arguments.
@@ -33,14 +34,14 @@ public abstract class Handler<E extends Enum<?>, S extends Enum<?>> extends FSM<
      * @param outputChannels output channels of the handler
      * @param initState initial state of FSM
      */
-    protected Handler(HashMap<E, SelectableChannel> inputChannels,
-                      HashMap<E, SelectableChannel> outputChannels,
+    protected Handler(LinkedList<Pair<E, SelectableChannel>> inputChannels,
+                      LinkedList<Pair<E, SelectableChannel>> outputChannels,
                       S initState) {
         super(initState);
         this.inputChannels = inputChannels;
         this.outputChannels = outputChannels;
         this.subscriptions = this.inputChannels;
-        this.readyChannels = new HashSet<>();
+        this.readyChannels = new LinkedList<>();
     }
 
     /**
@@ -71,12 +72,12 @@ public abstract class Handler<E extends Enum<?>, S extends Enum<?>> extends FSM<
         if (type == null) {
             this.subscriptions = this.inputChannels;
         } else {
-            this.subscriptions = new HashMap<>();
-            SelectableChannel ic = this.inputChannels.get(type);
-            if (ic == null) {
-                throw new IOException("Cannot subscribe to channel. Channel doesn't exist: " + type);
-            } else {
-                this.subscriptions.put(type, ic);
+            this.subscriptions = new LinkedList<>();
+
+            for (Pair<E, SelectableChannel> ic : this.inputChannels) {
+                if (ic.getKey() == type) {
+                    this.subscriptions.push(ic);
+                }
             }
         }
     }
@@ -92,16 +93,47 @@ public abstract class Handler<E extends Enum<?>, S extends Enum<?>> extends FSM<
         if (filter == null) {
             this.subscriptions = this.inputChannels;
         } else {
-            this.subscriptions = new HashMap<>();
+            this.subscriptions = new LinkedList<>();
             for (E type : filter) {
-                SelectableChannel ic = this.inputChannels.get(type);
-                if (ic == null) {
-                    throw new IOException("Cannot subscribe to channel. Channel doesn't exist: " + type);
-                } else {
-                    this.subscriptions.put(type, ic);
+                for (Pair<E, SelectableChannel> ic : this.inputChannels) {
+                    if (ic.getKey() == type) {
+                        this.subscriptions.push(ic);
+                    }
                 }
             }
         }
+    }
+
+    /**
+     * Returns first input channel of type {@code type}.
+     *
+     * @param type type of the channel
+     * @return input channel if exists, else null
+     */
+    protected SelectableChannel getFirstInputChannel(ChannelType type) {
+        for (Pair<E, SelectableChannel> ic : this.inputChannels) {
+            if (ic.getKey() == type) {
+                return ic.getValue();
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Returns first output channel of type {@code type}.
+     *
+     * @param type type of the channel
+     * @return output channel if exists, else null
+     */
+    protected SelectableChannel getFirstOutputChannel(ChannelType type) {
+        for (Pair<E, SelectableChannel> oc : this.outputChannels) {
+            if (oc.getKey() == type) {
+                return oc.getValue();
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -109,7 +141,7 @@ public abstract class Handler<E extends Enum<?>, S extends Enum<?>> extends FSM<
      *
      * @return input channels of the handler
      */
-    public HashMap<E, SelectableChannel> getInputChannels() {
+    public LinkedList<Pair<E, SelectableChannel>> getInputChannels() {
         return this.inputChannels;
     }
 
@@ -119,7 +151,7 @@ public abstract class Handler<E extends Enum<?>, S extends Enum<?>> extends FSM<
      *
      * @return subscriptions of the handler
      */
-    public HashMap<E, SelectableChannel> getSubscriptions() {
+    public LinkedList<Pair<E, SelectableChannel>> getSubscriptions() {
         return this.subscriptions;
     }
 
