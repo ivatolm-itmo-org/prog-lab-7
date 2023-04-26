@@ -1,7 +1,15 @@
 package server;
 
 import java.io.IOException;
+import java.nio.channels.Pipe;
+import java.nio.channels.SelectableChannel;
+import java.util.LinkedList;
 
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
+
+import core.handler.ChannelType;
+import core.handler.InputHandler;
 import core.models.humanBeing.HumanBeing;
 import core.net.Com;
 import server.database.CSVDatabase;
@@ -34,6 +42,8 @@ public class Server
      * @param args command line arguments
      */
     public static void main(String[] args) {
+        Thread.currentThread().setName("server");
+
         if (args.length != 3) {
             System.err.println("Wrong number of input arguments.");
             return;
@@ -54,32 +64,74 @@ public class Server
         Interpreter interpreter = new Interpreter(database);
         Runner runner = new Runner(interpreter);
 
-        Com com;
+        // Com com;
+        // try {
+        //     com = new ServerComUDP(ip, port);
+        // } catch (IOException e) {
+        //     System.err.println("Cannot create socket: " + e);
+        //     return;
+        // }
+
+        Pipe input_shell, shell_com, com_shell;
         try {
-            com = new ServerComUDP(ip, port);
+            input_shell = Pipe.open();
+            shell_com = Pipe.open();
+            com_shell = Pipe.open();
         } catch (IOException e) {
-            System.err.println("Cannot create socket: " + e);
+            System.err.println("Cannot open pipe: " + e);
             return;
         }
 
-        ServerComHandler comHandler = new ServerComHandler(com, runner);
-        ServerShellHandler shell = new ServerShellHandler(runner);
+        InputHandler inputHandler = new InputHandler(
+            input_shell.sink()
+        );
+
+        ServerShellHandler shellHandler = new ServerShellHandler(
+            new LinkedList<Pair<ChannelType, SelectableChannel>>() {{
+                add(new ImmutablePair<>(ChannelType.Input, input_shell.source()));
+                add(new ImmutablePair<>(ChannelType.Com, com_shell.source()));
+            }},
+            new LinkedList<Pair<ChannelType, SelectableChannel>>() {{
+                add(new ImmutablePair<>(ChannelType.Com, shell_com.sink()));
+            }}
+        );
+
+        ServerComHandler shellComHandler = new ServerComHandler(
+            new LinkedList<Pair<ChannelType, SelectableChannel>>() {{
+                add(new ImmutablePair<>(ChannelType.Shell, shell_com.source()));
+            }},
+            new LinkedList<Pair<ChannelType, SelectableChannel>>() {{
+                add(new ImmutablePair<>(ChannelType.Shell, com_shell.sink()));
+            }},
+            runner,
+            ChannelType.Shell
+        );
+
+        // ServerSocketHandler socketHandler = new ServerSocketHandler(
+        //     new LinkedList<Pair<ChannelType, SelectableChannel>>() {{
+
+        //     }},
+        //     new LinkedList<Pair<ChannelType, SelectableChannel>>() {{
+
+        //     }},
+        //     com
+        // );
 
         EventHandler eventHandler = null;
         try {
-            eventHandler = new EventHandler(comHandler, shell);
+            eventHandler = new EventHandler(shellHandler, shellComHandler);
         } catch (IOException e) {
             System.err.println("Error occured while starting event handler: " + e);
             return;
         }
 
-        Thread shellThread = new Thread(shell);
-        shellThread.start();
+        Thread inputHandlerThread = new Thread(inputHandler);
+        inputHandlerThread.start();
 
         eventHandler.run();
 
         try {
-            shellThread.join();
+            inputHandlerThread.join();
         } catch (InterruptedException e) {
             System.err.println("Shell thread failed to join.");
         }

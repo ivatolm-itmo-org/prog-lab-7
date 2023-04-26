@@ -32,6 +32,9 @@ public class EventHandler {
     // Shell handler
     private ServerShellHandler shellHandler;
 
+    // Communication handler for shell
+    private ServerComHandler shellComHandler;
+
     // Client handlers
     private LinkedList<ServerComHandler> comHandlers;
 
@@ -41,8 +44,11 @@ public class EventHandler {
      * @param shellHandler handler of shell
      * @throws IOException if cannot setup {@code Selector}
      */
-    public EventHandler(ServerShellHandler shellHandler) throws IOException {
+    public EventHandler(ServerShellHandler shellHandler,
+                        ServerComHandler shellComHandler) throws IOException {
         this.shellHandler = shellHandler;
+        this.shellComHandler = shellComHandler;
+
         this.comHandlers = new LinkedList<>();
 
         this.selector = Selector.open();
@@ -51,6 +57,11 @@ public class EventHandler {
         logger.debug("  " + "Shell:");
         LinkedList<Pair<ChannelType, SelectableChannel>> shellIC = this.shellHandler.getInputChannels();
         this.registerChannels(ChannelType.Shell, this.shellHandler, shellIC);
+
+        logger.debug("Registering channels:");
+        logger.debug("  " + "ShellCom:");
+        LinkedList<Pair<ChannelType, SelectableChannel>> comShellIC = this.shellComHandler.getInputChannels();
+        this.registerChannels(ChannelType.Com, this.shellComHandler, comShellIC);
 
         for (ServerComHandler comHandler : this.comHandlers) {
             logger.debug("  " + "Com:");
@@ -66,6 +77,11 @@ public class EventHandler {
         LinkedList<Pair<ChannelType, SelectableChannel>> shellIC = this.shellHandler.getInputChannels();
         LinkedList<Pair<ChannelType, SelectableChannel>> shellSubsIC = this.shellHandler.getSubscriptions();
         this.updateChannelSubscriptions(ChannelType.Shell, shellIC, shellSubsIC);
+
+        logger.debug("  " + "ShellCom:");
+        LinkedList<Pair<ChannelType, SelectableChannel>> shellComIC = this.shellHandler.getInputChannels();
+        LinkedList<Pair<ChannelType, SelectableChannel>> shellComSubsIC = this.shellHandler.getSubscriptions();
+        this.updateChannelSubscriptions(ChannelType.Com, shellComIC, shellComSubsIC);
 
         for (ServerComHandler comHandler : this.comHandlers) {
             logger.debug("  " + "Com:");
@@ -151,7 +167,7 @@ public class EventHandler {
                 channel.register(
                     selector,
                     SelectionKey.OP_READ,
-                    new Object[] { handler, type }
+                    new Object[] { handler, item.getKey() }
                 );
 
                 logger.debug("    " + type + " <== " + item.getKey());

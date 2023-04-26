@@ -78,7 +78,7 @@ public class ServerShellHandler extends ShellHandler<ServerShellHandlerState> {
         switch (type) {
             case Input:
             case Com:
-                this.readyChannels.add(type);
+                this.readyChannels = new LinkedList<ChannelType>() {{ add(type); }};
                 break;
             default:
                 System.err.println("Unexpected channel.");
@@ -135,6 +135,10 @@ public class ServerShellHandler extends ShellHandler<ServerShellHandlerState> {
         if (this.readyChannels.contains(ChannelType.Input)) {
             this.nextState(ServerShellHandlerState.InputParsingStart);
         }
+
+        if (this.readyChannels.contains(ChannelType.Com)) {
+            this.nextState(ServerShellHandlerState.ComReceiveOutput);
+        }
     }
 
     private void handleInputParsingStart() {
@@ -152,7 +156,8 @@ public class ServerShellHandler extends ShellHandler<ServerShellHandlerState> {
 
     private void handleInputParsingProcessing() {
         logger.debug("Parsing command...");
-        this.parseCommands(new LinkedList<>(Arrays.asList(input)));
+        this.parseCommands(new LinkedList<>(Arrays.asList(this.input)));
+        this.input = null;
         logger.debug("Parsing completed");
 
         logger.debug("Has argument for id validation: " + this.hasArgForIdValidation());
@@ -213,7 +218,7 @@ public class ServerShellHandler extends ShellHandler<ServerShellHandlerState> {
             return;
         }
 
-        if (!this.readyChannels.contains(ChannelType.Com)) {
+        if (this.readyChannels.contains(ChannelType.Com)) {
             this.nextState(ServerShellHandlerState.ComIdValidationFinish);
         }
     }

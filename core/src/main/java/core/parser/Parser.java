@@ -43,8 +43,13 @@ public class Parser {
      * @throws ArgumentCheckFailedException if argument check failed
      */
     public boolean parse(String input) throws SimpleParseException, ArgumentCheckFailedException {
-        String slimmedString = this.slim(input);
-        LinkedList<String> slices = this.split(slimmedString);
+        LinkedList<String> slices;
+        if (input != null) {
+            String slimmedString = this.slim(input);
+            slices = this.split(slimmedString);
+        } else {
+            slices = new LinkedList<>();
+        }
 
         // Feeding in slices from before
         if (this.remainingSlices != null) {

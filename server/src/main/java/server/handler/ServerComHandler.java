@@ -53,32 +53,35 @@ public class ServerComHandler extends ComHandler<ServerComHandlerState> {
     // Program runner
     private Runner runner;
 
+    // Communication channel type
+    private ChannelType channelType;
+
     /**
      * Constructs new {@code ServerComHandler} with provided arguments.
      *
      * @param inputChannels input channels of the handler
      * @param outputChannels output channels of the handler
      * @param runner program runner
+     * @param type communication channel type
      */
     public ServerComHandler(LinkedList<Pair<ChannelType, SelectableChannel>> inputChannels,
                             LinkedList<Pair<ChannelType, SelectableChannel>> outputChannels,
-                            Runner runner) {
+                            Runner runner,
+                            ChannelType type) {
         super(inputChannels, outputChannels, ServerComHandlerState.Waiting);
 
         this.runner = runner;
+        this.channelType = type;
     }
 
     @Override
     public void process(ChannelType type, SelectableChannel channel) {
         logger.trace("New event from " + type);
 
-        switch (type) {
-            case Network:
-                this.readyChannels.add(type);
-                break;
-            default:
-                System.err.println("Unexpected channel.");
-                break;
+        if (this.channelType == type) {
+            this.readyChannels = new LinkedList<ChannelType>() {{ add(type); }};
+        } else {
+            System.err.println("Unexpected channel.");
         }
 
         this.handleEvents();
@@ -132,7 +135,7 @@ public class ServerComHandler extends ComHandler<ServerComHandlerState> {
             return;
         }
 
-        if (this.readyChannels.contains(ChannelType.Network)) {
+        if (this.readyChannels.contains(this.channelType)) {
             this.nextState(ServerComHandlerState.NewEvent);
         }
     }
@@ -140,7 +143,7 @@ public class ServerComHandler extends ComHandler<ServerComHandlerState> {
     private void handleNewEvent() {
         if (this.event == null) {
             try {
-                this.filterSubscriptions(ChannelType.Network);
+                this.filterSubscriptions(this.channelType);
             } catch (IOException e) {
                 this.nextState(ServerComHandlerState.Error);
                 return;
@@ -153,7 +156,7 @@ public class ServerComHandler extends ComHandler<ServerComHandlerState> {
     }
 
     private void handleNewRequest() {
-        SourceChannel channel = (SourceChannel) this.getFirstInputChannel(ChannelType.Network);
+        SourceChannel channel = (SourceChannel) this.getFirstInputChannel(this.channelType);
         try {
             this.event = (ServerEvent) NBChannelController.read(channel);
         } catch (IOException e) {
@@ -194,7 +197,7 @@ public class ServerComHandler extends ComHandler<ServerComHandlerState> {
     }
 
     private void handleExistingRequest() {
-        SourceChannel channel = (SourceChannel) this.getFirstInputChannel(ChannelType.Network);
+        SourceChannel channel = (SourceChannel) this.getFirstInputChannel(this.channelType);
         ServerEvent response = null;
         try {
             response = (ServerEvent) NBChannelController.read(channel);
@@ -220,9 +223,11 @@ public class ServerComHandler extends ComHandler<ServerComHandlerState> {
         Argument id = (Argument) this.stateData;
 
         boolean result = Interpreter.HasItemWithId(id);
+        logger.debug("Id validation result: " + result);
+
         ServerEvent respIV = new ServerEvent(ServerEventType.IdValidation, result);
 
-        SinkChannel channel = (SinkChannel) this.getFirstOutputChannel(ChannelType.Network);
+        SinkChannel channel = (SinkChannel) this.getFirstOutputChannel(this.channelType);
         try {
             NBChannelController.write(channel, respIV);
         } catch (IOException e) {
@@ -277,7 +282,7 @@ public class ServerComHandler extends ComHandler<ServerComHandlerState> {
             }
         }
 
-        SinkChannel channel = (SinkChannel) this.getFirstOutputChannel(ChannelType.Network);
+        SinkChannel channel = (SinkChannel) this.getFirstOutputChannel(this.channelType);
         try {
             NBChannelController.write(channel, respNC);
         } catch (IOException e) {
