@@ -1,6 +1,9 @@
 package core.net;
 
+import java.net.SocketAddress;
 import java.nio.channels.SelectableChannel;
+
+import org.apache.commons.lang3.tuple.Pair;
 
 import core.net.packet.Packet;
 
@@ -22,15 +25,16 @@ public interface Com {
      * Sends packet to other peer.
      *
      * @param packet packet to be sent
+     * @param address destination address
      */
-    void send(Packet packet);
+    void send(Packet packet, SocketAddress address);
 
     /**
      * Receives packet from other peer.
      *
-     * @return received packet
+     * @return pair of ip and received packet
      */
-    Packet receive();
+    Pair<SocketAddress, Packet> receive();
 
     /**
      * Returns {@code Channel} object.

@@ -51,7 +51,7 @@ public abstract class ShellHandler<S extends Enum<?>> extends Handler<ChannelTyp
      * Implements {@code process} for {@code Handler}.
      */
     @Override
-    public abstract void process(ChannelType channel);
+    public abstract void process(ChannelType type, SelectableChannel channel);
 
     /**
      * Parses one or multiple {@code Command}-s from {@code inputs}.

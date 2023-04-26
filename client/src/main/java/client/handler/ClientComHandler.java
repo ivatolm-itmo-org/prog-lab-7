@@ -68,13 +68,13 @@ public class ClientComHandler extends ComHandler<ClientComHandlerState> {
     }
 
     @Override
-    public void process(ChannelType channel) {
-        logger.trace("New event from " + channel);
+    public void process(ChannelType type, SelectableChannel channel) {
+        logger.trace("New event from " + type);
 
-        switch (channel) {
+        switch (type) {
             case Shell:
             case Network:
-                this.readyChannels.add(channel);
+                this.readyChannels.add(type);
                 break;
             default:
                 System.err.println("Unexpected channel.");

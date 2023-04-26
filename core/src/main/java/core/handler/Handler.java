@@ -47,9 +47,10 @@ public abstract class Handler<E extends Enum<?>, S extends Enum<?>> extends FSM<
      * Method that is run by {@code Selector} when
      * some event occures on one input channels.
      *
-     * @param channel ready channel identificator
+     * @param type ready channel identificator
+     * @param channel ready channel
      */
-    public abstract void process(E channel);
+    public abstract void process(E type, SelectableChannel channel);
 
     /**
      * Filters {@code inputChannels} to all avaliable

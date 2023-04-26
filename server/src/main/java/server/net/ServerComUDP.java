@@ -8,16 +8,16 @@ import java.nio.channels.DatagramChannel;
 import java.nio.channels.SelectableChannel;
 
 import org.apache.commons.lang3.SerializationUtils;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 
 import core.net.Com;
 import core.net.packet.Packet;
 
 public class ServerComUDP implements Com {
+
     // Channel
     private DatagramChannel channel;
-
-    // Client address
-    private SocketAddress clientAddress;
 
     /**
      * Constructs new {@code ClientComUDP} with provided arguments.
@@ -30,7 +30,6 @@ public class ServerComUDP implements Com {
         InetSocketAddress address = new InetSocketAddress(ip, port);
         this.channel = DatagramChannel.open();
         this.channel.bind(address);
-        this.clientAddress = null;
     }
 
     /**
@@ -45,17 +44,12 @@ public class ServerComUDP implements Com {
      * Implements {@code send} method of {@code Com}.
      */
     @Override
-    public void send(Packet packet) {
+    public void send(Packet packet, SocketAddress address) {
         byte[] data = SerializationUtils.serialize(packet);
         ByteBuffer buffer = ByteBuffer.wrap(data);
 
-        if (this.clientAddress == null) {
-            System.err.println("Unknown destination");
-            return;
-        }
-
         try {
-            this.channel.send(buffer, this.clientAddress);
+            this.channel.send(buffer, address);
         } catch (IOException e) {
             System.err.println("Cannot send packet: " + e);
         }
@@ -65,18 +59,19 @@ public class ServerComUDP implements Com {
      * Implements {@code receive} method of {@code Com}.
      */
     @Override
-    public Packet receive() {
+    public Pair<SocketAddress, Packet> receive() {
         byte[] data = new byte[16384];
         ByteBuffer buffer = ByteBuffer.wrap(data);
 
+        SocketAddress address;
         try {
-            this.clientAddress = this.channel.receive(buffer);
+            address = this.channel.receive(buffer);
         } catch (IOException e) {
             System.err.println("Cannot receive packet: " + e);
             return null;
         }
 
-        return SerializationUtils.deserialize(data);
+        return new ImmutablePair<>(address, SerializationUtils.deserialize(data));
     }
 
     /**

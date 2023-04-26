@@ -94,13 +94,13 @@ public class EventHandler {
                     switch (handler) {
                         case Shell:
                             if (key.isReadable()) {
-                                this.shellHandler.process(channelType);
+                                this.shellHandler.process(channelType, key.channel());
                             }
                             break;
 
                         case Com:
                             if (key.isReadable()) {
-                                this.comHandler.process(channelType);
+                                this.comHandler.process(channelType, key.channel());
                             }
                             break;
 

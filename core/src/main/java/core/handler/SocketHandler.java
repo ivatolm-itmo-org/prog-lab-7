@@ -3,15 +3,17 @@ package core.handler;
 import java.nio.channels.SelectableChannel;
 import java.util.HashMap;
 
+import core.net.Com;
+
 /**
  * Class for handling events of network socket.
  *
  * @author ivatolm
  */
-public abstract class SocketHandler<S extends Enum<?>> extends Handler<ChannelType, S> {
+public abstract class SocketHandler<C extends SelectableChannel, S extends Enum<?>> extends Handler<ChannelType, S> {
 
-    /** Socket channel */
-    protected SelectableChannel channel;
+    /** Network comminicator */
+    protected Com networkCom;
 
     /**
      * Constructs new {@code SocketHandler} with provided arguments.
@@ -19,23 +21,15 @@ public abstract class SocketHandler<S extends Enum<?>> extends Handler<ChannelTy
      * @param inputChannels input channels of the handler
      * @param outputChannels output channels of the handler
      * @param initState initial state of FSM
+     * @param networkCom network communicator
      */
     protected SocketHandler(HashMap<ChannelType, SelectableChannel> inputChannels,
                             HashMap<ChannelType, SelectableChannel> outputChannels,
-                            S initState) {
+                            S initState,
+                            Com networkCom) {
         super(inputChannels, outputChannels, initState);
 
-        this.inputChannels.put(ChannelType.Socket, channel);
+        this.networkCom = networkCom;
     }
-
-    /**
-     * Implements {@code process} for {@code Handler}.
-     */
-    @Override
-    public abstract void process(ChannelType channel);
-
-    protected abstract void send();
-
-    protected abstract void receive();
 
 }

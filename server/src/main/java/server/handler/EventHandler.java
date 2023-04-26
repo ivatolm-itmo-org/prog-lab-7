@@ -1,12 +1,20 @@
 package server.handler;
 
 import java.io.IOException;
-import java.nio.channels.Pipe;
 import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.Set;
+import java.util.Map.Entry;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import core.handler.ChannelType;
+import core.handler.Handler;
 
 /**
  * Class for handling application events via other handlers.
@@ -15,45 +23,56 @@ import java.util.Set;
  */
 public class EventHandler {
 
-    enum ChannelType {
-        Server,
-        Shell
-    };
+    // Logger
+    private static final Logger logger = LoggerFactory.getLogger("EventHandler");
 
     // Channel selector
     private Selector selector;
 
-    // Communication handler
-    private ServerComHandler comHandler;
+    // Shell handler
+    private ServerShellHandler shellHandler;
 
-    // Shell
-    private ServerShellHandler shell;
+    // Client handlers
+    private LinkedList<ServerComHandler> comHandlers;
 
     /**
      * Constructs new {@code EventHandler} with provided arguments.
      *
-     * @param comHandler handler of communicator
-     * @param shell handler of shell
+     * @param shellHandler handler of shell
      * @throws IOException if cannot setup {@code Selector}
      */
-    public EventHandler(ServerComHandler comHandler, ServerShellHandler shell) throws IOException {
-        this.comHandler = comHandler;
-        this.shell = shell;
+    public EventHandler(ServerShellHandler shellHandler) throws IOException {
+        this.shellHandler = shellHandler;
+        this.comHandlers = new LinkedList<>();
 
         this.selector = Selector.open();
 
-        // Server
-        SelectableChannel serverChannel = comHandler.getComChannel();
-        serverChannel.configureBlocking(false);
-        serverChannel.register(selector, SelectionKey.OP_READ, ChannelType.Server);
+        logger.debug("Registering channels:");
+        logger.debug("  " + "Shell:");
+        HashMap<ChannelType, SelectableChannel> shellIC = this.shellHandler.getInputChannels();
+        this.registerChannels(ChannelType.Shell, this.shellHandler, shellIC);
 
-        // Shell
-        Pipe pipe = Pipe.open();
-        shell.setPipe(pipe);
+        for (ServerComHandler comHandler : this.comHandlers) {
+            logger.debug("  " + "Com:");
+            HashMap<ChannelType, SelectableChannel> comIC = comHandler.getInputChannels();
+            this.registerChannels(ChannelType.Com, comHandler, comIC);
+        }
+    }
 
-        SelectableChannel shellChannel = pipe.source();
-        shellChannel.configureBlocking(false);
-        shellChannel.register(selector, SelectionKey.OP_READ, ChannelType.Shell);
+    public void updateSubscriptions() {
+        logger.debug("Updating subscriptions...");
+
+        logger.debug("  " + "Shell:");
+        HashMap<ChannelType, SelectableChannel> shellIC = this.shellHandler.getInputChannels();
+        HashMap<ChannelType, SelectableChannel> shellSubsIC = this.shellHandler.getSubscriptions();
+        this.updateChannelSubscriptions(ChannelType.Shell, shellIC, shellSubsIC);
+
+        for (ServerComHandler comHandler : this.comHandlers) {
+            logger.debug("  " + "Com:");
+            HashMap<ChannelType, SelectableChannel> comIC = comHandler.getInputChannels();
+            HashMap<ChannelType, SelectableChannel> comSubsIC = comHandler.getSubscriptions();
+            this.updateChannelSubscriptions(ChannelType.Com, comIC, comSubsIC);
+        }
     }
 
     /**
@@ -62,32 +81,29 @@ public class EventHandler {
     public void run() {
         while (true) {
             try {
+                logger.trace("Selecting channels...");
                 this.selector.select();
                 Set<SelectionKey> selectedKeys = this.selector.selectedKeys();
+                logger.debug("Selected channels count: " + selectedKeys.size());
 
                 Iterator<SelectionKey> iter = selectedKeys.iterator();
                 while (iter.hasNext()) {
                     SelectionKey key = iter.next();
 
-                    ChannelType channelType = (ChannelType) key.attachment();
-                    switch (channelType) {
-                        case Server:
-                            if (key.isReadable()) {
-                                this.onReadServer();
-                            }
+                    Object[] attachments = (Object[]) key.attachment();
 
-                            break;
+                    @SuppressWarnings("unchecked")
+                    Handler<ChannelType,?> handler = (Handler<ChannelType,?>) attachments[0];
+                    ChannelType channelType = (ChannelType) attachments[1];
 
-                        case Shell:
-                            if (key.isReadable()) {
-                                this.onReadShell();
-                            }
+                    logger.trace("Event on " + channelType + " for " + handler);
 
-                            break;
-
-                        default:
-                            break;
+                    if (key.isReadable()) {
+                        handler.process(channelType, key.channel());
                     }
+
+                    this.updateSubscriptions();
+                    break;
                 }
 
                 selectedKeys.clear();
@@ -98,18 +114,54 @@ public class EventHandler {
         }
     }
 
-    /**
-     * Tells {@code comHandler} to process incoming data.
-     */
-    private void onReadServer() {
-        this.comHandler.process();
+    private void updateChannelSubscriptions(ChannelType type,
+                                            HashMap<ChannelType, SelectableChannel> ic,
+                                            HashMap<ChannelType, SelectableChannel> subs) {
+        Set<Entry<ChannelType, SelectableChannel>> icES = ic.entrySet();
+        Set<Entry<ChannelType, SelectableChannel>> subsES = subs.entrySet();
+
+        for (HashMap.Entry<ChannelType, SelectableChannel> item : icES) {
+            SelectableChannel channel = item.getValue();
+            SelectionKey key = channel.keyFor(this.selector);
+
+            if (key == null) {
+                logger.warn("Cannot subscribe " + type + " to channel: " + item.getKey());
+                continue;
+            }
+
+            if (subsES.contains(item)) {
+                if ((key.interestOps() & SelectionKey.OP_READ) != SelectionKey.OP_READ) {
+                    logger.debug("    " + type + " === " + item.getKey());
+                    key.interestOps(SelectionKey.OP_READ);
+                }
+            } else {
+                if ((key.interestOps() & SelectionKey.OP_READ) == SelectionKey.OP_READ) {
+                    logger.debug("    " + type + " =!= " + item.getKey());
+                    key.interestOps(0);
+                }
+            }
+        }
     }
 
-    /**
-     * Tells {@code comHandler} to process incoming data.
-     */
-    private void onReadShell() {
-        this.shell.process();
+    private void registerChannels(ChannelType type,
+                                  Handler<ChannelType,?> handler,
+                                  HashMap<ChannelType, SelectableChannel> ic) {
+        for (HashMap.Entry<ChannelType, SelectableChannel> item : ic.entrySet()) {
+            SelectableChannel channel = item.getValue();
+
+            try {
+                channel.configureBlocking(false);
+                channel.register(
+                    selector,
+                    SelectionKey.OP_READ,
+                    new Object[] { handler, type }
+                );
+
+                logger.debug("    " + type + " <== " + item.getKey());
+            } catch (IOException e) {
+                logger.warn("Cannot subscribe " + type + " to channel: " + item.getKey());
+            }
+        }
     }
 
 }
