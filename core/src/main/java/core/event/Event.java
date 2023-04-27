@@ -1,28 +1,27 @@
-package server.event;
+package core.event;
 
 import java.io.Serializable;
 
 /**
- * Class representing communication event used
- * by server.
+ * Class representing communication event used by client and server.
  *
  * @author ivatolm
  */
-public class ServerEvent implements Serializable {
+public class Event implements Serializable {
 
     // Type of event
-    private ServerEventType type;
+    private EventType type;
 
     // Data of event
     private Object data;
 
     /**
-     * Constructs new {@code Packet} with provided arguments.
+     * Constructs new {@code Event} with provided arguments.
      *
      * @param type type of the event
      * @param data data of the event
      */
-    public ServerEvent(ServerEventType type, Object data) {
+    public Event(EventType type, Object data) {
         this.type = type;
         this.data = data;
     }
@@ -30,7 +29,7 @@ public class ServerEvent implements Serializable {
     /**
      * @return type of the event
      */
-    public ServerEventType getType() {
+    public EventType getType() {
         return this.type;
     }
 

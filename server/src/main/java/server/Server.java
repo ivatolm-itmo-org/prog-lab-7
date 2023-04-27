@@ -16,6 +16,7 @@ import server.database.CSVDatabase;
 import server.handler.ServerComHandler;
 import server.handler.EventHandler;
 import server.handler.ServerShellHandler;
+import server.handler.ServerSocketHandler;
 import server.interpreter.Interpreter;
 import server.net.ServerComUDP;
 import server.runner.Runner;
@@ -64,13 +65,13 @@ public class Server
         Interpreter interpreter = new Interpreter(database);
         Runner runner = new Runner(interpreter);
 
-        // Com com;
-        // try {
-        //     com = new ServerComUDP(ip, port);
-        // } catch (IOException e) {
-        //     System.err.println("Cannot create socket: " + e);
-        //     return;
-        // }
+        Com com;
+        try {
+            com = new ServerComUDP(ip, port);
+        } catch (IOException e) {
+            System.err.println("Cannot create socket: " + e);
+            return;
+        }
 
         Pipe input_shell, shell_com, com_shell;
         try {
@@ -107,19 +108,19 @@ public class Server
             ChannelType.Shell
         );
 
-        // ServerSocketHandler socketHandler = new ServerSocketHandler(
-        //     new LinkedList<Pair<ChannelType, SelectableChannel>>() {{
+        ServerSocketHandler socketHandler = new ServerSocketHandler(
+            new LinkedList<Pair<ChannelType, SelectableChannel>>() {{
 
-        //     }},
-        //     new LinkedList<Pair<ChannelType, SelectableChannel>>() {{
+            }},
+            new LinkedList<Pair<ChannelType, SelectableChannel>>() {{
 
-        //     }},
-        //     com
-        // );
+            }},
+            com
+        );
 
         EventHandler eventHandler = null;
         try {
-            eventHandler = new EventHandler(shellHandler, shellComHandler);
+            eventHandler = new EventHandler(shellHandler, shellComHandler, socketHandler, runner);
         } catch (IOException e) {
             System.err.println("Error occured while starting event handler: " + e);
             return;

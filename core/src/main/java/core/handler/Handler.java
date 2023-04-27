@@ -155,4 +155,22 @@ public abstract class Handler<E extends Enum<?>, S extends Enum<?>> extends FSM<
         return this.subscriptions;
     }
 
+    /**
+     * Adds {@code ic} to input channels.
+     *
+     * @param ic channel to add
+     */
+    public void addInputChannel(Pair<E, SelectableChannel> ic) {
+        this.inputChannels.add(ic);
+    }
+
+    /**
+     * Adds {@code oc} to output channels.
+     *
+     * @param oc channel to add
+     */
+    public void addOutputChannel(Pair<E, SelectableChannel> oc) {
+        this.outputChannels.add(oc);
+    }
+
 }

@@ -10,13 +10,13 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import server.event.ServerEvent;
-import server.event.ServerEventType;
 import server.interpreter.Interpreter;
 import server.runner.RecursionFoundException;
 import server.runner.Runner;
 import core.command.Command;
 import core.command.arguments.Argument;
+import core.event.Event;
+import core.event.EventType;
 import core.handler.ChannelType;
 import core.handler.ComHandler;
 import core.utils.NBChannelController;
@@ -48,7 +48,7 @@ public class ServerComHandler extends ComHandler<ServerComHandlerState> {
     private Object stateData;
 
     // Currently processed event
-    private ServerEvent event;
+    private Event event;
 
     // Program runner
     private Runner runner;
@@ -158,7 +158,7 @@ public class ServerComHandler extends ComHandler<ServerComHandlerState> {
     private void handleNewRequest() {
         SourceChannel channel = (SourceChannel) this.getFirstInputChannel(this.channelType);
         try {
-            this.event = (ServerEvent) NBChannelController.read(channel);
+            this.event = (Event) NBChannelController.read(channel);
         } catch (IOException e) {
             System.err.println("Cannot read from the channel.");
             this.nextState(ServerComHandlerState.Error);
@@ -191,16 +191,16 @@ public class ServerComHandler extends ComHandler<ServerComHandlerState> {
         LinkedList<Command> commands = (LinkedList<Command>) this.event.getData();
 
         // Sending commands to server as it was response to the script request
-        this.stateData = new ServerEvent(ServerEventType.ScriptRequest, commands);
+        this.stateData = new Event(EventType.ScriptRequest, commands);
 
         this.nextState(ServerComHandlerState.NCProcessing);
     }
 
     private void handleExistingRequest() {
         SourceChannel channel = (SourceChannel) this.getFirstInputChannel(this.channelType);
-        ServerEvent response = null;
+        Event response = null;
         try {
-            response = (ServerEvent) NBChannelController.read(channel);
+            response = (Event) NBChannelController.read(channel);
         } catch (IOException e) {
             System.err.println("Cannot read from the channel.");
             this.nextState(ServerComHandlerState.Error);
@@ -225,7 +225,7 @@ public class ServerComHandler extends ComHandler<ServerComHandlerState> {
         boolean result = Interpreter.HasItemWithId(id);
         logger.debug("Id validation result: " + result);
 
-        ServerEvent respIV = new ServerEvent(ServerEventType.IdValidation, result);
+        Event respIV = new Event(EventType.IdValidation, result);
 
         SinkChannel channel = (SinkChannel) this.getFirstOutputChannel(this.channelType);
         try {
@@ -240,7 +240,7 @@ public class ServerComHandler extends ComHandler<ServerComHandlerState> {
     }
 
     private void handleNCProcessing() {
-        ServerEvent response = (ServerEvent) this.stateData;
+        Event response = (Event) this.stateData;
 
         @SuppressWarnings("unchecked")
         LinkedList<Command> commands = (LinkedList<Command>) response.getData();
@@ -256,7 +256,7 @@ public class ServerComHandler extends ComHandler<ServerComHandlerState> {
             errorMessage = e.getMessage();
         }
 
-        ServerEvent respNC = null;
+        Event respNC = null;
         if (errorOccured) {
             LinkedList<String> programOutput = this.runner.getProgramOutput();
             if (programOutput == null) {
@@ -264,12 +264,12 @@ public class ServerComHandler extends ComHandler<ServerComHandlerState> {
             }
 
             programOutput.push(errorMessage);
-            respNC = new ServerEvent(ServerEventType.OutputResponse, programOutput);
+            respNC = new Event(EventType.OutputResponse, programOutput);
             this.nextState(ServerComHandlerState.FinishRequest);
         } else {
             LinkedList<String> programResult = this.runner.getProgramResult();
             if (programResult != null) {
-                respNC = new ServerEvent(ServerEventType.ScriptRequest, programResult);
+                respNC = new Event(EventType.ScriptRequest, programResult);
                 this.nextState(ServerComHandlerState.Waiting);
             } else {
                 LinkedList<String> programOutput = this.runner.getProgramOutput();
@@ -277,7 +277,7 @@ public class ServerComHandler extends ComHandler<ServerComHandlerState> {
                     programOutput = new LinkedList<>();
                 }
 
-                respNC = new ServerEvent(ServerEventType.OutputResponse, programOutput);
+                respNC = new Event(EventType.OutputResponse, programOutput);
                 this.nextState(ServerComHandlerState.FinishRequest);
             }
         }

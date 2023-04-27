@@ -10,10 +10,10 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import client.event.ClientEvent;
-import client.event.ClientEventType;
 import client.shell.ContentManager;
 import core.command.Command;
+import core.event.Event;
+import core.event.EventType;
 import core.handler.ChannelType;
 import core.handler.ComHandler;
 import core.utils.NBChannelController;
@@ -26,7 +26,6 @@ enum ClientComHandlerState {
     NCStart,
     ExistingRequest,
     IVProcessing,
-    NCProcessing,
     NCProcessingSR,
     NCProcessingOR,
     FinishRequest,
@@ -50,7 +49,7 @@ public class ClientComHandler extends ComHandler<ClientComHandlerState> {
     private Object stateData;
 
     // Currently processed event
-    private ClientEvent event;
+    private Event event;
 
     /**
      * Constructs new {@code ClientComHandler} with provided arguments.
@@ -74,7 +73,7 @@ public class ClientComHandler extends ComHandler<ClientComHandlerState> {
         switch (type) {
             case Shell:
             case Network:
-                this.readyChannels.add(type);
+                this.readyChannels = new LinkedList<ChannelType>() {{ add(type); }};
                 break;
             default:
                 System.err.println("Unexpected channel.");
@@ -112,9 +111,6 @@ public class ClientComHandler extends ComHandler<ClientComHandlerState> {
                 case IVProcessing:
                     this.handleIVProcessing();
                     break;
-                case NCProcessing:
-                    this.handleNCProcessing();
-                    break;
                 case NCProcessingSR:
                     this.handleNCProcessingSR();
                     break;
@@ -140,6 +136,8 @@ public class ClientComHandler extends ComHandler<ClientComHandlerState> {
 
         if (this.readyChannels.contains(ChannelType.Shell)) {
             this.nextState(ClientComHandlerState.NewEvent);
+        } else if (this.readyChannels.contains(ChannelType.Network)) {
+            this.nextState(ClientComHandlerState.NewEvent);
         }
     }
 
@@ -161,7 +159,7 @@ public class ClientComHandler extends ComHandler<ClientComHandlerState> {
     private void handleNewRequest() {
         SourceChannel channel = (SourceChannel) this.getFirstInputChannel(ChannelType.Shell);
         try {
-            this.event = (ClientEvent) NBChannelController.read(channel);
+            this.event = (Event) NBChannelController.read(channel);
         } catch (IOException e) {
             System.err.println("Cannot read from the channel.");
             this.nextState(ClientComHandlerState.Error);
@@ -182,7 +180,7 @@ public class ClientComHandler extends ComHandler<ClientComHandlerState> {
     }
 
     private void handleIVStart() {
-        ClientEvent reqIV = new ClientEvent(ClientEventType.IdValidation, this.event.getData());
+        Event reqIV = new Event(EventType.IdValidation, this.event.getData());
 
         SinkChannel channel = (SinkChannel) this.getFirstOutputChannel(ChannelType.Network);
         try {
@@ -197,7 +195,7 @@ public class ClientComHandler extends ComHandler<ClientComHandlerState> {
     }
 
     private void handleNCStart() {
-        ClientEvent reqNC = new ClientEvent(ClientEventType.NewCommands, this.event.getData());
+        Event reqNC = new Event(EventType.NewCommands, this.event.getData());
 
         SinkChannel channel = (SinkChannel) this.getFirstOutputChannel(ChannelType.Network);
         try {
@@ -213,9 +211,9 @@ public class ClientComHandler extends ComHandler<ClientComHandlerState> {
 
     private void handleExistingRequest() {
         SourceChannel channel = (SourceChannel) this.getFirstInputChannel(ChannelType.Network);
-        ClientEvent response = null;
+        Event response = null;
         try {
-            response = (ClientEvent) NBChannelController.read(channel);
+            response = (Event) NBChannelController.read(channel);
         } catch (IOException e) {
             System.err.println("Cannot read from the channel.");
             this.nextState(ClientComHandlerState.Error);
@@ -224,12 +222,16 @@ public class ClientComHandler extends ComHandler<ClientComHandlerState> {
 
         this.stateData = response;
 
+        logger.info(""+response.getType());
         switch (response.getType()) {
             case IdValidation:
                 this.nextState(ClientComHandlerState.IVProcessing);
                 break;
-            case NewCommands:
-                this.nextState(ClientComHandlerState.NCProcessing);
+            case ScriptRequest:
+                this.nextState(ClientComHandlerState.NCProcessingSR);
+                break;
+            case OutputResponse:
+                this.nextState(ClientComHandlerState.NCProcessingOR);
                 break;
             default:
                 this.nextState(ClientComHandlerState.Error);
@@ -240,7 +242,7 @@ public class ClientComHandler extends ComHandler<ClientComHandlerState> {
     private void handleIVProcessing() {
         boolean result = (boolean) this.stateData;
 
-        ClientEvent respIV = new ClientEvent(ClientEventType.IdValidation, result);
+        Event respIV = new Event(EventType.IdValidation, result);
 
         SinkChannel channel = (SinkChannel) this.getFirstOutputChannel(ChannelType.Shell);
         try {
@@ -254,29 +256,11 @@ public class ClientComHandler extends ComHandler<ClientComHandlerState> {
         this.nextState(ClientComHandlerState.FinishRequest);
     }
 
-    private void handleNCProcessing() {
-        ClientEvent response = (ClientEvent) this.stateData;
-
-        this.stateData = response.getData();
-
-        switch (response.getType()) {
-            case ScriptRequest:
-                this.nextState(ClientComHandlerState.NCProcessingSR);
-                break;
-            case OutputResponse:
-                this.nextState(ClientComHandlerState.NCProcessingOR);
-                break;
-            default:
-                this.nextState(ClientComHandlerState.Error);
-                break;
-        }
-    }
-
     private void handleNCProcessingSR() {
         String filename = (String) this.stateData;
         LinkedList<Command> commands = this.contentManager.get(filename);
 
-        ClientEvent respNCSR = new ClientEvent(ClientEventType.ScriptRequest, commands);
+        Event respNCSR = new Event(EventType.ScriptRequest, commands);
 
         SinkChannel channel = (SinkChannel) this.getFirstOutputChannel(ChannelType.Network);
         try {
@@ -291,10 +275,11 @@ public class ClientComHandler extends ComHandler<ClientComHandlerState> {
     }
 
     private void handleNCProcessingOR() {
+        Event data = (Event) this.stateData;
         @SuppressWarnings("unchecked")
-        LinkedList<String> output = (LinkedList<String>) this.stateData;
+        LinkedList<String> output = (LinkedList<String>) data.getData();
 
-        ClientEvent respIV = new ClientEvent(ClientEventType.NewCommands, output);
+        Event respIV = new Event(EventType.NewCommands, output);
 
         SinkChannel channel = (SinkChannel) this.getFirstOutputChannel(ChannelType.Shell);
         try {

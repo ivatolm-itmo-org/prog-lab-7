@@ -10,10 +10,13 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import client.handler.ClientComHandler;
 import client.handler.ClientShellHandler;
+import client.handler.ClientSocketHandler;
 import client.handler.EventHandler;
+import client.net.ClientComUDP;
 import client.shell.ContentManager;
 import core.handler.ChannelType;
 import core.handler.InputHandler;
+import core.net.Com;
 
 /**
  * Program for running client application.
@@ -43,23 +46,22 @@ public class Client {
             return;
         }
 
+        String ip = args[0];
+        Integer port = null;
+        try {
+            port = Integer.parseInt(args[1]);
+        } catch (NumberFormatException e) {
+            System.out.println("Cannot parse port from argument: " + args[1]);
+            return;
+        }
 
-        // String ip = args[0];
-        // Integer port = null;
-        // try {
-        //     port = Integer.parseInt(args[1]);
-        // } catch (NumberFormatException e) {
-        //     System.out.println("Cannot parse port from argument: " + args[1]);
-        //     return;
-        // }
-
-        // Com com;
-        // try {
-        //     com = new ClientSocketHandler(ip, port);
-        // } catch (IOException e) {
-        //     System.err.println("Cannot create socket: " + e);
-        //     return;
-        // }
+        Com com;
+        try {
+            com = new ClientComUDP(ip, port);
+        } catch (IOException e) {
+            System.err.println("Cannot create socket: " + e);
+            return;
+        }
 
         Pipe input_shell, shell_com, com_shell, com_socket, socket_com;
         try {
@@ -99,9 +101,19 @@ public class Client {
             new ContentManager("../res")
         );
 
+        ClientSocketHandler socketHandler = new ClientSocketHandler(
+            new LinkedList<Pair<ChannelType, SelectableChannel>>() {{
+                add(new ImmutablePair<>(ChannelType.Com, com_socket.source()));
+            }},
+            new LinkedList<Pair<ChannelType, SelectableChannel>>() {{
+                add(new ImmutablePair<>(ChannelType.Com, socket_com.sink()));
+            }},
+            com
+        );
+
         EventHandler eventHandler = null;
         try {
-            eventHandler = new EventHandler(shellHandler, comHandler);
+            eventHandler = new EventHandler(shellHandler, comHandler, socketHandler);
         } catch (IOException e) {
             System.err.println("Error occured while starting event handler: " + e);
             return;

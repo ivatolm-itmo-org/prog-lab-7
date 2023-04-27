@@ -1,6 +1,7 @@
 package server.handler;
 
 import java.io.IOException;
+import java.nio.channels.Pipe;
 import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -9,12 +10,14 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Set;
 
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import core.handler.ChannelType;
 import core.handler.Handler;
+import server.runner.Runner;
 
 /**
  * Class for handling application events via other handlers.
@@ -35,8 +38,14 @@ public class EventHandler {
     // Communication handler for shell
     private ServerComHandler shellComHandler;
 
+    // Socket handler
+    private ServerSocketHandler socketHandler;
+
     // Client handlers
     private LinkedList<ServerComHandler> comHandlers;
+
+    // Program runner
+    private Runner runner;
 
     /**
      * Constructs new {@code EventHandler} with provided arguments.
@@ -45,9 +54,13 @@ public class EventHandler {
      * @throws IOException if cannot setup {@code Selector}
      */
     public EventHandler(ServerShellHandler shellHandler,
-                        ServerComHandler shellComHandler) throws IOException {
+                        ServerComHandler shellComHandler,
+                        ServerSocketHandler socketHandler,
+                        Runner runner) throws IOException {
         this.shellHandler = shellHandler;
         this.shellComHandler = shellComHandler;
+        this.socketHandler = socketHandler;
+        this.runner = runner;
 
         this.comHandlers = new LinkedList<>();
 
@@ -58,16 +71,13 @@ public class EventHandler {
         LinkedList<Pair<ChannelType, SelectableChannel>> shellIC = this.shellHandler.getInputChannels();
         this.registerChannels(ChannelType.Shell, this.shellHandler, shellIC);
 
-        logger.debug("Registering channels:");
         logger.debug("  " + "ShellCom:");
         LinkedList<Pair<ChannelType, SelectableChannel>> comShellIC = this.shellComHandler.getInputChannels();
         this.registerChannels(ChannelType.Com, this.shellComHandler, comShellIC);
 
-        for (ServerComHandler comHandler : this.comHandlers) {
-            logger.debug("  " + "Com:");
-            LinkedList<Pair<ChannelType, SelectableChannel>> comIC = comHandler.getInputChannels();
-            this.registerChannels(ChannelType.Com, comHandler, comIC);
-        }
+        logger.debug("  " + "Socket:");
+        LinkedList<Pair<ChannelType, SelectableChannel>> socketIC = this.socketHandler.getInputChannels();
+        this.registerChannels(ChannelType.Network, this.socketHandler, socketIC);
     }
 
     public void updateSubscriptions() {
@@ -82,6 +92,11 @@ public class EventHandler {
         LinkedList<Pair<ChannelType, SelectableChannel>> shellComIC = this.shellHandler.getInputChannels();
         LinkedList<Pair<ChannelType, SelectableChannel>> shellComSubsIC = this.shellHandler.getSubscriptions();
         this.updateChannelSubscriptions(ChannelType.Com, shellComIC, shellComSubsIC);
+
+        logger.debug("  " + "Socket:");
+        LinkedList<Pair<ChannelType, SelectableChannel>> socketIC = this.socketHandler.getInputChannels();
+        LinkedList<Pair<ChannelType, SelectableChannel>> socketSubsIC = this.socketHandler.getSubscriptions();
+        this.updateChannelSubscriptions(ChannelType.Network, socketIC, socketSubsIC);
 
         for (ServerComHandler comHandler : this.comHandlers) {
             logger.debug("  " + "Com:");
@@ -116,6 +131,41 @@ public class EventHandler {
 
                     if (key.isReadable()) {
                         handler.process(channelType, key.channel());
+                    }
+
+                    if (this.socketHandler.hasClientPipe()) {
+                        Pair<Pipe, Pipe> clientPipes = this.socketHandler.getClientPipe();
+                        Pipe network_com = clientPipes.getLeft();
+                        Pipe com_network = clientPipes.getRight();
+
+                        ServerComHandler comHandler = new ServerComHandler(
+                            new LinkedList<Pair<ChannelType, SelectableChannel>>() {{
+                                add(new ImmutablePair<>(ChannelType.Network, network_com.source()));
+                            }},
+                            new LinkedList<Pair<ChannelType, SelectableChannel>>() {{
+                                add(new ImmutablePair<>(ChannelType.Network, com_network.sink()));
+                            }},
+                            this.runner,
+                            ChannelType.Network
+                        );
+
+                        logger.debug("Registering channels for new comHandler:");
+                        logger.debug("  " + "Com:");
+                        LinkedList<Pair<ChannelType, SelectableChannel>> comIC = comHandler.getInputChannels();
+                        this.registerChannels(ChannelType.Com, comHandler, comIC);
+                        this.comHandlers.push(comHandler);
+
+                        Pipe.SourceChannel com_network_channel = com_network.source();
+                        com_network_channel.configureBlocking(false);
+                        com_network_channel.register(
+                            selector,
+                            SelectionKey.OP_READ,
+                            new Object[] { this.socketHandler, ChannelType.Com }
+                        );
+                        logger.debug("    " + ChannelType.Network + " <== " + ChannelType.Com);
+
+                        this.socketHandler.addInputChannel(new ImmutablePair<>(ChannelType.Com, com_network.source()));
+                        this.socketHandler.addOutputChannel(new ImmutablePair<>(ChannelType.Com, network_com.sink()));
                     }
 
                     this.updateSubscriptions();
@@ -172,10 +222,9 @@ public class EventHandler {
 
                 logger.debug("    " + type + " <== " + item.getKey());
             } catch (IOException e) {
-                logger.warn("Cannot subscribe " + type + " to channel: " + item.getKey());
+                logger.warn("Cannot subscribe " + type + " to channel " + item.getKey() + ": " + e);
             }
         }
     }
-
 
 }

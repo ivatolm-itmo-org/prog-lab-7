@@ -6,10 +6,8 @@ package core.net.packet;
  * @author ivatolm
  */
 public enum PacketType {
-    CommandReq,
-    CommandResp,
-    ScriptReq,
-    ScriptResp,
-    ValidateIdReq,
-    ValidateIdResp
+    IdValidation,
+    NewCommands,
+    ScriptRequest,
+    OutputResponse
 }

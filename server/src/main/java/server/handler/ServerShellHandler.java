@@ -13,11 +13,11 @@ import org.slf4j.LoggerFactory;
 
 import core.command.Command;
 import core.command.arguments.Argument;
+import core.event.Event;
+import core.event.EventType;
 import core.handler.ChannelType;
 import core.handler.ShellHandler;
 import core.utils.NBChannelController;
-import server.event.ServerEvent;
-import server.event.ServerEventType;
 
 enum ServerShellHandlerState {
     Waiting(true),
@@ -174,7 +174,7 @@ public class ServerShellHandler extends ShellHandler<ServerShellHandlerState> {
         if (this.hasParsingResult()) {
             SinkChannel comChannel = (SinkChannel) this.getFirstOutputChannel(ChannelType.Com);
             LinkedList<Command> commands = this.getParsingResult();
-            ServerEvent event = new ServerEvent(ServerEventType.NewCommands, commands);
+            Event event = new Event(EventType.NewCommands, commands);
 
             try {
                 NBChannelController.write(comChannel, event);
@@ -191,7 +191,7 @@ public class ServerShellHandler extends ShellHandler<ServerShellHandlerState> {
     private void handleComIdValidationStart() {
         if (this.idArgForValidation != null) {
             SinkChannel comChannel = (SinkChannel) this.getFirstOutputChannel(ChannelType.Com);
-            ServerEvent event = new ServerEvent(ServerEventType.IdValidation, this.idArgForValidation);
+            Event event = new Event(EventType.IdValidation, this.idArgForValidation);
 
             try {
                 NBChannelController.write(comChannel, event);
@@ -225,16 +225,16 @@ public class ServerShellHandler extends ShellHandler<ServerShellHandlerState> {
 
     private void handleComIdValidationFinish() {
         SourceChannel comChannel = (SourceChannel) this.getFirstInputChannel(ChannelType.Com);
-        ServerEvent event;
+        Event event;
         try {
-            event = (ServerEvent) NBChannelController.read(comChannel);
+            event = (Event) NBChannelController.read(comChannel);
         } catch (IOException e) {
             System.err.println("Cannot read from the channel.");
             this.nextState(ServerShellHandlerState.Waiting);
             return;
         }
 
-        if (event.getType() == ServerEventType.IdValidation) {
+        if (event.getType() == EventType.IdValidation) {
             boolean result = (boolean) event.getData();
             this.setArgIdValidationResult(result);
 
@@ -248,16 +248,16 @@ public class ServerShellHandler extends ShellHandler<ServerShellHandlerState> {
 
     private void handleComReceiveOutput() {
         SourceChannel comChannel = (SourceChannel) this.getFirstInputChannel(ChannelType.Com);
-        ServerEvent event;
+        Event event;
         try {
-            event = (ServerEvent) NBChannelController.read(comChannel);
+            event = (Event) NBChannelController.read(comChannel);
         } catch (IOException e) {
             // System.err.println("Cannot read from the channel.");
             this.nextState(ServerShellHandlerState.Waiting);
             return;
         }
 
-        if (event.getType() == ServerEventType.NewCommands) {
+        if (event.getType() == EventType.NewCommands) {
             @SuppressWarnings("unchecked")
             LinkedList<String> result = (LinkedList<String>) event.getData();
 

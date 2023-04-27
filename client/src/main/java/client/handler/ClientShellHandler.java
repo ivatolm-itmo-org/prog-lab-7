@@ -11,10 +11,10 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import client.event.ClientEvent;
-import client.event.ClientEventType;
 import core.command.Command;
 import core.command.arguments.Argument;
+import core.event.Event;
+import core.event.EventType;
 import core.handler.ChannelType;
 import core.handler.ShellHandler;
 import core.utils.NBChannelController;
@@ -78,7 +78,7 @@ public class ClientShellHandler extends ShellHandler<ClientShellHandlerState> {
         switch (type) {
             case Input:
             case Com:
-                this.readyChannels.add(type);
+                this.readyChannels = new LinkedList<ChannelType>() {{ add(type); }};
                 break;
             default:
                 System.err.println("Unexpected channel.");
@@ -134,6 +134,8 @@ public class ClientShellHandler extends ShellHandler<ClientShellHandlerState> {
         logger.debug("Ready channels: " + this.readyChannels);
         if (this.readyChannels.contains(ChannelType.Input)) {
             this.nextState(ClientShellHandlerState.InputParsingStart);
+        } else if (this.readyChannels.contains(ChannelType.Com)) {
+            this.nextState(ClientShellHandlerState.ComReceiveOutput);
         }
     }
 
@@ -169,7 +171,7 @@ public class ClientShellHandler extends ShellHandler<ClientShellHandlerState> {
         if (this.hasParsingResult()) {
             SinkChannel comChannel = (SinkChannel) this.getFirstOutputChannel(ChannelType.Com);
             LinkedList<Command> commands = this.getParsingResult();
-            ClientEvent event = new ClientEvent(ClientEventType.NewCommands, commands);
+            Event event = new Event(EventType.NewCommands, commands);
 
             try {
                 NBChannelController.write(comChannel, event);
@@ -186,7 +188,7 @@ public class ClientShellHandler extends ShellHandler<ClientShellHandlerState> {
     private void handleComIdValidationStart() {
         if (this.idArgForValidation != null) {
             SinkChannel comChannel = (SinkChannel) this.getFirstOutputChannel(ChannelType.Com);
-            ClientEvent event = new ClientEvent(ClientEventType.IdValidation, this.idArgForValidation);
+            Event event = new Event(EventType.IdValidation, this.idArgForValidation);
 
             try {
                 NBChannelController.write(comChannel, event);
@@ -220,16 +222,16 @@ public class ClientShellHandler extends ShellHandler<ClientShellHandlerState> {
 
     private void handleComIdValidationFinish() {
         SourceChannel comChannel = (SourceChannel) this.getFirstInputChannel(ChannelType.Com);
-        ClientEvent event;
+        Event event;
         try {
-            event = (ClientEvent) NBChannelController.read(comChannel);
+            event = (Event) NBChannelController.read(comChannel);
         } catch (IOException e) {
             System.err.println("Cannot read from the channel.");
             this.nextState(ClientShellHandlerState.Waiting);
             return;
         }
 
-        if (event.getType() == ClientEventType.IdValidation) {
+        if (event.getType() == EventType.IdValidation) {
             boolean result = (boolean) event.getData();
             this.setArgIdValidationResult(result);
 
@@ -243,16 +245,16 @@ public class ClientShellHandler extends ShellHandler<ClientShellHandlerState> {
 
     private void handleComReceiveOutput() {
         SourceChannel comChannel = (SourceChannel) this.getFirstInputChannel(ChannelType.Com);
-        ClientEvent event;
+        Event event;
         try {
-            event = (ClientEvent) NBChannelController.read(comChannel);
+            event = (Event) NBChannelController.read(comChannel);
         } catch (IOException e) {
             // System.err.println("Cannot read from the channel.");
             this.nextState(ClientShellHandlerState.Waiting);
             return;
         }
 
-        if (event.getType() == ClientEventType.NewCommands) {
+        if (event.getType() == EventType.NewCommands) {
             @SuppressWarnings("unchecked")
             LinkedList<String> result = (LinkedList<String>) event.getData();
 

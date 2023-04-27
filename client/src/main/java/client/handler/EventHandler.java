@@ -34,6 +34,9 @@ public class EventHandler {
     // Shell handler
     private ClientShellHandler shellHandler;
 
+    // Socket handler
+    private ClientSocketHandler socketHandler;
+
     /**
      * Constructs new {@code EventHandler} with provided arguments.
      *
@@ -42,9 +45,11 @@ public class EventHandler {
      * @throws IOException if cannot setup {@code Selector}
      */
     public EventHandler(ClientShellHandler shellHandler,
-                        ClientComHandler comHandler) throws IOException {
+                        ClientComHandler comHandler,
+                        ClientSocketHandler socketHandler) throws IOException {
         this.shellHandler = shellHandler;
         this.comHandler = comHandler;
+        this.socketHandler = socketHandler;
 
         this.selector = Selector.open();
 
@@ -56,6 +61,10 @@ public class EventHandler {
         logger.debug("  " + "Com:");
         LinkedList<Pair<ChannelType, SelectableChannel>> comIC = this.comHandler.getInputChannels();
         this.registerChannels(ChannelType.Com, comIC);
+
+        logger.debug("  " + "Network:");
+        LinkedList<Pair<ChannelType, SelectableChannel>> socketIC = this.socketHandler.getInputChannels();
+        this.registerChannels(ChannelType.Network, socketIC);
     }
 
     public void updateSubscriptions() {
@@ -70,6 +79,11 @@ public class EventHandler {
         LinkedList<Pair<ChannelType, SelectableChannel>> comIC = this.comHandler.getInputChannels();
         LinkedList<Pair<ChannelType, SelectableChannel>> comSubsIC = this.comHandler.getSubscriptions();
         this.updateChannelSubscriptions(ChannelType.Com, comIC, comSubsIC);
+
+        logger.debug("  " + "Network:");
+        LinkedList<Pair<ChannelType, SelectableChannel>> socketIC = this.socketHandler.getInputChannels();
+        LinkedList<Pair<ChannelType, SelectableChannel>> socketSubsIC = this.socketHandler.getSubscriptions();
+        this.updateChannelSubscriptions(ChannelType.Network, socketIC, socketSubsIC);
     }
 
     /**
@@ -102,6 +116,12 @@ public class EventHandler {
                         case Com:
                             if (key.isReadable()) {
                                 this.comHandler.process(channelType, key.channel());
+                            }
+                            break;
+
+                        case Network:
+                            if (key.isReadable()) {
+                                this.socketHandler.process(channelType, key.channel());
                             }
                             break;
 
