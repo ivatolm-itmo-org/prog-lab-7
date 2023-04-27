@@ -1,5 +1,6 @@
 package client.handler;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.channels.SelectableChannel;
 import java.nio.channels.Pipe.SinkChannel;
@@ -261,7 +262,13 @@ public class ClientComHandler extends ComHandler<ClientComHandlerState> {
         Event data = (Event) this.stateData;
         @SuppressWarnings("unchecked")
         LinkedList<String> filename = (LinkedList<String>) data.getData();
-        LinkedList<Command> commands = this.contentManager.get(filename.getFirst());
+
+        LinkedList<Command> commands = null;
+        try {
+            commands = this.contentManager.get(filename.getFirst());
+        } catch (FileNotFoundException e) {
+            logger.info("Resource was not found.");
+        }
 
         Event respNCSR = new Event(EventType.ScriptRequest, commands);
 

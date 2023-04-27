@@ -2,6 +2,7 @@ package client.shell;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Path;
@@ -55,9 +56,15 @@ public class ContentManager {
      * @param filename filename of the resource
      * @return content of the resource or null if it doesnt exist
      */
-    public LinkedList<Command> get(String filename) {
+    public LinkedList<Command> get(String filename) throws FileNotFoundException {
         String path = Path.of(filename).toAbsolutePath().toString();
-        return this.resources.get(path);
+        LinkedList<Command> result = this.resources.get(path);
+
+        if (result == null) {
+            throw new FileNotFoundException("Resource wasn't found.");
+        }
+
+        return result;
     }
 
     /**

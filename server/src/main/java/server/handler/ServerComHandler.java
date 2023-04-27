@@ -250,6 +250,26 @@ public class ServerComHandler extends ComHandler<ServerComHandlerState> {
         @SuppressWarnings("unchecked")
         LinkedList<Command> commands = (LinkedList<Command>) response.getData();
 
+        if (commands == null) {
+            logger.info("File wasn't found on client. Sending output...");
+            LinkedList<String> programOutput = this.runner.getProgramOutput();
+            if (programOutput == null) {
+                programOutput = new LinkedList<>();
+            }
+
+            Event respNC = new Event(EventType.OutputResponse, programOutput);
+            SinkChannel channel = (SinkChannel) this.getFirstOutputChannel(this.channelType);
+            try {
+                NBChannelController.write(channel, respNC);
+            } catch (IOException e) {
+                System.err.println("Cannot write to the channel.");
+                this.nextState(ServerComHandlerState.Error);
+                return;
+            }
+            this.nextState(ServerComHandlerState.FinishRequest);
+            return;
+        }
+
         boolean errorOccured = false;
         String errorMessage = null;
         try {
