@@ -240,7 +240,8 @@ public class ClientComHandler extends ComHandler<ClientComHandlerState> {
     }
 
     private void handleIVProcessing() {
-        boolean result = (boolean) this.stateData;
+        Event data = (Event) this.stateData;
+        boolean result = (boolean) data.getData();
 
         Event respIV = new Event(EventType.IdValidation, result);
 
@@ -257,8 +258,10 @@ public class ClientComHandler extends ComHandler<ClientComHandlerState> {
     }
 
     private void handleNCProcessingSR() {
-        String filename = (String) this.stateData;
-        LinkedList<Command> commands = this.contentManager.get(filename);
+        Event data = (Event) this.stateData;
+        @SuppressWarnings("unchecked")
+        LinkedList<String> filename = (LinkedList<String>) data.getData();
+        LinkedList<Command> commands = this.contentManager.get(filename.getFirst());
 
         Event respNCSR = new Event(EventType.ScriptRequest, commands);
 

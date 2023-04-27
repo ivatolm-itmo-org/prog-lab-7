@@ -2,6 +2,8 @@ package core.net.packet;
 
 import java.io.Serializable;
 
+import core.event.EventType;
+
 /**
  * Class representing communication packet used
  * by client and server.
@@ -11,7 +13,7 @@ import java.io.Serializable;
 public class Packet implements Serializable {
 
     // Type of packet
-    private PacketType type;
+    private EventType type;
 
     // Data of packet
     private Object data;
@@ -22,7 +24,7 @@ public class Packet implements Serializable {
      * @param type type of the packet
      * @param data data of the packet
      */
-    public Packet(PacketType type, Object data) {
+    public Packet(EventType type, Object data) {
         this.type = type;
         this.data = data;
     }
@@ -30,7 +32,7 @@ public class Packet implements Serializable {
     /**
      * @return type of the packet
      */
-    public PacketType getType() {
+    public EventType getType() {
         return this.type;
     }
 

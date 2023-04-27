@@ -14,11 +14,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import core.event.Event;
+import core.event.EventType;
 import core.handler.ChannelType;
 import core.handler.SocketHandler;
 import core.net.Com;
 import core.net.packet.Packet;
-import core.net.packet.PacketType;
 import core.utils.NBChannelController;
 
 enum ClientSocketHandlerState {
@@ -38,6 +38,7 @@ public class ClientSocketHandler extends SocketHandler<DatagramChannel, ClientSo
     private Pair<Integer, LinkedList<Packet>> message;
 
     // State data
+    @SuppressWarnings("unused")
     private Object stateData;
 
     /**
@@ -124,7 +125,7 @@ public class ClientSocketHandler extends SocketHandler<DatagramChannel, ClientSo
             return;
         }
 
-        Packet packet = new Packet(PacketType.NewCommands, reqNC);
+        Packet packet = new Packet(EventType.NewCommands, reqNC);
         this.networkCom.send(packet, null);
 
         this.nextState(ClientSocketHandlerState.Waiting);

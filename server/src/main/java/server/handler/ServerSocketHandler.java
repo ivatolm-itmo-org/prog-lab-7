@@ -10,7 +10,6 @@ import java.nio.channels.Pipe.SourceChannel;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.Set;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -22,7 +21,6 @@ import core.handler.ChannelType;
 import core.handler.SocketHandler;
 import core.net.Com;
 import core.net.packet.Packet;
-import core.net.packet.PacketType;
 import core.utils.NBChannelController;
 
 enum ServerSocketHandlerState {
@@ -78,7 +76,6 @@ public class ServerSocketHandler extends SocketHandler<DatagramChannel, ServerSo
 
         switch (type) {
             case Com:
-                // this.readyChannels = new LinkedList<ChannelType>() {{ add(type); }};
             case Network:
                 this.readyChannels = new LinkedList<ChannelType>() {{ add(type); }};
 
@@ -192,6 +189,10 @@ public class ServerSocketHandler extends SocketHandler<DatagramChannel, ServerSo
         SocketAddress client = data.getKey();
         Packet packet = data.getValue();
 
+        if (this.messages.get(client) == null) {
+            this.messages.put(client, new ImmutablePair<>(1, new LinkedList<>()));
+        }
+
         Pair<Integer, LinkedList<Packet>> message = this.messages.get(client);
         Integer requiredLength = message.getLeft();
         LinkedList<Packet> receivedPackets = message.getRight();
@@ -230,7 +231,7 @@ public class ServerSocketHandler extends SocketHandler<DatagramChannel, ServerSo
     }
 
     private void handleNewComEvent() {
-        SourceChannel inputChannel = (SourceChannel) this.getFirstInputChannel(ChannelType.Com);
+        SourceChannel inputChannel = (SourceChannel) this.channel;
 
         Event reqNC;
         try {
@@ -243,8 +244,7 @@ public class ServerSocketHandler extends SocketHandler<DatagramChannel, ServerSo
 
         SocketAddress address = this.clientCA.get(this.channel);
 
-        // TODO: DO NOT FORGET TO CHANGE EVENT TYPE ON THE EVENT THAT YOU RECEIVE
-        Packet packet = new Packet(PacketType.NewCommands, reqNC);
+        Packet packet = new Packet(reqNC.getType(), reqNC);
         this.networkCom.send(packet, address);
 
         this.nextState(ServerSocketHandlerState.Waiting);
