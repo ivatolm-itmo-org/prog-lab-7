@@ -223,7 +223,7 @@ public class ClientComHandler extends ComHandler<ClientComHandlerState> {
 
         this.stateData = response;
 
-        logger.info(""+response.getType());
+        // logger.info(""+response.getType());
         switch (response.getType()) {
             case IdValidation:
                 this.nextState(ClientComHandlerState.IVProcessing);

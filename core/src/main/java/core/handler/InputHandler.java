@@ -19,12 +19,16 @@ public class InputHandler implements Runnable {
     // Scanner
     private Scanner scanner;
 
+    // Should close flag
+    private boolean shouldClose;
+
     /**
      * Constructs new {@code InputHandler} with provided arguments.
      */
     public InputHandler(Pipe.SinkChannel outputChannel) {
         this.outputChannel = outputChannel;
         this.scanner = new Scanner(System.in);
+        this.shouldClose = false;
     }
 
     /**
@@ -33,7 +37,7 @@ public class InputHandler implements Runnable {
      */
     @Override
     public void run() {
-        while (true) {
+        while (!shouldClose) {
             String value = this.scanner.nextLine();
 
             try {
@@ -42,6 +46,10 @@ public class InputHandler implements Runnable {
                 System.err.println("Cannot write to buffer: " + e);
             }
         }
+    }
+
+    public void close() {
+        this.shouldClose = true;
     }
 
 }

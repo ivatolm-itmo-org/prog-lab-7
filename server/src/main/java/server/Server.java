@@ -131,6 +131,8 @@ public class Server
 
         eventHandler.run();
 
+        inputHandler.close();
+
         try {
             inputHandlerThread.join();
         } catch (InterruptedException e) {

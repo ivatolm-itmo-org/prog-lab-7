@@ -124,6 +124,8 @@ public class Client {
 
         eventHandler.run();
 
+        inputHandler.close();
+
         try {
             inputHandlerThread.join();
         } catch (InterruptedException e) {

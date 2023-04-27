@@ -72,12 +72,7 @@ public abstract class ShellHandler<S extends Enum<?>> extends Handler<ChannelTyp
                 try {
                     this.parser.setIdValidationResult(this.argIdValidationResult);
                 } catch (ArgumentCheckFailedException e) {
-                    System.err.println(e.getMessage());
-                    CommandType cmdType = this.parser.getCurrentCommandType();
-                    int argCnt = this.parser.getCurrentArgumentsCnt();
-
-                    String greeting = "Enter" + " " + "'" + cmdType.getArgument(argCnt).getGreetingMsg() + "'";
-                    System.out.print(greeting);
+                    // error will be printed later
                 }
             } else {
                 return;

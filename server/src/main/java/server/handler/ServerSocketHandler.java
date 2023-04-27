@@ -215,7 +215,7 @@ public class ServerSocketHandler extends SocketHandler<DatagramChannel, ServerSo
         this.messages.remove(address);
 
         Event event = (Event) message.getValue().getLast().getData();
-        logger.info("Event type: " + event.getType());
+        // logger.info("Event type: " + event.getType());
 
         SelectableChannel outputChannel = this.clientAC.get(address);
         SinkChannel channel = (SinkChannel) outputChannel;

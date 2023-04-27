@@ -265,13 +265,13 @@ public class Parser {
     public void setIdValidationResult(boolean result) throws ArgumentCheckFailedException {
         if (result) {
             this.args.add(this.argForIdValidation);
+            this.argForIdValidation = null;
         } else {
+            this.argForIdValidation = null;
             int argId = this.args.size();
             Argument argType = this.cmdType.getArgument(argId);
             throw new ArgumentCheckFailedException(argType.getErrorMsg());
         }
-
-        this.argForIdValidation = null;
     }
 
     /**

@@ -168,6 +168,11 @@ public class EventHandler {
                         this.socketHandler.addOutputChannel(new ImmutablePair<>(ChannelType.Com, network_com.sink()));
                     }
 
+                    if (!this.runner.isRunning()) {
+                        logger.info("Exiting...");
+                        return;
+                    }
+
                     this.updateSubscriptions();
                     break;
                 }

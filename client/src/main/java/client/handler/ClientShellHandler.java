@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import core.command.Command;
+import core.command.CommandType;
 import core.command.arguments.Argument;
 import core.event.Event;
 import core.event.EventType;
@@ -27,7 +28,8 @@ enum ClientShellHandlerState {
     ComIdValidationStart(false),
     ComIdValidationWaiting(true),
     ComIdValidationFinish(false),
-    ComReceiveOutput(false)
+    ComReceiveOutput(false),
+    Close(true)
     ;
 
     private boolean isWaiting = false;
@@ -57,6 +59,9 @@ public class ClientShellHandler extends ShellHandler<ClientShellHandlerState> {
     // Id for validation
     private Argument idArgForValidation;
 
+    // Should close flag
+    private boolean shouldClose;
+
     /**
      * Constructs new {@code ClientShellHandler} with provided arguments.
      *
@@ -69,6 +74,7 @@ public class ClientShellHandler extends ShellHandler<ClientShellHandlerState> {
 
         this.input = null;
         this.idArgForValidation = null;
+        this.shouldClose = false;
     }
 
     @Override
@@ -119,6 +125,9 @@ public class ClientShellHandler extends ShellHandler<ClientShellHandlerState> {
                 case ComReceiveOutput:
                     this.handleComReceiveOutput();
                     break;
+                case Close:
+                    this.handleClose();
+                    break;
             }
 
             logger.trace("State: " + stState + " -> " + this.getState());
@@ -155,6 +164,7 @@ public class ClientShellHandler extends ShellHandler<ClientShellHandlerState> {
     private void handleInputParsingProcessing() {
         logger.debug("Parsing command...");
         this.parseCommands(new LinkedList<>(Arrays.asList(input)));
+        this.input = null;
         logger.debug("Parsing completed");
 
         logger.debug("Has argument for id validation: " + this.hasArgForIdValidation());
@@ -171,6 +181,13 @@ public class ClientShellHandler extends ShellHandler<ClientShellHandlerState> {
         if (this.hasParsingResult()) {
             SinkChannel comChannel = (SinkChannel) this.getFirstOutputChannel(ChannelType.Com);
             LinkedList<Command> commands = this.getParsingResult();
+            for (Command cmd : commands) {
+                if (cmd.getType() == CommandType.EXIT) {
+                    this.nextState(ClientShellHandlerState.Close);
+                    return;
+                }
+            }
+
             Event event = new Event(EventType.NewCommands, commands);
 
             try {
@@ -215,7 +232,7 @@ public class ClientShellHandler extends ShellHandler<ClientShellHandlerState> {
             return;
         }
 
-        if (!this.readyChannels.contains(ChannelType.Com)) {
+        if (this.readyChannels.contains(ChannelType.Com)) {
             this.nextState(ClientShellHandlerState.ComIdValidationFinish);
         }
     }
@@ -266,6 +283,14 @@ public class ClientShellHandler extends ShellHandler<ClientShellHandlerState> {
         } else {
             this.nextState(ClientShellHandlerState.Waiting);
         }
+    }
+
+    private void handleClose() {
+        this.shouldClose = true;
+    }
+
+    public boolean shouldClose() {
+        return this.shouldClose;
     }
 
 }

@@ -110,6 +110,10 @@ public class EventHandler {
                         case Shell:
                             if (key.isReadable()) {
                                 this.shellHandler.process(channelType, key.channel());
+                                if (this.shellHandler.shouldClose()) {
+                                    logger.info("Exiting...");
+                                    return;
+                                }
                             }
                             break;
 

@@ -209,13 +209,13 @@ public class ServerComHandler extends ComHandler<ServerComHandlerState> {
 
         this.stateData = response;
 
-        logger.info("Response type: " + response.getType());
+        // logger.info("Response type: " + response.getType());
         switch (response.getType()) {
             case NewCommands:
                 this.nextState(ServerComHandlerState.NCProcessing);
                 break;
             case ScriptRequest:
-                logger.info("" + response.getData());
+                // logger.info("" + response.getData());
                 this.nextState(ServerComHandlerState.NCProcessing);
                 break;
             default:
