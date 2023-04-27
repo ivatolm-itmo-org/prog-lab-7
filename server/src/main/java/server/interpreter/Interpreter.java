@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.LinkedList;
+import java.util.stream.Collectors;
 
 import core.command.Command;
 import core.command.CommandInfo;
@@ -84,7 +85,7 @@ public class Interpreter {
     public String[] exec(Command cmd) {
         LinkedList<Argument> args = cmd.getArgsValues();
 
-        if (this.history.size() > 100) {
+        if (this.history.size() > 12) {
             this.history.removeFirst();
         }
 
@@ -171,6 +172,7 @@ public class Interpreter {
         // Finding length of the longest name-description
         final int gap = 4;
         int length = 0;
+
         for (CommandType c : CommandType.values()) {
             CommandInfo info = c.getInfo();
             int nameDescriptionLength = info.getName().length();
@@ -223,9 +225,13 @@ public class Interpreter {
     private String[] show(LinkedList<Argument> args) {
         String result = "";
 
-        for (HumanBeing hb : Interpreter.collection) {
-            result += hb.toString() + '\n' + '\n';
-        }
+        result = Interpreter.collection.stream()
+            .map(hb -> hb.toString() + '\n' + '\n')
+            .collect(Collectors.joining());
+
+        // for (HumanBeing hb : Interpreter.collection) {
+        //     result += hb.toString() + '\n' + '\n';
+        // }
 
         this.commandOutput = result;
 
@@ -436,11 +442,15 @@ public class Interpreter {
     private String[] history(LinkedList<Argument> args) {
         String result = "";
 
-        for (int i = 0; i < Math.min(12, this.history.size()); i++) {
-            Command cmd = this.history.get(i);
+        // for (int i = 0; i < Math.min(12, this.history.size()); i++) {
+        //     Command cmd = this.history.get(i);
 
-            result += cmd.getType().name() + '\n';
-        }
+        //     result += cmd.getType().name() + '\n';
+        // }
+
+        result = this.history.stream()
+            .map(h -> h.getType().name() + '\n')
+            .collect(Collectors.joining());
 
         this.commandOutput = result;
 
