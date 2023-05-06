@@ -27,24 +27,19 @@ public class NBChannelController {
      * @throws IOException if failed to read from channel
      */
     public static Serializable read(ReadableByteChannel channel) throws IOException {
-        int readCnt;
+        int readCnt = 0;
 
         ByteBuffer lengthBuffer = ByteBuffer.allocate(LENGTH_FIELD_SIZE);
-        readCnt = channel.read(lengthBuffer);
-        if (readCnt != LENGTH_FIELD_SIZE) {
-            throw new IOException(
-                "Cannot read object from channel: " + readCnt + " != " + LENGTH_FIELD_SIZE
-            );
+        while (readCnt != LENGTH_FIELD_SIZE) {
+            readCnt += channel.read(lengthBuffer);
         }
 
         int length = SerializationUtils.deserialize(lengthBuffer.array());
 
+        readCnt = 0;
         ByteBuffer objectBuffer = ByteBuffer.allocate(length);
-        readCnt = channel.read(objectBuffer);
-        if (readCnt != length) {
-            throw new IOException(
-                "Cannot read object from channel: " + readCnt + " != " + length
-            );
+        while (readCnt != length) {
+            readCnt += channel.read(objectBuffer);
         }
 
         Serializable object = SerializationUtils.deserialize(objectBuffer.array());
@@ -59,22 +54,24 @@ public class NBChannelController {
      * @throws IOException if failed to write to channel
      */
     public static void write(WritableByteChannel channel, Serializable object) throws IOException {
+        int writeCnt;
+
         byte[] objectBytes = SerializationUtils.serialize(object);
         byte[] objectLengthBytes = SerializationUtils.serialize(objectBytes.length);
 
-        ByteBuffer objectLengthBuffer = ByteBuffer.allocate(LENGTH_FIELD_SIZE);
-        ByteBuffer.wrap(objectLengthBytes);
-
-        if (objectLengthBuffer.capacity() != LENGTH_FIELD_SIZE) {
-            throw new IOException("Cannot write object to channel: " +
-                                  objectLengthBuffer.capacity() +
-                                  " != " +
-                                  LENGTH_FIELD_SIZE
+        writeCnt = channel.write(ByteBuffer.wrap(objectLengthBytes));
+        if (writeCnt != LENGTH_FIELD_SIZE) {
+            throw new IOException(
+                "Cannot write object to channel: " + writeCnt + " != " + LENGTH_FIELD_SIZE
             );
         }
 
-        channel.write(ByteBuffer.wrap(objectLengthBytes));
-        channel.write(ByteBuffer.wrap(objectBytes));
+        writeCnt = channel.write(ByteBuffer.wrap(objectBytes));
+        if (writeCnt != objectBytes.length) {
+            throw new IOException(
+                "Cannot write object to channel: " + writeCnt + " != " + objectBytes.length
+            );
+        }
     }
 
 }
