@@ -200,10 +200,9 @@ public class ServerSocketHandler extends SocketHandler<DatagramChannel, ServerSo
         SinkChannel clientChannelOutput = (SinkChannel) clientChannel;
         try {
             NBChannelController.write(clientChannelOutput, reqCL);
-        } catch (IOException e) {
+        } catch (IOException | NullPointerException e) {
             System.err.println("Cannot write to the channel.");
             this.nextState(ServerSocketHandlerState.Error);
-            return;
         }
 
         this.knownClients.remove(address);
