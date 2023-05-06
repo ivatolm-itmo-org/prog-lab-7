@@ -36,7 +36,7 @@ enum ClientSocketHandlerState {
 
 public class ClientSocketHandler extends SocketHandler<DatagramChannel, ClientSocketHandlerState> {
 
-    private static final int PING_DELAY = 250;
+    private static final int PING_DELAY = 100;
 
     // Logger
     private static final Logger logger = LoggerFactory.getLogger("SocketHandler");

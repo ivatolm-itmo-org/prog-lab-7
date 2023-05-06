@@ -279,7 +279,7 @@ public class ClientShellHandler extends ShellHandler<ClientShellHandlerState> {
                 System.out.println(line);
             }
 
-            this.nextState(ClientShellHandlerState.ComReceiveOutput);
+            this.nextState(ClientShellHandlerState.Waiting);
         } else {
             this.nextState(ClientShellHandlerState.Waiting);
         }
