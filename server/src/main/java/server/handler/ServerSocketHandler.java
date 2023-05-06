@@ -12,6 +12,8 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -63,6 +65,7 @@ public class ServerSocketHandler extends SocketHandler<DatagramChannel, ServerSo
     private Pair<Pipe, Pipe> newClientPipe;
 
     // Disconnection task
+    private Lock disconnectionLock;
     private Pipe disconnectionPipe;
 
     /**
@@ -81,6 +84,7 @@ public class ServerSocketHandler extends SocketHandler<DatagramChannel, ServerSo
         this.stateData = null;
         this.newClientPipe = null;
 
+        this.disconnectionLock = new ReentrantLock();
         this.disconnectionPipe = Pipe.open();
         this.inputChannels.add(new ImmutablePair<>(ChannelType.Internal, disconnectionPipe.source()));
     }
@@ -257,7 +261,11 @@ public class ServerSocketHandler extends SocketHandler<DatagramChannel, ServerSo
             task.cancel();
         }
 
-        TimerTask newTask = new DisconnectionTask(this.disconnectionPipe.sink(), client);
+        TimerTask newTask = new DisconnectionTask(
+            this.disconnectionLock,
+            this.disconnectionPipe.sink(),
+            client
+        );
         timer.schedule(newTask, DISCONNECTION_DELAY);
         this.timers.put(client, new ImmutablePair<>(timer, newTask));
 
