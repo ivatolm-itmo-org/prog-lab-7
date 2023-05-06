@@ -14,7 +14,7 @@ import core.models.humanBeing.HumanBeing;
 import core.net.Com;
 import server.database.CSVDatabase;
 import server.handler.ServerComHandler;
-import server.handler.EventHandler;
+import server.handler.ServerEventHandler;
 import server.handler.ServerShellHandler;
 import server.handler.ServerSocketHandler;
 import server.interpreter.Interpreter;
@@ -118,9 +118,9 @@ public class Server
             com
         );
 
-        EventHandler eventHandler = null;
+        ServerEventHandler eventHandler = null;
         try {
-            eventHandler = new EventHandler(shellHandler, shellComHandler, socketHandler, runner);
+            eventHandler = new ServerEventHandler(shellHandler, shellComHandler, socketHandler, runner);
         } catch (IOException e) {
             System.err.println("Error occured while starting event handler: " + e);
             return;
