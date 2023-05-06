@@ -10,6 +10,8 @@ import java.nio.channels.Pipe.SourceChannel;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -17,15 +19,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import core.event.Event;
+import core.event.EventType;
 import core.handler.ChannelType;
 import core.handler.SocketHandler;
 import core.net.Com;
 import core.net.packet.Packet;
 import core.utils.NBChannelController;
+import server.net.DisconnectionTask;
 
 enum ServerSocketHandlerState {
     Waiting,
     NewEvent,
+    ConnectionTimeout,
     NewNetworkEvent,
     NewNetworkPacket,
     CompletedMessage,
@@ -34,6 +39,8 @@ enum ServerSocketHandlerState {
 }
 
 public class ServerSocketHandler extends SocketHandler<DatagramChannel, ServerSocketHandlerState> {
+
+    private static final int DISCONNECTION_DELAY = 1000;
 
     // Logger
     private static final Logger logger = LoggerFactory.getLogger("SocketHandler");
@@ -47,12 +54,16 @@ public class ServerSocketHandler extends SocketHandler<DatagramChannel, ServerSo
     private HashMap<SocketAddress, SelectableChannel> clientAC = new HashMap<>();
     private HashMap<SelectableChannel, SocketAddress> clientCA = new HashMap<>();
     private HashMap<SocketAddress, Pair<Integer, LinkedList<Packet>>> messages = new HashMap<>();
+    private HashMap<SocketAddress, Pair<Timer, TimerTask>> timers = new HashMap<>();
 
     // State data
     private Object stateData;
 
     // Communicaton Handler
-    private Pair<Pipe, Pipe> clientPipe;
+    private Pair<Pipe, Pipe> newClientPipe;
+
+    // Disconnection task
+    private Pipe disconnectionPipe;
 
     /**
      * Constructs new {@code ServerComHandler} with provided arguments.
@@ -60,14 +71,18 @@ public class ServerSocketHandler extends SocketHandler<DatagramChannel, ServerSo
      * @param inputChannels input channels of the handler
      * @param outputChannels output channels of the handler
      * @param networkCom network communicator
+     * @throws IOException if cannot open a pipe
      */
     public ServerSocketHandler(LinkedList<Pair<ChannelType, SelectableChannel>> inputChannels,
                                LinkedList<Pair<ChannelType, SelectableChannel>> outputChannels,
-                               Com networkCom) {
+                               Com networkCom) throws IOException {
         super(inputChannels, outputChannels, ServerSocketHandlerState.Waiting, networkCom);
 
         this.stateData = null;
-        this.clientPipe = null;
+        this.newClientPipe = null;
+
+        this.disconnectionPipe = Pipe.open();
+        this.inputChannels.add(new ImmutablePair<>(ChannelType.Internal, disconnectionPipe.source()));
     }
 
     @Override
@@ -75,6 +90,7 @@ public class ServerSocketHandler extends SocketHandler<DatagramChannel, ServerSo
         logger.trace("New event from " + type);
 
         switch (type) {
+            case Internal:
             case Com:
             case Network:
                 this.readyChannels = new LinkedList<ChannelType>() {{ add(type); }};
@@ -103,6 +119,9 @@ public class ServerSocketHandler extends SocketHandler<DatagramChannel, ServerSo
                 case NewEvent:
                     this.handleNewEvent();
                     break;
+                case ConnectionTimeout:
+                    this.handleConnectionTimeout();
+                    break;
                 case NewNetworkEvent:
                     this.handleNewNetworkEvent();
                     break;
@@ -129,7 +148,8 @@ public class ServerSocketHandler extends SocketHandler<DatagramChannel, ServerSo
             return;
         }
 
-        if (this.readyChannels.contains(ChannelType.Network) ||
+        if (this.readyChannels.contains(ChannelType.Internal) ||
+            this.readyChannels.contains(ChannelType.Network) ||
             this.readyChannels.contains(ChannelType.Com)) {
 
             ChannelType[] channels = this.readyChannels.toArray(new ChannelType[0]);
@@ -141,6 +161,9 @@ public class ServerSocketHandler extends SocketHandler<DatagramChannel, ServerSo
 
     private void handleNewEvent() {
         switch (this.channelType) {
+            case Internal:
+                this.nextState(ServerSocketHandlerState.ConnectionTimeout);
+                break;
             case Network:
                 this.nextState(ServerSocketHandlerState.NewNetworkEvent);
                 break;
@@ -151,6 +174,41 @@ public class ServerSocketHandler extends SocketHandler<DatagramChannel, ServerSo
                 this.nextState(ServerSocketHandlerState.Error);
                 break;
         }
+    }
+
+    private void handleConnectionTimeout() {
+        SourceChannel inputChannel = (SourceChannel) this.channel;
+
+        Event reqDC;
+        try {
+            reqDC = (Event) NBChannelController.read(inputChannel);
+        } catch (IOException e) {
+            System.err.println("Cannot read from the channel.");
+            this.nextState(ServerSocketHandlerState.Error);
+            return;
+        }
+
+        SocketAddress address = (SocketAddress) reqDC.getData();
+        SelectableChannel clientChannel = this.clientAC.get(address);
+
+        Event reqCL = new Event(EventType.Close, null);
+
+        SinkChannel clientChannelOutput = (SinkChannel) clientChannel;
+        try {
+            NBChannelController.write(clientChannelOutput, reqCL);
+        } catch (IOException e) {
+            System.err.println("Cannot write to the channel.");
+            this.nextState(ServerSocketHandlerState.Error);
+            return;
+        }
+
+        this.knownClients.remove(address);
+        this.clientAC.remove(address);
+        this.clientCA.remove(channel);
+        this.messages.remove(address);
+        this.timers.remove(address);
+
+        this.nextState(ServerSocketHandlerState.Waiting);
     }
 
     private void handleNewNetworkEvent() {
@@ -176,7 +234,10 @@ public class ServerSocketHandler extends SocketHandler<DatagramChannel, ServerSo
             this.clientCA.put(client_socket.source(), address);
             this.messages.put(address, new ImmutablePair<>(1, new LinkedList<>()));
 
-            this.clientPipe = new ImmutablePair<>(socket_client, client_socket);
+            Timer timer = new Timer();
+            this.timers.put(address, new ImmutablePair<>(timer, null));
+
+            this.newClientPipe = new ImmutablePair<>(socket_client, client_socket);
 
             this.nextState(ServerSocketHandlerState.NewNetworkPacket);
         }
@@ -187,7 +248,24 @@ public class ServerSocketHandler extends SocketHandler<DatagramChannel, ServerSo
         Pair<SocketAddress, Packet> data = (Pair<SocketAddress, Packet>) this.stateData;
 
         SocketAddress client = data.getKey();
+
+        Pair<Timer, TimerTask> item = this.timers.get(client);
+        Timer timer = item.getLeft();
+        TimerTask task = item.getRight();
+
+        if (task != null) {
+            task.cancel();
+        }
+
+        TimerTask newTask = new DisconnectionTask(this.disconnectionPipe.sink(), client);
+        timer.schedule(newTask, DISCONNECTION_DELAY);
+        this.timers.put(client, new ImmutablePair<>(timer, newTask));
+
         Packet packet = data.getValue();
+        if (packet.getType() == EventType.Ping) {
+            this.nextState(ServerSocketHandlerState.Waiting);
+            return;
+        }
 
         if (this.messages.get(client) == null) {
             this.messages.put(client, new ImmutablePair<>(1, new LinkedList<>()));
@@ -256,13 +334,13 @@ public class ServerSocketHandler extends SocketHandler<DatagramChannel, ServerSo
         logger.warn("Error occured while processing the last state. Resetting...");
     }
 
-    public boolean hasClientPipe() {
-        return this.clientPipe != null;
+    public boolean hasNewClient() {
+        return this.newClientPipe != null;
     }
 
-    public Pair<Pipe, Pipe> getClientPipe() {
-        Pair<Pipe, Pipe> result = this.clientPipe;
-        this.clientPipe = null;
+    public Pair<Pipe, Pipe> getNewClientPipe() {
+        Pair<Pipe, Pipe> result = this.newClientPipe;
+        this.newClientPipe = null;
         return result;
     }
 

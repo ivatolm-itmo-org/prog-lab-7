@@ -27,6 +27,9 @@ public abstract class Handler<E extends Enum<?>, S extends Enum<?>> extends FSM<
     /** Ready channels */
     protected LinkedList<E> readyChannels;
 
+    // Is running
+    private boolean running;
+
     /**
      * Constructs new {@code Handler} with provided arguments.
      *
@@ -42,6 +45,7 @@ public abstract class Handler<E extends Enum<?>, S extends Enum<?>> extends FSM<
         this.outputChannels = outputChannels;
         this.subscriptions = this.inputChannels;
         this.readyChannels = new LinkedList<>();
+        this.running = true;
     }
 
     /**
@@ -137,6 +141,13 @@ public abstract class Handler<E extends Enum<?>, S extends Enum<?>> extends FSM<
     }
 
     /**
+     * Sets running flag to false.
+     */
+    protected void setNotRunning() {
+        this.running = false;
+    }
+
+    /**
      * Returns all input channels that of the handler.
      *
      * @return input channels of the handler
@@ -171,6 +182,15 @@ public abstract class Handler<E extends Enum<?>, S extends Enum<?>> extends FSM<
      */
     public void addOutputChannel(Pair<E, SelectableChannel> oc) {
         this.outputChannels.add(oc);
+    }
+
+    /**
+     * Returns running state of the Handler.
+     *
+     * @return true if running, else false
+     */
+    public boolean isRunning() {
+        return this.running;
     }
 
 }

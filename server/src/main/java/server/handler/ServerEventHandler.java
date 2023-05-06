@@ -121,7 +121,7 @@ public class ServerEventHandler extends EventHandler<ChannelType> {
                     Object[] attachments = (Object[]) key.attachment();
 
                     @SuppressWarnings("unchecked")
-                    Handler<ChannelType,?> handler = (Handler<ChannelType,?>) attachments[0];
+                    Handler<ChannelType, ?> handler = (Handler<ChannelType,?>) attachments[0];
                     ChannelType channelType = (ChannelType) attachments[1];
 
                     logger.trace("Event on " + channelType + " for " + handler);
@@ -130,7 +130,11 @@ public class ServerEventHandler extends EventHandler<ChannelType> {
                         handler.process(channelType, key.channel());
                     }
 
-                    if (this.socketHandler.hasClientPipe()) {
+                    if (!handler.isRunning()) {
+                        logger.debug("Shutting down handler...");
+                        this.removeHandler(handler);
+                        logger.debug("Handler was shut down");
+                    } else if (this.socketHandler.hasNewClient()) {
                         logger.debug("Adding new client...");
                         this.addClient();
                         logger.debug("Adding new client done");
@@ -150,6 +154,8 @@ public class ServerEventHandler extends EventHandler<ChannelType> {
                     }
                     logger.debug("Updating subscriptions done");
 
+                    logger.debug("Connected clients count: " + this.comHandlers.size());
+
                     break;
                 }
 
@@ -162,7 +168,7 @@ public class ServerEventHandler extends EventHandler<ChannelType> {
     }
 
     private void addClient() throws IOException {
-        Pair<Pipe, Pipe> clientPipes = this.socketHandler.getClientPipe();
+        Pair<Pipe, Pipe> clientPipes = this.socketHandler.getNewClientPipe();
         Pipe network_com = clientPipes.getLeft();
         Pipe com_network = clientPipes.getRight();
 
@@ -192,6 +198,15 @@ public class ServerEventHandler extends EventHandler<ChannelType> {
 
         this.socketHandler.addInputChannel(new ImmutablePair<>(ChannelType.Com, com_network.source()));
         this.socketHandler.addOutputChannel(new ImmutablePair<>(ChannelType.Com, network_com.sink()));
+    }
+
+    void removeHandler(Handler<ChannelType, ?> handler) {
+        this.unsubscribeChannels(handler.getInputChannels());
+
+        // TODO: Handle situation of main handler failure
+        if (this.comHandlers.contains(handler)) {
+            this.comHandlers.remove(handler);
+        }
     }
 
 }

@@ -108,15 +108,21 @@ public class Server
             ChannelType.Shell
         );
 
-        ServerSocketHandler socketHandler = new ServerSocketHandler(
-            new LinkedList<Pair<ChannelType, SelectableChannel>>() {{
+        ServerSocketHandler socketHandler;
+        try {
+            socketHandler = new ServerSocketHandler(
+                new LinkedList<Pair<ChannelType, SelectableChannel>>() {{
 
-            }},
-            new LinkedList<Pair<ChannelType, SelectableChannel>>() {{
+                }},
+                new LinkedList<Pair<ChannelType, SelectableChannel>>() {{
 
-            }},
-            com
-        );
+                }},
+                com
+            );
+        } catch (IOException e) {
+            System.err.println("Cannot create socket handler: " + e);
+            return;
+        }
 
         ServerEventHandler eventHandler = null;
         try {

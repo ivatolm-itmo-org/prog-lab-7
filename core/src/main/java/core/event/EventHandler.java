@@ -125,4 +125,24 @@ public abstract class EventHandler<E extends Enum<?>> {
         }
     }
 
+    /**
+     * Unsubscribe channel from all operations.
+     *
+     * @param channel channel to unsubscribe
+     */
+    protected void unsubscribeChannel(SelectableChannel channel) {
+        channel.keyFor(this.selector).cancel();
+    }
+
+    /**
+     * Unsubscribe channels from all operations.
+     *
+     * @param channels channels to unsubscribe
+     */
+    protected void unsubscribeChannels(LinkedList<Pair<E, SelectableChannel>> channels) {
+        for (Pair<E, SelectableChannel> item : channels) {
+            this.unsubscribeChannel(item.getValue());
+        }
+    }
+
 }

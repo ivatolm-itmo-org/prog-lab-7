@@ -6,6 +6,7 @@ package core.handler;
  * @author ivatolm
  */
 public enum ChannelType {
+    Internal,
     Input,
     Com,
     Shell,

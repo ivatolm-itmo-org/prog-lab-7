@@ -9,5 +9,9 @@ public enum EventType {
     IdValidation,
     NewCommands,
     ScriptRequest,
-    OutputResponse
+    OutputResponse,
+    ConnectionTimeout,
+    PingTimeout,
+    Ping,
+    Close
 }

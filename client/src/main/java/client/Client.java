@@ -101,15 +101,21 @@ public class Client {
             new ContentManager("../res")
         );
 
-        ClientSocketHandler socketHandler = new ClientSocketHandler(
-            new LinkedList<Pair<ChannelType, SelectableChannel>>() {{
-                add(new ImmutablePair<>(ChannelType.Com, com_socket.source()));
-            }},
-            new LinkedList<Pair<ChannelType, SelectableChannel>>() {{
-                add(new ImmutablePair<>(ChannelType.Com, socket_com.sink()));
-            }},
-            com
-        );
+        ClientSocketHandler socketHandler;
+        try {
+            socketHandler = new ClientSocketHandler(
+                new LinkedList<Pair<ChannelType, SelectableChannel>>() {{
+                    add(new ImmutablePair<>(ChannelType.Com, com_socket.source()));
+                }},
+                new LinkedList<Pair<ChannelType, SelectableChannel>>() {{
+                    add(new ImmutablePair<>(ChannelType.Com, socket_com.sink()));
+                }},
+                com
+            );
+        } catch (IOException e) {
+            System.err.println("Cannot create socket handler: " + e);
+            return;
+        }
 
         EventHandler eventHandler = null;
         try {

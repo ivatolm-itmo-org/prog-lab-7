@@ -31,7 +31,8 @@ enum ServerComHandlerState {
     IVProcessing,
     NCProcessing,
     FinishRequest,
-    Error
+    Error,
+    Close
 }
 
 /**
@@ -124,6 +125,9 @@ public class ServerComHandler extends ComHandler<ServerComHandlerState> {
                 case Error:
                     this.handleError();
                     break;
+                case Close:
+                    this.handleClose();
+                    break;
             }
 
             logger.trace("State: " + stState + " -> " + this.getState());
@@ -171,6 +175,9 @@ public class ServerComHandler extends ComHandler<ServerComHandlerState> {
                 break;
             case NewCommands:
                 this.nextState(ServerComHandlerState.NCStart);
+                break;
+            case Close:
+                this.nextState(ServerComHandlerState.Close);
                 break;
             default:
                 this.nextState(ServerComHandlerState.Error);
@@ -332,6 +339,12 @@ public class ServerComHandler extends ComHandler<ServerComHandlerState> {
         logger.warn("Error occured while processing the last state. Resetting...");
 
         this.nextState(ServerComHandlerState.FinishRequest);
+    }
+
+    private void handleClose() {
+        this.setNotRunning();
+
+        this.nextState(ServerComHandlerState.Waiting);
     }
 
 }
