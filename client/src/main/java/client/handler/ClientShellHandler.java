@@ -6,6 +6,7 @@ import java.nio.channels.Pipe.SinkChannel;
 import java.nio.channels.Pipe.SourceChannel;
 import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.Optional;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -149,9 +150,16 @@ public class ClientShellHandler extends ShellHandler<ClientShellHandlerState> {
     }
 
     private void handleInputParsingStart() {
-        SourceChannel inputChannel = (SourceChannel) this.getFirstInputChannel(ChannelType.Input);
+        ChannelType type = ChannelType.Input;
+        Optional<SelectableChannel> ic = this.getFirstInputChannel(type);
+        if (!ic.isPresent()) {
+            logger.warn("Input channel " + type + " was not found.");
+            return;
+        }
+
+        SourceChannel channel = (SourceChannel) ic.get();
         try {
-            this.input = (String) NBChannelController.read(inputChannel);
+            this.input = (String) NBChannelController.read(channel);
         } catch (IOException e) {
             System.err.println("Cannot read from the channel.");
             this.nextState(ClientShellHandlerState.Waiting);
@@ -179,7 +187,14 @@ public class ClientShellHandler extends ShellHandler<ClientShellHandlerState> {
 
     private void handleInputParsingFinish() {
         if (this.hasParsingResult()) {
-            SinkChannel comChannel = (SinkChannel) this.getFirstOutputChannel(ChannelType.Com);
+            ChannelType type = ChannelType.Com;
+            Optional<SelectableChannel> oc = this.getFirstOutputChannel(type);
+            if (!oc.isPresent()) {
+                logger.warn("Output channel " + type + " was not found.");
+                return;
+            }
+
+            SinkChannel channel = (SinkChannel) oc.get();
             LinkedList<Command> commands = this.getParsingResult();
             for (Command cmd : commands) {
                 if (cmd.getType() == CommandType.EXIT) {
@@ -191,7 +206,7 @@ public class ClientShellHandler extends ShellHandler<ClientShellHandlerState> {
             Event event = new Event(EventType.NewCommands, commands);
 
             try {
-                NBChannelController.write(comChannel, event);
+                NBChannelController.write(channel, event);
             } catch (IOException e) {
                 System.err.println("Cannot write to the channel.");
                 this.nextState(ClientShellHandlerState.Waiting);
@@ -204,11 +219,18 @@ public class ClientShellHandler extends ShellHandler<ClientShellHandlerState> {
 
     private void handleComIdValidationStart() {
         if (this.idArgForValidation != null) {
-            SinkChannel comChannel = (SinkChannel) this.getFirstOutputChannel(ChannelType.Com);
+            ChannelType type = ChannelType.Com;
+            Optional<SelectableChannel> oc = this.getFirstOutputChannel(type);
+            if (!oc.isPresent()) {
+                logger.warn("Output channel " + type + " was not found.");
+                return;
+            }
+
+            SinkChannel channel = (SinkChannel) oc.get();
             Event event = new Event(EventType.IdValidation, this.idArgForValidation);
 
             try {
-                NBChannelController.write(comChannel, event);
+                NBChannelController.write(channel, event);
             } catch (IOException e) {
                 System.err.println("Cannot write to the channel.");
                 this.nextState(ClientShellHandlerState.Waiting);
@@ -238,10 +260,17 @@ public class ClientShellHandler extends ShellHandler<ClientShellHandlerState> {
     }
 
     private void handleComIdValidationFinish() {
-        SourceChannel comChannel = (SourceChannel) this.getFirstInputChannel(ChannelType.Com);
+        ChannelType type = ChannelType.Com;
+        Optional<SelectableChannel> ic = this.getFirstInputChannel(type);
+        if (!ic.isPresent()) {
+            logger.warn("Input channel " + type + " was not found.");
+            return;
+        }
+
+        SourceChannel channel = (SourceChannel) ic.get();
         Event event;
         try {
-            event = (Event) NBChannelController.read(comChannel);
+            event = (Event) NBChannelController.read(channel);
         } catch (IOException e) {
             System.err.println("Cannot read from the channel.");
             this.nextState(ClientShellHandlerState.Waiting);
@@ -261,10 +290,17 @@ public class ClientShellHandler extends ShellHandler<ClientShellHandlerState> {
     }
 
     private void handleComReceiveOutput() {
-        SourceChannel comChannel = (SourceChannel) this.getFirstInputChannel(ChannelType.Com);
+        ChannelType type = ChannelType.Com;
+        Optional<SelectableChannel> ic = this.getFirstInputChannel(type);
+        if (!ic.isPresent()) {
+            logger.warn("Input channel " + type + " was not found.");
+            return;
+        }
+
+        SourceChannel channel = (SourceChannel) ic.get();
         Event event;
         try {
-            event = (Event) NBChannelController.read(comChannel);
+            event = (Event) NBChannelController.read(channel);
         } catch (IOException e) {
             // System.err.println("Cannot read from the channel.");
             this.nextState(ClientShellHandlerState.Waiting);

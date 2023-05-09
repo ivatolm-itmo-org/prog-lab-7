@@ -3,6 +3,7 @@ package core.handler;
 import java.io.IOException;
 import java.nio.channels.SelectableChannel;
 import java.util.LinkedList;
+import java.util.Optional;
 
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -112,32 +113,32 @@ public abstract class Handler<E extends Enum<?>, S extends Enum<?>> extends FSM<
      * Returns first input channel of type {@code type}.
      *
      * @param type type of the channel
-     * @return input channel if exists, else null
+     * @return input channel
      */
-    protected SelectableChannel getFirstInputChannel(ChannelType type) {
+    protected Optional<SelectableChannel> getFirstInputChannel(ChannelType type) {
         for (Pair<E, SelectableChannel> ic : this.inputChannels) {
             if (ic.getKey() == type) {
-                return ic.getValue();
+                return Optional.of(ic.getValue());
             }
         }
 
-        return null;
+        return Optional.empty();
     }
 
     /**
      * Returns first output channel of type {@code type}.
      *
      * @param type type of the channel
-     * @return output channel if exists, else null
+     * @return output channel
      */
-    protected SelectableChannel getFirstOutputChannel(ChannelType type) {
+    protected Optional<SelectableChannel> getFirstOutputChannel(ChannelType type) {
         for (Pair<E, SelectableChannel> oc : this.outputChannels) {
             if (oc.getKey() == type) {
-                return oc.getValue();
+                return Optional.of(oc.getValue());
             }
         }
 
-        return null;
+        return Optional.empty();
     }
 
     /**

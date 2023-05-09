@@ -8,6 +8,7 @@ import java.nio.channels.SelectableChannel;
 import java.nio.channels.Pipe.SinkChannel;
 import java.nio.channels.Pipe.SourceChannel;
 import java.util.LinkedList;
+import java.util.Optional;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -136,12 +137,20 @@ public class ClientSocketHandler extends SocketHandler<DatagramChannel, ClientSo
     }
 
     private void handlePingTimeout() {
-        SourceChannel inputChannel = (SourceChannel) this.getFirstInputChannel(ChannelType.Internal);
+        ChannelType type = ChannelType.Internal;
+        Optional<SelectableChannel> ic = this.getFirstInputChannel(type);
+        if (!ic.isPresent()) {
+            logger.warn("Input channel " + type + " was not found.");
+            this.nextState(ClientSocketHandlerState.Error);
+            return;
+        }
+
+        SourceChannel channel = (SourceChannel) ic.get();
 
         @SuppressWarnings("unused")
         Event event;
         try {
-            event = (Event) NBChannelController.read(inputChannel);
+            event = (Event) NBChannelController.read(channel);
         } catch (IOException e) {
             System.err.println("Cannot read from the channel.");
             this.nextState(ClientSocketHandlerState.Waiting);
@@ -157,11 +166,19 @@ public class ClientSocketHandler extends SocketHandler<DatagramChannel, ClientSo
     }
 
     private void handleNewComEvent() {
-        SourceChannel inputChannel = (SourceChannel) this.getFirstInputChannel(ChannelType.Com);
+        ChannelType type = ChannelType.Com;
+        Optional<SelectableChannel> ic = this.getFirstInputChannel(type);
+        if (!ic.isPresent()) {
+            logger.warn("Input channel " + type + " was not found.");
+            this.nextState(ClientSocketHandlerState.Error);
+            return;
+        }
+
+        SourceChannel channel = (SourceChannel) ic.get();
 
         Event reqNC;
         try {
-            reqNC = (Event) NBChannelController.read(inputChannel);
+            reqNC = (Event) NBChannelController.read(channel);
         } catch (IOException e) {
             System.err.println("Cannot read from the channel.");
             this.nextState(ClientSocketHandlerState.Waiting);
@@ -198,8 +215,15 @@ public class ClientSocketHandler extends SocketHandler<DatagramChannel, ClientSo
         Event event = (Event) this.message.getValue().getLast().getData();
         this.message = null;
 
-        SelectableChannel outputChannel = this.getFirstOutputChannel(ChannelType.Com);
-        SinkChannel channel = (SinkChannel) outputChannel;
+        ChannelType type = ChannelType.Com;
+        Optional<SelectableChannel> oc = this.getFirstOutputChannel(type);
+        if (!oc.isPresent()) {
+            logger.warn("Output channel " + type + " was not found.");
+            this.nextState(ClientSocketHandlerState.Error);
+            return;
+        }
+
+        SinkChannel channel = (SinkChannel) oc.get();
         try {
             NBChannelController.write(channel, event);
         } catch (IOException e) {

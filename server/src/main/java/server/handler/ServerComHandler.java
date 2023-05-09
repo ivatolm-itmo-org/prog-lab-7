@@ -5,6 +5,7 @@ import java.nio.channels.SelectableChannel;
 import java.nio.channels.Pipe.SinkChannel;
 import java.nio.channels.Pipe.SourceChannel;
 import java.util.LinkedList;
+import java.util.Optional;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -160,7 +161,14 @@ public class ServerComHandler extends ComHandler<ServerComHandlerState> {
     }
 
     private void handleNewRequest() {
-        SourceChannel channel = (SourceChannel) this.getFirstInputChannel(this.channelType);
+        Optional<SelectableChannel> ic = this.getFirstInputChannel(this.channelType);
+        if (!ic.isPresent()) {
+            logger.warn("Input channel " + this.channelType + " was not found.");
+            this.nextState(ServerComHandlerState.Error);
+            return;
+        }
+
+        SourceChannel channel = (SourceChannel) ic.get();
         try {
             this.event = (Event) NBChannelController.read(channel);
         } catch (IOException e) {
@@ -204,7 +212,14 @@ public class ServerComHandler extends ComHandler<ServerComHandlerState> {
     }
 
     private void handleExistingRequest() {
-        SourceChannel channel = (SourceChannel) this.getFirstInputChannel(this.channelType);
+        Optional<SelectableChannel> ic = this.getFirstInputChannel(this.channelType);
+        if (!ic.isPresent()) {
+            logger.warn("Input channel " + this.channelType + " was not found.");
+            this.nextState(ServerComHandlerState.Error);
+            return;
+        }
+
+        SourceChannel channel = (SourceChannel) ic.get();
         Event response = null;
         try {
             response = (Event) NBChannelController.read(channel);
@@ -239,7 +254,14 @@ public class ServerComHandler extends ComHandler<ServerComHandlerState> {
 
         Event respIV = new Event(EventType.IdValidation, result);
 
-        SinkChannel channel = (SinkChannel) this.getFirstOutputChannel(this.channelType);
+        Optional<SelectableChannel> oc = this.getFirstOutputChannel(this.channelType);
+        if (!oc.isPresent()) {
+            logger.warn("Output channel " + this.channelType + " was not found.");
+            this.nextState(ServerComHandlerState.Error);
+            return;
+        }
+
+        SinkChannel channel = (SinkChannel) oc.get();
         try {
             NBChannelController.write(channel, respIV);
         } catch (IOException e) {
@@ -265,7 +287,15 @@ public class ServerComHandler extends ComHandler<ServerComHandlerState> {
             }
 
             Event respNC = new Event(EventType.OutputResponse, programOutput);
-            SinkChannel channel = (SinkChannel) this.getFirstOutputChannel(this.channelType);
+
+            Optional<SelectableChannel> oc = this.getFirstOutputChannel(this.channelType);
+            if (!oc.isPresent()) {
+                logger.warn("Output channel " + this.channelType + " was not found.");
+                this.nextState(ServerComHandlerState.Error);
+                return;
+            }
+
+            SinkChannel channel = (SinkChannel) oc.get();
             try {
                 NBChannelController.write(channel, respNC);
             } catch (IOException e) {
@@ -314,7 +344,14 @@ public class ServerComHandler extends ComHandler<ServerComHandlerState> {
             }
         }
 
-        SinkChannel channel = (SinkChannel) this.getFirstOutputChannel(this.channelType);
+        Optional<SelectableChannel> oc = this.getFirstOutputChannel(this.channelType);
+        if (!oc.isPresent()) {
+            logger.warn("Output channel " + this.channelType + " was not found.");
+            this.nextState(ServerComHandlerState.Error);
+            return;
+        }
+
+        SinkChannel channel = (SinkChannel) oc.get();
         try {
             NBChannelController.write(channel, respNC);
         } catch (IOException e) {

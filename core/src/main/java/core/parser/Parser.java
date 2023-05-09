@@ -3,6 +3,7 @@ package core.parser;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.LinkedList;
+import java.util.Optional;
 
 import core.command.Command;
 import core.command.CommandType;
@@ -279,8 +280,8 @@ public class Parser {
      *
      * @return argument if there is one, else null
      */
-    public Argument getArgForIdValidation() {
-        return this.argForIdValidation;
+    public Optional<Argument> getArgForIdValidation() {
+        return Optional.ofNullable(this.argForIdValidation);
     }
 
     /**
@@ -295,13 +296,13 @@ public class Parser {
     /**
      * Returns parsed commands with removal from parser.
      *
-     * @return parsed commands or null, if no command was parsed yet
+     * @return parsed commands
      */
-    public LinkedList<Command> getResult() {
+    public Optional<LinkedList<Command>> getResult() {
         LinkedList<Command> result = this.result;
         this.result = new LinkedList<>();
 
-        return result.isEmpty() ? null : result;
+        return result.isEmpty() ? Optional.empty() : Optional.of(result);
     }
 
     /**

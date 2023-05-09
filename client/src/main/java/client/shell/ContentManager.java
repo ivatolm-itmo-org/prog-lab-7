@@ -101,7 +101,7 @@ public class ContentManager {
 
             // Checking if script is valid
             if (parser.getCurrentCommandType() == null) {
-                return parser.getResult();
+                return parser.getResult().get();
             } else {
                 return null;
             }

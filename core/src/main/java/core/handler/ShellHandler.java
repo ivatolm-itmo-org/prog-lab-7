@@ -94,7 +94,7 @@ public abstract class ShellHandler<S extends Enum<?>> extends Handler<ChannelTyp
             try {
                 boolean hasParsedCommands = this.parser.parse(input);
                 if (this.parser.needIdValidation()) {
-                    Argument arg = this.parser.getArgForIdValidation();
+                    Argument arg = this.parser.getArgForIdValidation().get();
                     this.argForIdValidation = arg;
                     this.argIdValidationResult = null;
                     return;
@@ -105,7 +105,7 @@ public abstract class ShellHandler<S extends Enum<?>> extends Handler<ChannelTyp
                         this.parsingResult = new LinkedList<>();
                     }
 
-                    this.parsingResult.addAll(this.parser.getResult());
+                    this.parsingResult.addAll(this.parser.getResult().get());
 
                     if (promptRequired) {
                         return;
