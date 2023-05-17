@@ -5,7 +5,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.LinkedList;
 
@@ -40,7 +39,7 @@ public class ContentManager {
                 System.out.print(resource.getName() + ": " + "...");
                 LinkedList<Command> resourceContent = this.getResourceContent(resource);
                 if (resourceContent != null) {
-                    this.resources.put(resource.getAbsolutePath(), resourceContent);
+                    this.resources.put(resource.getName(), resourceContent);
                     System.out.print("\r" + resource.getName() + ": " + "added");
                 } else {
                     System.out.print("\r" + resource.getName() + ": " + "skipped (validation failed)");
@@ -57,8 +56,7 @@ public class ContentManager {
      * @return content of the resource or null if it doesnt exist
      */
     public LinkedList<Command> get(String filename) throws FileNotFoundException {
-        String path = Path.of(filename).toAbsolutePath().toString();
-        LinkedList<Command> result = this.resources.get(path);
+        LinkedList<Command> result = this.resources.get(filename);
 
         if (result == null) {
             throw new FileNotFoundException("Resource wasn't found.");

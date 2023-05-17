@@ -308,7 +308,7 @@ public class ClientComHandler extends ComHandler<ClientComHandlerState> {
         try {
             commands = this.contentManager.get(filename.getFirst());
         } catch (FileNotFoundException e) {
-            logger.info("Resource was not found.");
+            logger.info("Resource was not found: " + filename.getFirst());
         }
 
         Event respNCSR = new Event(EventType.ScriptRequest, commands);

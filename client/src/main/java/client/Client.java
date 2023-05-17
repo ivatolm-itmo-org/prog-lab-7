@@ -98,7 +98,7 @@ public class Client {
                 add(new ImmutablePair<>(ChannelType.Shell, com_shell.sink()));
                 add(new ImmutablePair<>(ChannelType.Network, com_socket.sink()));
             }},
-            new ContentManager("../res")
+            new ContentManager("../client/src/main/resources/scripts")
         );
 
         ClientSocketHandler socketHandler;
