@@ -5,7 +5,6 @@ import java.net.SocketAddress;
 import java.nio.channels.Pipe;
 import java.util.TimerTask;
 import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 import core.event.Event;
 import core.event.EventType;
