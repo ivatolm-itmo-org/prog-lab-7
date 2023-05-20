@@ -76,6 +76,8 @@ public class ClientShellHandler extends ShellHandler<ClientShellHandlerState> {
         this.input = null;
         this.idArgForValidation = null;
         this.shouldClose = false;
+
+        this.showInputGreeting();
     }
 
     @Override
@@ -314,6 +316,8 @@ public class ClientShellHandler extends ShellHandler<ClientShellHandlerState> {
             for (String line : result) {
                 System.out.println(line);
             }
+
+            this.showInputGreeting();
 
             this.nextState(ClientShellHandlerState.Waiting);
         } else {

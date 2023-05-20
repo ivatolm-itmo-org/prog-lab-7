@@ -79,16 +79,6 @@ public class Client {
             input_shell.sink()
         );
 
-        ClientShellHandler shellHandler = new ClientShellHandler(
-            new LinkedList<Pair<ChannelType, SelectableChannel>>() {{
-                add(new ImmutablePair<>(ChannelType.Input, input_shell.source()));
-                add(new ImmutablePair<>(ChannelType.Com, com_shell.source()));
-            }},
-            new LinkedList<Pair<ChannelType, SelectableChannel>>() {{
-                add(new ImmutablePair<>(ChannelType.Com, shell_com.sink()));
-            }}
-        );
-
         ClientComHandler comHandler = new ClientComHandler(
             new LinkedList<Pair<ChannelType, SelectableChannel>>() {{
                 add(new ImmutablePair<>(ChannelType.Shell, shell_com.source()));
@@ -99,6 +89,16 @@ public class Client {
                 add(new ImmutablePair<>(ChannelType.Network, com_socket.sink()));
             }},
             new ContentManager("../client/src/main/resources/scripts")
+        );
+
+        ClientShellHandler shellHandler = new ClientShellHandler(
+            new LinkedList<Pair<ChannelType, SelectableChannel>>() {{
+                add(new ImmutablePair<>(ChannelType.Input, input_shell.source()));
+                add(new ImmutablePair<>(ChannelType.Com, com_shell.source()));
+            }},
+            new LinkedList<Pair<ChannelType, SelectableChannel>>() {{
+                add(new ImmutablePair<>(ChannelType.Com, shell_com.sink()));
+            }}
         );
 
         ClientSocketHandler socketHandler;

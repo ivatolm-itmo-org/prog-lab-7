@@ -70,6 +70,8 @@ public class ServerShellHandler extends ShellHandler<ServerShellHandlerState> {
 
         this.input = null;
         this.idArgForValidation = null;
+
+        this.showInputGreeting();
     }
 
     @Override
@@ -84,7 +86,7 @@ public class ServerShellHandler extends ShellHandler<ServerShellHandlerState> {
             default:
                 System.err.println("Unexpected channel.");
                 break;
-            }
+        }
 
         this.handleEvents();
     }
@@ -301,6 +303,8 @@ public class ServerShellHandler extends ShellHandler<ServerShellHandlerState> {
             for (String line : result) {
                 System.out.println(line);
             }
+
+            this.showInputGreeting();
 
             this.nextState(ServerShellHandlerState.ComReceiveOutput);
         } else {

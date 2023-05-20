@@ -55,6 +55,13 @@ public abstract class ShellHandler<S extends Enum<?>> extends Handler<ChannelTyp
     public abstract void process(ChannelType type, SelectableChannel channel);
 
     /**
+     * Prints initial greeting.
+     */
+    protected void showInputGreeting() {
+        System.out.print(": ");
+    }
+
+    /**
      * Parses one or multiple {@code Command}-s from {@code inputs}.
      * If input is null or parsing fails, waits for being called again
      * with further user input.
