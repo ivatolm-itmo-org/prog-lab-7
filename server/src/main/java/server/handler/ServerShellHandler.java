@@ -296,7 +296,7 @@ public class ServerShellHandler extends ShellHandler<ServerShellHandlerState> {
             return;
         }
 
-        if (event.getType() == EventType.NewCommands) {
+        if (event.getType() == EventType.OutputResponse) {
             @SuppressWarnings("unchecked")
             LinkedList<String> result = (LinkedList<String>) event.getData();
 
@@ -306,7 +306,11 @@ public class ServerShellHandler extends ShellHandler<ServerShellHandlerState> {
 
             this.showInputGreeting();
 
-            this.nextState(ServerShellHandlerState.ComReceiveOutput);
+            this.nextState(ServerShellHandlerState.Waiting);
+        } else if (event.getType() == EventType.ScriptRequest) {
+            System.out.println("Script are not currently supported by the server.");
+            this.showInputGreeting();
+            this.nextState(ServerShellHandlerState.Waiting);
         } else {
             this.nextState(ServerShellHandlerState.Waiting);
         }

@@ -309,7 +309,7 @@ public class ClientShellHandler extends ShellHandler<ClientShellHandlerState> {
             return;
         }
 
-        if (event.getType() == EventType.NewCommands) {
+        if (event.getType() == EventType.OutputResponse) {
             @SuppressWarnings("unchecked")
             LinkedList<String> result = (LinkedList<String>) event.getData();
 

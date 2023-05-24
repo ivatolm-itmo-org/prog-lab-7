@@ -338,7 +338,7 @@ public class ClientComHandler extends ComHandler<ClientComHandlerState> {
         @SuppressWarnings("unchecked")
         LinkedList<String> output = (LinkedList<String>) data.getData();
 
-        Event respIV = new Event(EventType.NewCommands, output);
+        Event respIV = new Event(EventType.OutputResponse, output);
 
         ChannelType type = ChannelType.Shell;
         Optional<SelectableChannel> oc = this.getFirstOutputChannel(type);
