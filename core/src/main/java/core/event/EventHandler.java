@@ -93,8 +93,8 @@ public abstract class EventHandler<E extends Enum<?>> {
             }
         }
 
-        boolean subscribed = (key.interestOps() & SelectionKey.OP_READ) == SelectionKey.OP_READ;
         int interestOps = key.interestOps();
+        boolean subscribed = (interestOps & SelectionKey.OP_READ) == SelectionKey.OP_READ;
 
         if (found && !subscribed) {
             key.interestOps(interestOps | SelectionKey.OP_READ);

@@ -65,7 +65,7 @@ public class Server
         CSVDatabase<HumanBeing> database = new CSVDatabase<>(databaseFilename);
         Interpreter interpreter = new Interpreter(database);
         Runner runner = new Runner(interpreter);
-        LoadBalancer loadBalancer = new LoadBalancer(1);
+        LoadBalancer loadBalancer = new LoadBalancer(4);
 
         Com com;
         try {

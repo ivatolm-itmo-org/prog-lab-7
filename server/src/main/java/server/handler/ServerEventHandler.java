@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.nio.channels.Pipe;
 import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Set;
@@ -98,7 +97,7 @@ public class ServerEventHandler extends EventHandler<ChannelType> {
             this.updateChannelsSubscriptionRead(
                 this.shellComHandler.getInputChannels(),
                 this.shellComHandler.getSubscriptions()
-                );
+            );
 
             this.updateChannelsSubscriptionRead(
                 this.socketHandler.getInputChannels(),
@@ -125,51 +124,58 @@ public class ServerEventHandler extends EventHandler<ChannelType> {
     public void run() {
         while (true) {
             try {
+                this.updateSubscriptions();
+
                 logger.trace("Selecting channels...");
                 this.selector.select(10);
                 Set<SelectionKey> selectedKeys = this.selector.selectedKeys();
+                logger.debug("" + selectedKeys);
                 logger.trace("Selected channels count: " + selectedKeys.size());
 
-                Iterator<SelectionKey> iter = selectedKeys.iterator();
-                while (iter.hasNext()) {
-                    SelectionKey key = iter.next();
+                if (this.socketHandler.hasNewClient()) {
+                    this.addClient();
+                }
 
-                    Object[] attachments = (Object[]) key.attachment();
+                if (!this.runner.isRunning()) {
+                    logger.info("Exiting...");
+                    return;
+                }
 
-                    @SuppressWarnings("unchecked")
-                    Handler<ChannelType, ?> handler = (Handler<ChannelType,?>) attachments[0];
-                    ChannelType channelType = (ChannelType) attachments[1];
-                    SelectableChannel channel = key.channel();
-
-                    logger.trace("Event on " + channelType + " for " + handler);
-
-                    if (key.isReadable()) {
-                        handler.preProcessing();
-                        this.updateSubscriptions();
-
-                        this.loadBalancer.process(handler, channelType, channel);
-                    }
-
+                for (Handler<ChannelType, ?> handler : this.comHandlers) {
                     if (!handler.isRunning()) {
                         this.removeHandler(handler);
-                    } else if (this.socketHandler.hasNewClient()) {
-                        this.addClient();
                     }
+                }
 
-                    if (!this.runner.isRunning()) {
-                        logger.info("Exiting...");
-                        return;
-                    }
+                logger.debug("Connected clients count: " + this.comHandlers.size());
 
-                    logger.debug("Connected clients count: " + this.comHandlers.size());
+                Iterator<SelectionKey> iter = selectedKeys.iterator();
+                if (!iter.hasNext()) {
+                    continue;
+                }
 
-                    iter.remove();
-                    break;
+                SelectionKey key = iter.next();
+
+                Object[] attachments = (Object[]) key.attachment();
+
+                @SuppressWarnings("unchecked")
+                Handler<ChannelType, ?> handler = (Handler<ChannelType, ?>) attachments[0];
+                ChannelType channelType = (ChannelType) attachments[1];
+                SelectableChannel channel = key.channel();
+
+                logger.trace("Event on " + channelType + " for " + handler);
+
+                if (key.isReadable()) {
+                    logger.trace("Preprocessing handler...");
+
+                    handler.preProcessing();
+                    this.updateSubscriptions();
+
+                    logger.trace("Sending to load balancer...");
+                    this.loadBalancer.process(handler, channelType, channel);
                 }
 
                 selectedKeys.clear();
-
-                this.updateSubscriptions();
 
             } catch (IOException e) {
                 e.printStackTrace();

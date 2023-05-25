@@ -164,7 +164,6 @@ public class ServerSocketHandler extends SocketHandler<DatagramChannel, ServerSo
     }
 
     private void handleNewEvent() {
-        logger.warn(""+this.channelType);
         switch (this.channelType) {
             case Internal:
                 this.nextState(ServerSocketHandlerState.ConnectionTimeout);
@@ -270,7 +269,6 @@ public class ServerSocketHandler extends SocketHandler<DatagramChannel, ServerSo
         this.timers.put(client, new ImmutablePair<>(timer, newTask));
 
         Packet packet = data.getValue();
-        logger.warn("" + packet.getType());
         if (packet.getType() == EventType.Ping) {
             this.nextState(ServerSocketHandlerState.Waiting);
             return;

@@ -161,17 +161,13 @@ public class ServerComHandler extends ComHandler<ServerComHandlerState> {
     }
 
     private void handleNewRequest() {
-        logger.warn("" + this.channelType);
-        logger.warn("10");
         Optional<SelectableChannel> ic = this.getFirstInputChannel(this.channelType);
         if (!ic.isPresent()) {
             logger.warn("Input channel " + this.channelType + " was not found.");
             this.nextState(ServerComHandlerState.Error);
             return;
         }
-        logger.warn("20");
 
-        logger.warn("30");
         SourceChannel channel = (SourceChannel) ic.get();
         try {
             this.event = (Event) NBChannelController.read(channel);
@@ -180,9 +176,7 @@ public class ServerComHandler extends ComHandler<ServerComHandlerState> {
             this.nextState(ServerComHandlerState.Error);
             return;
         }
-        logger.warn("40");
 
-        logger.warn("" + this.event.getType());
         switch (this.event.getType()) {
             case IdValidation:
                 this.nextState(ServerComHandlerState.IVStart);

@@ -29,7 +29,6 @@ public class NBChannelController {
     public static Serializable read(ReadableByteChannel channel) throws IOException {
         int readCnt = 0;
 
-        System.err.println("50");
         ByteBuffer lengthBuffer = ByteBuffer.allocate(LENGTH_FIELD_SIZE);
         while (readCnt != LENGTH_FIELD_SIZE) {
             readCnt += channel.read(lengthBuffer);
@@ -37,7 +36,6 @@ public class NBChannelController {
 
         int length = SerializationUtils.deserialize(lengthBuffer.array());
 
-        System.err.println("60");
         readCnt = 0;
         ByteBuffer objectBuffer = ByteBuffer.allocate(length);
         while (readCnt != length) {

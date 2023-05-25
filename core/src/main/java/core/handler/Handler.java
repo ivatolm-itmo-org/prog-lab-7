@@ -5,8 +5,6 @@ import java.io.Serializable;
 import java.nio.channels.SelectableChannel;
 import java.util.LinkedList;
 import java.util.Optional;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -67,22 +65,16 @@ public abstract class Handler<E extends Enum<?>, S extends Enum<?>> extends FSM<
      * Removes and saves all handler subscriptions.
      */
     public void preProcessing() {
-        // System.err.println("preProcessing...");
         this.subscriptionsBuffer = this.subscriptions;
         this.subscriptions = new LinkedList<>();
-        // System.err.println("Subscriptions: " + this.subscriptions);
-        // System.err.println("Subscriptions buffer: " + subscriptionsBuffer);
     }
 
     /**
      * Restores all handler subscriptions.
      */
     public void postProcessing() {
-        // System.err.println("postProcessing...");
         this.subscriptions = this.subscriptionsBuffer;
         this.subscriptionsBuffer = new LinkedList<>();
-        // System.err.println("Subscriptions: " + this.subscriptions);
-        // System.err.println("Subscriptions buffer: " + subscriptionsBuffer);
     }
 
     /**
@@ -90,7 +82,7 @@ public abstract class Handler<E extends Enum<?>, S extends Enum<?>> extends FSM<
      * input channels.
      */
     protected void filterSubscriptions() {
-        this.subscriptions = this.inputChannels;
+        this.subscriptionsBuffer = this.inputChannels;
     }
 
     /**
@@ -102,13 +94,13 @@ public abstract class Handler<E extends Enum<?>, S extends Enum<?>> extends FSM<
      */
     protected void filterSubscriptions(E type) throws IOException {
         if (type == null) {
-            this.subscriptions = this.inputChannels;
+            this.subscriptionsBuffer = this.inputChannels;
         } else {
-            this.subscriptions = new LinkedList<>();
+            this.subscriptionsBuffer = new LinkedList<>();
 
             for (Pair<E, SelectableChannel> ic : this.inputChannels) {
                 if (ic.getKey() == type) {
-                    this.subscriptions.push(ic);
+                    this.subscriptionsBuffer.push(ic);
                 }
             }
         }
@@ -123,13 +115,13 @@ public abstract class Handler<E extends Enum<?>, S extends Enum<?>> extends FSM<
      */
     protected void filterSubscriptions(E[] filter) throws IOException {
         if (filter == null) {
-            this.subscriptions = this.inputChannels;
+            this.subscriptionsBuffer = this.inputChannels;
         } else {
-            this.subscriptions = new LinkedList<>();
+            this.subscriptionsBuffer = new LinkedList<>();
             for (E type : filter) {
                 for (Pair<E, SelectableChannel> ic : this.inputChannels) {
                     if (ic.getKey() == type) {
-                        this.subscriptions.push(ic);
+                        this.subscriptionsBuffer.push(ic);
                     }
                 }
             }
