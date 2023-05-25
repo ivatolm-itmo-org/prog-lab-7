@@ -1,9 +1,12 @@
 package core.handler;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.nio.channels.SelectableChannel;
 import java.util.LinkedList;
 import java.util.Optional;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -14,7 +17,7 @@ import core.fsm.FSM;
  *
  * @author ivatolm
  */
-public abstract class Handler<E extends Enum<?>, S extends Enum<?>> extends FSM<S> {
+public abstract class Handler<E extends Enum<?>, S extends Enum<?>> extends FSM<S> implements Serializable {
 
     /** Input channels */
     protected LinkedList<Pair<E, SelectableChannel>> inputChannels;
@@ -24,6 +27,7 @@ public abstract class Handler<E extends Enum<?>, S extends Enum<?>> extends FSM<
 
     /** Input channels subscriptions */
     protected LinkedList<Pair<E, SelectableChannel>> subscriptions;
+    protected LinkedList<Pair<E, SelectableChannel>> subscriptionsBuffer;
 
     /** Ready channels */
     protected LinkedList<E> readyChannels;
@@ -45,6 +49,7 @@ public abstract class Handler<E extends Enum<?>, S extends Enum<?>> extends FSM<
         this.inputChannels = inputChannels;
         this.outputChannels = outputChannels;
         this.subscriptions = this.inputChannels;
+        this.subscriptionsBuffer = new LinkedList<>();
         this.readyChannels = new LinkedList<>();
         this.running = true;
     }
@@ -57,6 +62,28 @@ public abstract class Handler<E extends Enum<?>, S extends Enum<?>> extends FSM<
      * @param channel ready channel
      */
     public abstract void process(E type, SelectableChannel channel);
+
+    /**
+     * Removes and saves all handler subscriptions.
+     */
+    public void preProcessing() {
+        // System.err.println("preProcessing...");
+        this.subscriptionsBuffer = this.subscriptions;
+        this.subscriptions = new LinkedList<>();
+        // System.err.println("Subscriptions: " + this.subscriptions);
+        // System.err.println("Subscriptions buffer: " + subscriptionsBuffer);
+    }
+
+    /**
+     * Restores all handler subscriptions.
+     */
+    public void postProcessing() {
+        // System.err.println("postProcessing...");
+        this.subscriptions = this.subscriptionsBuffer;
+        this.subscriptionsBuffer = new LinkedList<>();
+        // System.err.println("Subscriptions: " + this.subscriptions);
+        // System.err.println("Subscriptions buffer: " + subscriptionsBuffer);
+    }
 
     /**
      * Filters {@code inputChannels} to all avaliable

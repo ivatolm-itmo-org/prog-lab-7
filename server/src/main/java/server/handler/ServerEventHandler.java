@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.channels.Pipe;
 import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Set;
@@ -17,6 +18,7 @@ import core.event.EventHandler;
 import core.event.SelectorKeyNotFoundException;
 import core.handler.ChannelType;
 import core.handler.Handler;
+import server.load.LoadBalancer;
 import server.runner.Runner;
 
 /**
@@ -44,6 +46,9 @@ public class ServerEventHandler extends EventHandler<ChannelType> {
     // Program runner
     private Runner runner;
 
+    // Load balancer
+    private LoadBalancer loadBalancer;
+
     /**
      * Constructs new {@code EventHandler} with provided arguments.
      *
@@ -51,15 +56,17 @@ public class ServerEventHandler extends EventHandler<ChannelType> {
      * @throws IOException if cannot setup {@code Selector}
      */
     public ServerEventHandler(ServerShellHandler shellHandler,
-                        ServerComHandler shellComHandler,
-                        ServerSocketHandler socketHandler,
-                        Runner runner) throws IOException {
+                            ServerComHandler shellComHandler,
+                            ServerSocketHandler socketHandler,
+                            Runner runner,
+                            LoadBalancer loadBalancer) throws IOException {
         super();
 
         this.shellHandler = shellHandler;
         this.shellComHandler = shellComHandler;
         this.socketHandler = socketHandler;
         this.runner = runner;
+        this.loadBalancer = loadBalancer;
 
         this.comHandlers = new LinkedList<>();
 
@@ -79,28 +86,37 @@ public class ServerEventHandler extends EventHandler<ChannelType> {
         );
     }
 
-    public void updateSubscriptions() throws SelectorKeyNotFoundException {
-        this.updateChannelsSubscriptionRead(
-            this.shellHandler.getInputChannels(),
-            this.shellHandler.getSubscriptions()
-        );
+    public void updateSubscriptions() {
+        logger.trace("Updating subscriptions...");
 
-        this.updateChannelsSubscriptionRead(
-            this.shellComHandler.getInputChannels(),
-            this.shellComHandler.getSubscriptions()
-        );
-
-        this.updateChannelsSubscriptionRead(
-            this.socketHandler.getInputChannels(),
-            this.socketHandler.getSubscriptions()
-        );
-
-        for (ServerComHandler comHandler : this.comHandlers) {
+        try {
             this.updateChannelsSubscriptionRead(
-                comHandler.getInputChannels(),
-                comHandler.getSubscriptions()
+                this.shellHandler.getInputChannels(),
+                this.shellHandler.getSubscriptions()
             );
+
+            this.updateChannelsSubscriptionRead(
+                this.shellComHandler.getInputChannels(),
+                this.shellComHandler.getSubscriptions()
+                );
+
+            this.updateChannelsSubscriptionRead(
+                this.socketHandler.getInputChannels(),
+                this.socketHandler.getSubscriptions()
+            );
+
+            for (ServerComHandler comHandler : this.comHandlers) {
+                this.updateChannelsSubscriptionRead(
+                    comHandler.getInputChannels(),
+                    comHandler.getSubscriptions()
+                );
+            }
+
+        } catch (SelectorKeyNotFoundException e) {
+            e.printStackTrace();
         }
+
+        logger.trace("Updating subscriptions done");
     }
 
     /**
@@ -110,9 +126,9 @@ public class ServerEventHandler extends EventHandler<ChannelType> {
         while (true) {
             try {
                 logger.trace("Selecting channels...");
-                this.selector.select();
+                this.selector.select(10);
                 Set<SelectionKey> selectedKeys = this.selector.selectedKeys();
-                logger.debug("Selected channels count: " + selectedKeys.size());
+                logger.trace("Selected channels count: " + selectedKeys.size());
 
                 Iterator<SelectionKey> iter = selectedKeys.iterator();
                 while (iter.hasNext()) {
@@ -123,21 +139,21 @@ public class ServerEventHandler extends EventHandler<ChannelType> {
                     @SuppressWarnings("unchecked")
                     Handler<ChannelType, ?> handler = (Handler<ChannelType,?>) attachments[0];
                     ChannelType channelType = (ChannelType) attachments[1];
+                    SelectableChannel channel = key.channel();
 
                     logger.trace("Event on " + channelType + " for " + handler);
 
                     if (key.isReadable()) {
-                        handler.process(channelType, key.channel());
+                        handler.preProcessing();
+                        this.updateSubscriptions();
+
+                        this.loadBalancer.process(handler, channelType, channel);
                     }
 
                     if (!handler.isRunning()) {
-                        logger.debug("Shutting down handler...");
                         this.removeHandler(handler);
-                        logger.debug("Handler was shut down");
                     } else if (this.socketHandler.hasNewClient()) {
-                        logger.debug("Adding new client...");
                         this.addClient();
-                        logger.debug("Adding new client done");
                     }
 
                     if (!this.runner.isRunning()) {
@@ -145,29 +161,26 @@ public class ServerEventHandler extends EventHandler<ChannelType> {
                         return;
                     }
 
-                    logger.debug("Updating subscriptions...");
-                    try {
-                        this.updateSubscriptions();
-                    } catch (SelectorKeyNotFoundException e) {
-                        logger.warn("Cannot update subscriptions. Exiting...");
-                        return;
-                    }
-                    logger.debug("Updating subscriptions done");
-
                     logger.debug("Connected clients count: " + this.comHandlers.size());
 
+                    iter.remove();
                     break;
                 }
 
                 selectedKeys.clear();
 
+                this.updateSubscriptions();
+
             } catch (IOException e) {
                 e.printStackTrace();
+                return;
             }
         }
     }
 
     private void addClient() throws IOException {
+        logger.debug("Adding new client...");
+
         Pair<Pipe, Pipe> clientPipes = this.socketHandler.getNewClientPipe();
         Pipe network_com = clientPipes.getLeft();
         Pipe com_network = clientPipes.getRight();
@@ -198,15 +211,21 @@ public class ServerEventHandler extends EventHandler<ChannelType> {
 
         this.socketHandler.addInputChannel(new ImmutablePair<>(ChannelType.Com, com_network.source()));
         this.socketHandler.addOutputChannel(new ImmutablePair<>(ChannelType.Com, network_com.sink()));
+
+        logger.debug("Adding new client done");
     }
 
     void removeHandler(Handler<ChannelType, ?> handler) {
+        logger.debug("Shutting down handler...");
+
         this.unsubscribeChannels(handler.getInputChannels());
 
         // TODO: Handle situation of main handler failure
         if (this.comHandlers.contains(handler)) {
             this.comHandlers.remove(handler);
         }
+
+        logger.debug("Handler was shut down");
     }
 
 }

@@ -18,6 +18,7 @@ import server.handler.ServerEventHandler;
 import server.handler.ServerShellHandler;
 import server.handler.ServerSocketHandler;
 import server.interpreter.Interpreter;
+import server.load.LoadBalancer;
 import server.net.ServerComUDP;
 import server.runner.Runner;
 
@@ -64,6 +65,7 @@ public class Server
         CSVDatabase<HumanBeing> database = new CSVDatabase<>(databaseFilename);
         Interpreter interpreter = new Interpreter(database);
         Runner runner = new Runner(interpreter);
+        LoadBalancer loadBalancer = new LoadBalancer(1);
 
         Com com;
         try {
@@ -126,7 +128,10 @@ public class Server
 
         ServerEventHandler eventHandler = null;
         try {
-            eventHandler = new ServerEventHandler(shellHandler, shellComHandler, socketHandler, runner);
+            eventHandler = new ServerEventHandler(
+                shellHandler, shellComHandler, socketHandler,
+                runner, loadBalancer
+            );
         } catch (IOException e) {
             System.err.println("Error occured while starting event handler: " + e);
             return;
@@ -138,6 +143,7 @@ public class Server
         eventHandler.run();
 
         inputHandler.close();
+        loadBalancer.close();
 
         try {
             inputHandlerThread.join();
