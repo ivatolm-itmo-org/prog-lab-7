@@ -86,12 +86,12 @@ public class ServerComHandler extends ComHandler<ServerComHandlerState> {
 
     @Override
     public void process(ChannelType type, SelectableChannel channel) {
-        logger.trace("New event from " + type);
+        logger.trace("New event from {}", type);
 
         if (this.channelType == type) {
             this.readyChannels = new LinkedList<ChannelType>() {{ add(type); }};
         } else {
-            System.err.println("Unexpected channel.");
+            logger.warn("Unexpected channel.");
         }
 
         this.handleEvents();
@@ -99,7 +99,7 @@ public class ServerComHandler extends ComHandler<ServerComHandlerState> {
 
     @Override
     protected void handleEvents() {
-        logger.trace("State: " + this.getState());
+        logger.trace("State: {}", this.getState());
         do {
             ServerComHandlerState stState = this.getState();
 
@@ -153,7 +153,7 @@ public class ServerComHandler extends ComHandler<ServerComHandlerState> {
                 this.nextState(ServerComHandlerState.Error);
             }
 
-            logger.trace("State: " + stState + " -> " + this.getState());
+            logger.trace("State: {} -> {}", stState, this.getState());
         } while (this.getState() != ServerComHandlerState.Waiting);
     }
 
@@ -301,7 +301,7 @@ public class ServerComHandler extends ComHandler<ServerComHandlerState> {
         Argument id = (Argument) this.stateData;
 
         boolean result = Interpreter.HasItemWithId(id);
-        logger.debug("Id validation result: " + result);
+        logger.debug("Id validation result: {}", result);
 
         Event respIV = new Event(EventType.IdValidation, result);
 

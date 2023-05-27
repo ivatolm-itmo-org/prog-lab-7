@@ -10,11 +10,16 @@ import java.nio.channels.SelectableChannel;
 import org.apache.commons.lang3.SerializationUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import core.net.Com;
 import core.net.packet.Packet;
 
 public class ServerComUDP implements Com {
+
+    // Logger
+    private static final Logger logger = LoggerFactory.getLogger("ComUDP");
 
     // Channel
     private DatagramChannel channel;
@@ -33,14 +38,6 @@ public class ServerComUDP implements Com {
     }
 
     /**
-     * Implements {@code isAlive} method of {@code Com}.
-     */
-    @Override
-    public boolean isAlive() {
-        throw new UnsupportedOperationException("Unimplemented method 'isAlive'");
-    }
-
-    /**
      * Implements {@code send} method of {@code Com}.
      */
     @Override
@@ -51,7 +48,7 @@ public class ServerComUDP implements Com {
         try {
             this.channel.send(buffer, address);
         } catch (IOException e) {
-            System.err.println("Cannot send packet: " + e);
+            logger.warn("Cannot send packet: " + e);
         }
     }
 
@@ -67,7 +64,7 @@ public class ServerComUDP implements Com {
         try {
             address = this.channel.receive(buffer);
         } catch (IOException e) {
-            System.err.println("Cannot receive packet: " + e);
+            logger.warn("Cannot receive packet: " + e);
             return null;
         }
 

@@ -85,9 +85,9 @@ public class CSVDatabase<T extends StrSerializable & DataBaseObject> implements 
 
             writer.close();
         } catch (FileNotFoundException e) {
-            System.err.println("Cannot open file.");
+            System.out.println("Cannot open file.");
         } catch (IOException e) {
-            System.err.println("Cannot read file.");
+            System.out.println("Cannot read file.");
         }
     }
 
@@ -118,7 +118,7 @@ public class CSVDatabase<T extends StrSerializable & DataBaseObject> implements 
             String[] readAttributes = reader.readNext();
             for (int i = 0; i < Math.min(attributes.length, readAttributes.length); i++) {
                 if (!attributes[i].equals(readAttributes[i])) {
-                    System.err.println("Attributes doesn't match: " +
+                    System.out.println("Attributes doesn't match: " +
                                        "'" + attributes[i] + "'" +
                                        " != "
                                        + "'" + readAttributes[i] + "'" + ".");
@@ -171,9 +171,9 @@ public class CSVDatabase<T extends StrSerializable & DataBaseObject> implements 
 
             return result;
         } catch (FileNotFoundException e) {
-            System.err.println("Cannot open file.");
+            System.out.println("Cannot open file.");
         } catch (IOException e) {
-            System.err.println("Cannot read file.");
+            System.out.println("Cannot read file.");
         }
 
         return null;

@@ -51,7 +51,7 @@ public class LoadBalancer {
             this.workers.put(i, worker);
             this.workerThreads.put(i, workerThread);
 
-            System.out.println("Worker " + i + " started.");
+            logger.debug("Worker {} started.", i + 1);
         }
     }
 
@@ -66,7 +66,7 @@ public class LoadBalancer {
         Integer id = this.nextWorkerId();
         this.workers.get(id).addRequest(handler, channelType, channel);
 
-        logger.trace("Sent request to worker " + id);
+        logger.trace("Sent request to worker {}", id + 1);
     }
 
     /**
@@ -79,7 +79,7 @@ public class LoadBalancer {
             try {
                 this.workerThreads.get(key).join();
             } catch (InterruptedException e) {
-                System.err.println("Cannot join worker thread.");
+                logger.warn("Cannot join worker thread.");
             }
         }
     }

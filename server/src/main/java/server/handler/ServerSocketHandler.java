@@ -93,7 +93,7 @@ public class ServerSocketHandler extends SocketHandler<DatagramChannel, ServerSo
 
     @Override
     public void process(ChannelType type, SelectableChannel channel) {
-        logger.trace("New event from " + type);
+        logger.trace("New event from {}", type);
 
         switch (type) {
             case Internal:
@@ -105,7 +105,7 @@ public class ServerSocketHandler extends SocketHandler<DatagramChannel, ServerSo
                 this.channel = channel;
                 break;
             default:
-                System.err.println("Unexpected channel.");
+                logger.warn("Unexpected channel.");
                 break;
         }
 
@@ -145,7 +145,7 @@ public class ServerSocketHandler extends SocketHandler<DatagramChannel, ServerSo
                     break;
             }
 
-            logger.trace("State: " + stState + " -> " + this.getState());
+            logger.trace("State: {} -> {}", stState, this.getState());
         } while (this.getState() != ServerSocketHandlerState.Waiting);
     }
 
@@ -189,7 +189,7 @@ public class ServerSocketHandler extends SocketHandler<DatagramChannel, ServerSo
         try {
             reqDC = (Event) NBChannelController.read(inputChannel);
         } catch (IOException e) {
-            System.err.println("Cannot read from the channel.");
+            logger.error("Cannot read from the channel.");
             this.nextState(ServerSocketHandlerState.Error);
             return;
         }
@@ -203,7 +203,7 @@ public class ServerSocketHandler extends SocketHandler<DatagramChannel, ServerSo
         try {
             NBChannelController.write(clientChannelOutput, reqCL);
         } catch (IOException | NullPointerException e) {
-            System.err.println("Cannot write to the channel.");
+            logger.error("Cannot write to the channel.");
             this.nextState(ServerSocketHandlerState.Error);
         }
 
@@ -229,7 +229,7 @@ public class ServerSocketHandler extends SocketHandler<DatagramChannel, ServerSo
                 client_socket = Pipe.open();
                 socket_client = Pipe.open();
             } catch (IOException e) {
-                System.err.println("Cannot write to the channel.");
+                logger.error("Cannot write to the channel.");
                 this.nextState(ServerSocketHandlerState.Error);
                 return;
             }
@@ -309,7 +309,7 @@ public class ServerSocketHandler extends SocketHandler<DatagramChannel, ServerSo
         try {
             NBChannelController.write(channel, event);
         } catch (IOException e) {
-            System.err.println("Cannot write to the channel.");
+            logger.error("Cannot write to the channel.");
             this.nextState(ServerSocketHandlerState.Error);
             return;
         }
@@ -324,7 +324,7 @@ public class ServerSocketHandler extends SocketHandler<DatagramChannel, ServerSo
         try {
             reqNC = (Event) NBChannelController.read(inputChannel);
         } catch (IOException e) {
-            System.err.println("Cannot read from the channel.");
+            logger.error("Cannot read from the channel.");
             this.nextState(ServerSocketHandlerState.Waiting);
             return;
         }

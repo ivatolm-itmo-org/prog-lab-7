@@ -91,7 +91,7 @@ public class ClientShellHandler extends ShellHandler<ClientShellHandlerState> {
 
     @Override
     public void process(ChannelType type, SelectableChannel channel) {
-        logger.trace("New event from " + type);
+        logger.trace("New event from {}", type);
 
         switch (type) {
             case Input:
@@ -99,16 +99,16 @@ public class ClientShellHandler extends ShellHandler<ClientShellHandlerState> {
                 this.readyChannels = new LinkedList<ChannelType>() {{ add(type); }};
                 break;
             default:
-                System.err.println("Unexpected channel.");
+                logger.warn("Unexpected channel.");
                 break;
-            }
+        }
 
         this.handleEvents();
     }
 
     @Override
     protected void handleEvents() {
-        logger.trace("State: " + this.getState());
+        logger.trace("State: {}", this.getState());
         do {
             ClientShellHandlerState stState = this.getState();
 
@@ -159,17 +159,17 @@ public class ClientShellHandler extends ShellHandler<ClientShellHandlerState> {
                 this.nextState(ClientShellHandlerState.Close);
             }
 
-            logger.trace("State: " + stState + " -> " + this.getState());
+            logger.trace("State: {} -> {}", stState, this.getState());
         } while (!this.getState().isWaiting());
     }
 
     private void handleWaitingState() {
-        logger.debug("Ready channels count: " + this.readyChannels.size());
+        logger.debug("Ready channels count: {}", this.readyChannels.size());
         if (this.readyChannels.isEmpty()) {
             return;
         }
 
-        logger.debug("Ready channels: " + this.readyChannels);
+        logger.debug("Ready channels: {}", this.readyChannels);
         if (this.readyChannels.contains(ChannelType.Input)) {
             this.nextState(ClientShellHandlerState.InputParsingStart);
         } else if (this.readyChannels.contains(ChannelType.Com)) {
@@ -194,7 +194,7 @@ public class ClientShellHandler extends ShellHandler<ClientShellHandlerState> {
         this.input = null;
         logger.debug("Parsing completed");
 
-        logger.debug("Has argument for id validation: " + this.hasArgForIdValidation());
+        logger.debug("Has argument for id validation: {}", this.hasArgForIdValidation());
         if (this.hasArgForIdValidation()) {
             Argument arg = this.getArgForIdValidation();
             this.idArgForValidation = arg;

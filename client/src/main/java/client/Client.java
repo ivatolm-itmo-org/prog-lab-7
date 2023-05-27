@@ -48,7 +48,7 @@ public class Client {
         try {
             port = Integer.parseInt(args[1]);
         } catch (NumberFormatException e) {
-            System.out.println("Cannot parse port from argument: " + args[1]);
+            System.err.println("Cannot parse port from argument: " + args[1]);
             return;
         }
 

@@ -88,7 +88,7 @@ public abstract class ShellHandler<S extends Enum<?>> extends Handler<ChannelTyp
         while (true) {
             String input;
             if (promptRequired) {
-                System.out.print(": ");
+                this.showInputGreeting();
                 return;
             } else {
                 input = inputs.pop();
@@ -118,12 +118,12 @@ public abstract class ShellHandler<S extends Enum<?>> extends Handler<ChannelTyp
                 }
 
             } catch (SimpleParseException e) {
-                System.err.println(e.getMessage());
+                System.out.println(e.getMessage());
                 promptRequired = true;
                 continue;
 
             } catch (ArgumentCheckFailedException e) {
-                System.err.println(e.getMessage());
+                System.out.println(e.getMessage());
                 promptRequired = true;
             }
 

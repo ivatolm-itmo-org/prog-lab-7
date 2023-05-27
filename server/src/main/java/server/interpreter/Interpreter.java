@@ -549,8 +549,6 @@ public class Interpreter {
      * @return list of commands for later interpretation or null
      */
     private String[] login(LinkedList<Argument> args) {
-        System.err.println("Logging in...");
-
         return null;
     }
 

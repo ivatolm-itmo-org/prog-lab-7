@@ -95,7 +95,7 @@ public class EventHandler {
                 logger.trace("Selecting channels...");
                 this.selector.select();
                 Set<SelectionKey> selectedKeys = this.selector.selectedKeys();
-                logger.debug("Selected channels count: " + selectedKeys.size());
+                logger.debug("Selected channels count: {}", selectedKeys.size());
 
                 Iterator<SelectionKey> iter = selectedKeys.iterator();
                 while (iter.hasNext()) {
@@ -104,7 +104,7 @@ public class EventHandler {
                     Object[] attachments = (Object[]) key.attachment();
                     ChannelType handler = (ChannelType) attachments[0];
                     ChannelType channelType = (ChannelType) attachments[1];
-                    logger.trace("Event on " + channelType + " for " + handler);
+                    logger.trace("Event on {} for {}", channelType, handler);
 
                     switch (handler) {
                         case Shell:
@@ -153,7 +153,7 @@ public class EventHandler {
             SelectionKey key = channel.keyFor(this.selector);
 
             if (key == null) {
-                logger.warn("Cannot subscribe " + type + " to channel: " + item.getKey());
+                logger.warn("Cannot subscribe {} to channel {}", type, item.getKey());
                 continue;
             }
 
@@ -185,7 +185,7 @@ public class EventHandler {
 
                 logger.debug("    " + type + " <== " + item.getKey());
             } catch (IOException e) {
-                logger.warn("Cannot subscribe " + type + " to channel: " + item.getKey());
+                logger.warn("Cannot subscribe {} to channel {}", type, item.getKey());
             }
         }
     }

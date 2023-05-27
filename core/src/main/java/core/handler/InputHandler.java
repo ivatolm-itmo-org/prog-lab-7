@@ -43,7 +43,7 @@ public class InputHandler implements Runnable {
             try {
                 NBChannelController.write(this.outputChannel, value);
             } catch (IOException e) {
-                System.err.println("Cannot write to buffer: " + e);
+                // Ignoring errors
             }
         }
     }

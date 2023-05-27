@@ -76,7 +76,7 @@ public class ClientComHandler extends ComHandler<ClientComHandlerState> {
 
     @Override
     public void process(ChannelType type, SelectableChannel channel) {
-        logger.trace("New event from " + type);
+        logger.trace("New event from {}", type);
 
         switch (type) {
             case Shell:
@@ -84,7 +84,7 @@ public class ClientComHandler extends ComHandler<ClientComHandlerState> {
                 this.readyChannels = new LinkedList<ChannelType>() {{ add(type); }};
                 break;
             default:
-                System.err.println("Unexpected channel.");
+                logger.warn("Unexpected channel.");
                 break;
         }
 
@@ -93,7 +93,7 @@ public class ClientComHandler extends ComHandler<ClientComHandlerState> {
 
     @Override
     protected void handleEvents() {
-        logger.trace("State: " + this.getState());
+        logger.trace("State: {}", this.getState());
         do {
             ClientComHandlerState stState = this.getState();
 
@@ -147,7 +147,7 @@ public class ClientComHandler extends ComHandler<ClientComHandlerState> {
                 this.nextState(ClientComHandlerState.Error);
             }
 
-            logger.trace("State: " + stState + " -> " + this.getState());
+            logger.trace("State: {} -> {}", stState, this.getState());
         } while (this.getState() != ClientComHandlerState.Waiting);
     }
 
@@ -325,7 +325,7 @@ public class ClientComHandler extends ComHandler<ClientComHandlerState> {
         try {
             commands = this.contentManager.get(filename.getFirst());
         } catch (FileNotFoundException e) {
-            logger.info("Resource was not found: " + filename.getFirst());
+            logger.info("Resource was not found: {}", filename.getFirst());
         }
 
         Event respNCSR = new Event(EventType.ScriptRequest, commands);

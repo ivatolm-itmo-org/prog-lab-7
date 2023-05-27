@@ -15,13 +15,6 @@ import core.net.packet.Packet;
 public interface Com {
 
     /**
-     * Checks for connection being alive.
-     *
-     * @return true if connection is alive, else false
-     */
-    boolean isAlive();
-
-    /**
      * Sends packet to other peer.
      *
      * @param packet packet to be sent

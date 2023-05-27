@@ -131,7 +131,7 @@ public class ServerEventHandler extends EventHandler<ChannelType> {
                 this.selector.select(10);
                 Set<SelectionKey> selectedKeys = this.selector.selectedKeys();
                 logger.trace("" + selectedKeys);
-                logger.trace("Selected channels count: " + selectedKeys.size());
+                logger.trace("Selected channels count: {}", selectedKeys.size());
 
                 if (this.socketHandler.hasNewClient()) {
                     this.addClient();
@@ -148,7 +148,7 @@ public class ServerEventHandler extends EventHandler<ChannelType> {
                     }
                 }
 
-                logger.trace("Connected clients count: " + this.comHandlers.size());
+                logger.trace("Connected clients count: {}", this.comHandlers.size());
 
                 Iterator<SelectionKey> iter = selectedKeys.iterator();
                 if (!iter.hasNext()) {
@@ -164,7 +164,7 @@ public class ServerEventHandler extends EventHandler<ChannelType> {
                 ChannelType channelType = (ChannelType) attachments[1];
                 SelectableChannel channel = key.channel();
 
-                logger.debug("Event on " + channelType + " for " + handler);
+                logger.debug("Event on {} for {}", channelType, handler);
 
                 if (key.isReadable()) {
                     logger.trace("Preprocessing handler...");

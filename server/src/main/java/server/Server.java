@@ -44,7 +44,7 @@ public class Server
         Thread.currentThread().setName("server");
 
         if (args.length != 3) {
-            System.err.println("Wrong number of input arguments.");
+            System.out.println("Wrong number of input arguments.");
             return;
         }
 
@@ -68,7 +68,7 @@ public class Server
         try {
             com = new ServerComUDP(ip, port);
         } catch (IOException e) {
-            System.err.println("Cannot create socket: " + e);
+            System.out.println("Cannot create socket: " + e);
             return;
         }
 
@@ -78,7 +78,7 @@ public class Server
             shell_com = Pipe.open();
             com_shell = Pipe.open();
         } catch (IOException e) {
-            System.err.println("Cannot open pipe: " + e);
+            System.out.println("Cannot open pipe: " + e);
             return;
         }
 
@@ -119,7 +119,7 @@ public class Server
                 com
             );
         } catch (IOException e) {
-            System.err.println("Cannot create socket handler: " + e);
+            System.out.println("Cannot create socket handler: " + e);
             return;
         }
 
@@ -130,7 +130,7 @@ public class Server
                 runner, loadBalancer
             );
         } catch (IOException e) {
-            System.err.println("Error occured while starting event handler: " + e);
+            System.out.println("Error occured while starting event handler: " + e);
             return;
         }
 
@@ -145,7 +145,7 @@ public class Server
         try {
             inputHandlerThread.join();
         } catch (InterruptedException e) {
-            System.err.println("Shell thread failed to join.");
+            System.out.println("Shell thread failed to join.");
         }
     }
 

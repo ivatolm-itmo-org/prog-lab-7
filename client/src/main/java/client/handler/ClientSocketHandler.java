@@ -77,7 +77,7 @@ public class ClientSocketHandler extends SocketHandler<DatagramChannel, ClientSo
 
     @Override
     public void process(ChannelType type, SelectableChannel channel) {
-        logger.trace("New event from " + type);
+        logger.trace("New event from {}", type);
 
         switch (type) {
             case Internal:
@@ -86,7 +86,7 @@ public class ClientSocketHandler extends SocketHandler<DatagramChannel, ClientSo
                 this.readyChannels = new LinkedList<ChannelType>() {{ add(type); }};
                 break;
             default:
-                System.err.println("Unexpected channel.");
+                logger.warn("Unexpected channel.");
                 break;
         }
 
@@ -95,7 +95,7 @@ public class ClientSocketHandler extends SocketHandler<DatagramChannel, ClientSo
 
     @Override
     protected void handleEvents() {
-        logger.trace("State: " + this.getState());
+        logger.trace("State: {}", this.getState());
         do {
             ClientSocketHandlerState stState = this.getState();
 
@@ -125,7 +125,7 @@ public class ClientSocketHandler extends SocketHandler<DatagramChannel, ClientSo
                 this.nextState(ClientSocketHandlerState.Error);
             }
 
-            logger.trace("State: " + stState + " -> " + this.getState());
+            logger.trace("State: {} -> {}", stState, this.getState());
         } while (this.getState() != ClientSocketHandlerState.Waiting);
     }
 
