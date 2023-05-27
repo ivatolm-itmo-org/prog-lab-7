@@ -4,11 +4,10 @@ import java.io.IOException;
 import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
-import java.util.LinkedList;
-
-import org.apache.commons.lang3.tuple.Pair;
 
 import core.handler.Handler;
+import core.handler.HandlerChannel;
+import core.handler.HandlerChannels;
 
 /**
  * Class for handing occuring events via other handlers.
@@ -54,10 +53,10 @@ public abstract class EventHandler<E extends Enum<?>> {
      * @throws IOException if cannot configure channel non-blocking
      */
     protected void subscribeChannelsRead(
-        LinkedList<Pair<E, SelectableChannel>> channels,
+        HandlerChannels channels,
         Handler<E, ?> handler
     ) throws IOException {
-        for (Pair<E, SelectableChannel> item : channels) {
+        for (HandlerChannel item : channels) {
             this.subscribeChannelRead(
                 item.getValue(),
                 new Object[] { handler, item.getKey() }
@@ -76,7 +75,7 @@ public abstract class EventHandler<E extends Enum<?>> {
      * @throws SelectorKeyNotFoundException if key of {@code channel} is unknown
      */
     protected boolean updateSubscriptionRead(SelectableChannel channel,
-                                             LinkedList<Pair<E, SelectableChannel>> subscriptions)
+                                             HandlerChannels subscriptions)
         throws SelectorKeyNotFoundException
     {
         SelectionKey key = channel.keyFor(this.selector);
@@ -85,7 +84,7 @@ public abstract class EventHandler<E extends Enum<?>> {
         }
 
         boolean found = false;
-        for (Pair<E, SelectableChannel> subscription : subscriptions) {
+        for (HandlerChannel subscription : subscriptions) {
             SelectableChannel subsciptionChannel = subscription.getRight();
             if (subsciptionChannel.equals(channel)) {
                 found = true;
@@ -117,10 +116,10 @@ public abstract class EventHandler<E extends Enum<?>> {
      * @throws SelectorKeyNotFoundException if key of {@code channel} is unknown
      */
     protected void updateChannelsSubscriptionRead(
-        LinkedList<Pair<E, SelectableChannel>> channels,
-        LinkedList<Pair<E, SelectableChannel>> subscriptions
+        HandlerChannels channels,
+        HandlerChannels subscriptions
     ) throws SelectorKeyNotFoundException {
-        for (Pair<E, SelectableChannel> channel : channels) {
+        for (HandlerChannel channel : channels) {
             this.updateSubscriptionRead(channel.getValue(), subscriptions);
         }
     }
@@ -139,8 +138,8 @@ public abstract class EventHandler<E extends Enum<?>> {
      *
      * @param channels channels to unsubscribe
      */
-    protected void unsubscribeChannels(LinkedList<Pair<E, SelectableChannel>> channels) {
-        for (Pair<E, SelectableChannel> item : channels) {
+    protected void unsubscribeChannels(HandlerChannels channels) {
+        for (HandlerChannel item : channels) {
             this.unsubscribeChannel(item.getValue());
         }
     }

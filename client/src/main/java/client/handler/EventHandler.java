@@ -6,7 +6,6 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.Set;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -14,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import core.handler.ChannelType;
+import core.handler.HandlerChannels;
 
 /**
  * Class for handling application events via other handlers.
@@ -55,15 +55,15 @@ public class EventHandler {
 
         logger.debug("Registering channels:");
         logger.debug("  " + "Shell:");
-        LinkedList<Pair<ChannelType, SelectableChannel>> shellIC = this.shellHandler.getInputChannels();
+        HandlerChannels shellIC = this.shellHandler.getInputChannels();
         this.registerChannels(ChannelType.Shell, shellIC);
 
         logger.debug("  " + "Com:");
-        LinkedList<Pair<ChannelType, SelectableChannel>> comIC = this.comHandler.getInputChannels();
+        HandlerChannels comIC = this.comHandler.getInputChannels();
         this.registerChannels(ChannelType.Com, comIC);
 
         logger.debug("  " + "Network:");
-        LinkedList<Pair<ChannelType, SelectableChannel>> socketIC = this.socketHandler.getInputChannels();
+        HandlerChannels socketIC = this.socketHandler.getInputChannels();
         this.registerChannels(ChannelType.Network, socketIC);
     }
 
@@ -71,18 +71,18 @@ public class EventHandler {
         logger.debug("Updating subscriptions...");
 
         logger.debug("  " + "Shell:");
-        LinkedList<Pair<ChannelType, SelectableChannel>> shellIC = this.shellHandler.getInputChannels();
-        LinkedList<Pair<ChannelType, SelectableChannel>> shellSubsIC = this.shellHandler.getSubscriptions();
+        HandlerChannels shellIC = this.shellHandler.getInputChannels();
+        HandlerChannels shellSubsIC = this.shellHandler.getSubscriptions();
         this.updateChannelSubscriptions(ChannelType.Shell, shellIC, shellSubsIC);
 
         logger.debug("  " + "Com:");
-        LinkedList<Pair<ChannelType, SelectableChannel>> comIC = this.comHandler.getInputChannels();
-        LinkedList<Pair<ChannelType, SelectableChannel>> comSubsIC = this.comHandler.getSubscriptions();
+        HandlerChannels comIC = this.comHandler.getInputChannels();
+        HandlerChannels comSubsIC = this.comHandler.getSubscriptions();
         this.updateChannelSubscriptions(ChannelType.Com, comIC, comSubsIC);
 
         logger.debug("  " + "Network:");
-        LinkedList<Pair<ChannelType, SelectableChannel>> socketIC = this.socketHandler.getInputChannels();
-        LinkedList<Pair<ChannelType, SelectableChannel>> socketSubsIC = this.socketHandler.getSubscriptions();
+        HandlerChannels socketIC = this.socketHandler.getInputChannels();
+        HandlerChannels socketSubsIC = this.socketHandler.getSubscriptions();
         this.updateChannelSubscriptions(ChannelType.Network, socketIC, socketSubsIC);
     }
 
@@ -146,8 +146,8 @@ public class EventHandler {
     }
 
     private void updateChannelSubscriptions(ChannelType type,
-                                            LinkedList<Pair<ChannelType, SelectableChannel>> ic,
-                                            LinkedList<Pair<ChannelType, SelectableChannel>> subs) {
+                                            HandlerChannels ic,
+                                            HandlerChannels subs) {
         for (HashMap.Entry<ChannelType, SelectableChannel> item : ic) {
             SelectableChannel channel = item.getValue();
             SelectionKey key = channel.keyFor(this.selector);
@@ -171,7 +171,7 @@ public class EventHandler {
         }
     }
 
-    private void registerChannels(ChannelType type, LinkedList<Pair<ChannelType, SelectableChannel>> ic) {
+    private void registerChannels(ChannelType type, HandlerChannels ic) {
         for (Pair<ChannelType, SelectableChannel> item : ic) {
             SelectableChannel channel = item.getValue();
 

@@ -19,6 +19,7 @@ import core.event.Event;
 import core.event.EventType;
 import core.handler.ChannelType;
 import core.handler.ComHandler;
+import core.handler.HandlerChannels;
 import core.utils.ChannelNotFoundException;
 import core.utils.NBChannelController;
 
@@ -72,8 +73,8 @@ public class ServerComHandler extends ComHandler<ServerComHandlerState> {
      * @param runner program runner
      * @param type communication channel type
      */
-    public ServerComHandler(LinkedList<Pair<ChannelType, SelectableChannel>> inputChannels,
-                            LinkedList<Pair<ChannelType, SelectableChannel>> outputChannels,
+    public ServerComHandler(HandlerChannels inputChannels,
+                            HandlerChannels outputChannels,
                             Runner runner,
                             ChannelType type) {
         super(inputChannels, outputChannels, ServerComHandlerState.Waiting);

@@ -8,7 +8,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Set;
 
-import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +16,8 @@ import core.event.EventHandler;
 import core.event.SelectorKeyNotFoundException;
 import core.handler.ChannelType;
 import core.handler.Handler;
+import core.handler.HandlerChannel;
+import core.handler.HandlerChannels;
 import server.load.LoadBalancer;
 import server.runner.Runner;
 
@@ -192,11 +193,11 @@ public class ServerEventHandler extends EventHandler<ChannelType> {
         Pipe com_network = clientPipes.getRight();
 
         ServerComHandler comHandler = new ServerComHandler(
-            new LinkedList<Pair<ChannelType, SelectableChannel>>() {{
-                add(new ImmutablePair<>(ChannelType.Network, network_com.source()));
+            new HandlerChannels() {{
+                add(new HandlerChannel(ChannelType.Network, network_com.source()));
             }},
-            new LinkedList<Pair<ChannelType, SelectableChannel>>() {{
-                add(new ImmutablePair<>(ChannelType.Network, com_network.sink()));
+            new HandlerChannels() {{
+                add(new HandlerChannel(ChannelType.Network, com_network.sink()));
             }},
             this.runner,
             ChannelType.Network
@@ -209,14 +210,14 @@ public class ServerEventHandler extends EventHandler<ChannelType> {
         this.comHandlers.push(comHandler);
 
         this.subscribeChannelsRead(
-            new LinkedList<Pair<ChannelType, SelectableChannel>>() {{
-                add(new ImmutablePair<>(ChannelType.Com, com_network.source()));
+            new HandlerChannels() {{
+                add(new HandlerChannel(ChannelType.Com, com_network.source()));
             }},
             this.socketHandler
         );
 
-        this.socketHandler.addInputChannel(new ImmutablePair<>(ChannelType.Com, com_network.source()));
-        this.socketHandler.addOutputChannel(new ImmutablePair<>(ChannelType.Com, network_com.sink()));
+        this.socketHandler.addInputChannel(new HandlerChannel(ChannelType.Com, com_network.source()));
+        this.socketHandler.addOutputChannel(new HandlerChannel(ChannelType.Com, network_com.sink()));
 
         logger.debug("Adding new client done");
     }

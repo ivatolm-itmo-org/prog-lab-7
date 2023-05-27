@@ -7,7 +7,6 @@ import java.nio.channels.Pipe.SourceChannel;
 import java.util.Arrays;
 import java.util.LinkedList;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,6 +15,7 @@ import core.command.arguments.Argument;
 import core.event.Event;
 import core.event.EventType;
 import core.handler.ChannelType;
+import core.handler.HandlerChannels;
 import core.handler.ShellHandler;
 import core.utils.ChannelNotFoundException;
 import core.utils.NBChannelController;
@@ -64,8 +64,8 @@ public class ServerShellHandler extends ShellHandler<ServerShellHandlerState> {
      * @param inputChannels input channels of the handler
      * @param outputChannels output channels of the handler
      */
-    public ServerShellHandler(LinkedList<Pair<ChannelType, SelectableChannel>> inputChannels,
-                              LinkedList<Pair<ChannelType, SelectableChannel>> outputChannels) {
+    public ServerShellHandler(HandlerChannels inputChannels,
+                              HandlerChannels outputChannels) {
         super(inputChannels, outputChannels, ServerShellHandlerState.Waiting);
 
         this.input = null;

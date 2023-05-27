@@ -2,13 +2,10 @@ package server;
 
 import java.io.IOException;
 import java.nio.channels.Pipe;
-import java.nio.channels.SelectableChannel;
-import java.util.LinkedList;
-
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
 
 import core.handler.ChannelType;
+import core.handler.HandlerChannel;
+import core.handler.HandlerChannels;
 import core.handler.InputHandler;
 import core.models.humanBeing.HumanBeing;
 import core.net.Com;
@@ -90,21 +87,21 @@ public class Server
         );
 
         ServerShellHandler shellHandler = new ServerShellHandler(
-            new LinkedList<Pair<ChannelType, SelectableChannel>>() {{
-                add(new ImmutablePair<>(ChannelType.Input, input_shell.source()));
-                add(new ImmutablePair<>(ChannelType.Com, com_shell.source()));
+            new HandlerChannels() {{
+                add(new HandlerChannel(ChannelType.Input, input_shell.source()));
+                add(new HandlerChannel(ChannelType.Com, com_shell.source()));
             }},
-            new LinkedList<Pair<ChannelType, SelectableChannel>>() {{
-                add(new ImmutablePair<>(ChannelType.Com, shell_com.sink()));
+            new HandlerChannels() {{
+                add(new HandlerChannel(ChannelType.Com, shell_com.sink()));
             }}
         );
 
         ServerComHandler shellComHandler = new ServerComHandler(
-            new LinkedList<Pair<ChannelType, SelectableChannel>>() {{
-                add(new ImmutablePair<>(ChannelType.Shell, shell_com.source()));
+            new HandlerChannels() {{
+                add(new HandlerChannel(ChannelType.Shell, shell_com.source()));
             }},
-            new LinkedList<Pair<ChannelType, SelectableChannel>>() {{
-                add(new ImmutablePair<>(ChannelType.Shell, com_shell.sink()));
+            new HandlerChannels() {{
+                add(new HandlerChannel(ChannelType.Shell, com_shell.sink()));
             }},
             runner,
             ChannelType.Shell
@@ -113,10 +110,10 @@ public class Server
         ServerSocketHandler socketHandler;
         try {
             socketHandler = new ServerSocketHandler(
-                new LinkedList<Pair<ChannelType, SelectableChannel>>() {{
+                new HandlerChannels() {{
 
                 }},
-                new LinkedList<Pair<ChannelType, SelectableChannel>>() {{
+                new HandlerChannels() {{
 
                 }},
                 com

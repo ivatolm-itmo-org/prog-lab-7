@@ -18,6 +18,7 @@ import core.command.arguments.Argument;
 import core.event.Event;
 import core.event.EventType;
 import core.handler.ChannelType;
+import core.handler.HandlerChannels;
 import core.handler.ShellHandler;
 import core.utils.ChannelNotFoundException;
 import core.utils.NBChannelController;
@@ -77,8 +78,8 @@ public class ClientShellHandler extends ShellHandler<ClientShellHandlerState> {
      * @param inputChannels input channels of the handler
      * @param outputChannels output channels of the handler
      */
-    public ClientShellHandler(LinkedList<Pair<ChannelType, SelectableChannel>> inputChannels,
-                              LinkedList<Pair<ChannelType, SelectableChannel>> outputChannels) {
+    public ClientShellHandler(HandlerChannels inputChannels,
+                              HandlerChannels outputChannels) {
         super(inputChannels, outputChannels, ClientShellHandlerState.Waiting);
 
         this.input = null;

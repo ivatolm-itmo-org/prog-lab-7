@@ -2,11 +2,6 @@ package client;
 
 import java.io.IOException;
 import java.nio.channels.Pipe;
-import java.nio.channels.SelectableChannel;
-import java.util.LinkedList;
-
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
 
 import client.handler.ClientComHandler;
 import client.handler.ClientShellHandler;
@@ -15,6 +10,8 @@ import client.handler.EventHandler;
 import client.net.ClientComUDP;
 import client.shell.ContentManager;
 import core.handler.ChannelType;
+import core.handler.HandlerChannel;
+import core.handler.HandlerChannels;
 import core.handler.InputHandler;
 import core.net.Com;
 
@@ -80,35 +77,35 @@ public class Client {
         );
 
         ClientComHandler comHandler = new ClientComHandler(
-            new LinkedList<Pair<ChannelType, SelectableChannel>>() {{
-                add(new ImmutablePair<>(ChannelType.Shell, shell_com.source()));
-                add(new ImmutablePair<>(ChannelType.Network, socket_com.source()));
+            new HandlerChannels() {{
+                add(new HandlerChannel(ChannelType.Shell, shell_com.source()));
+                add(new HandlerChannel(ChannelType.Network, socket_com.source()));
             }},
-            new LinkedList<Pair<ChannelType, SelectableChannel>>() {{
-                add(new ImmutablePair<>(ChannelType.Shell, com_shell.sink()));
-                add(new ImmutablePair<>(ChannelType.Network, com_socket.sink()));
+            new HandlerChannels() {{
+                add(new HandlerChannel(ChannelType.Shell, com_shell.sink()));
+                add(new HandlerChannel(ChannelType.Network, com_socket.sink()));
             }},
             new ContentManager("../client/src/main/resources/scripts")
         );
 
         ClientShellHandler shellHandler = new ClientShellHandler(
-            new LinkedList<Pair<ChannelType, SelectableChannel>>() {{
-                add(new ImmutablePair<>(ChannelType.Input, input_shell.source()));
-                add(new ImmutablePair<>(ChannelType.Com, com_shell.source()));
+            new HandlerChannels() {{
+                add(new HandlerChannel(ChannelType.Input, input_shell.source()));
+                add(new HandlerChannel(ChannelType.Com, com_shell.source()));
             }},
-            new LinkedList<Pair<ChannelType, SelectableChannel>>() {{
-                add(new ImmutablePair<>(ChannelType.Com, shell_com.sink()));
+            new HandlerChannels() {{
+                add(new HandlerChannel(ChannelType.Com, shell_com.sink()));
             }}
         );
 
         ClientSocketHandler socketHandler;
         try {
             socketHandler = new ClientSocketHandler(
-                new LinkedList<Pair<ChannelType, SelectableChannel>>() {{
-                    add(new ImmutablePair<>(ChannelType.Com, com_socket.source()));
+                new HandlerChannels() {{
+                    add(new HandlerChannel(ChannelType.Com, com_socket.source()));
                 }},
-                new LinkedList<Pair<ChannelType, SelectableChannel>>() {{
-                    add(new ImmutablePair<>(ChannelType.Com, socket_com.sink()));
+                new HandlerChannels() {{
+                    add(new HandlerChannel(ChannelType.Com, socket_com.sink()));
                 }},
                 com
             );

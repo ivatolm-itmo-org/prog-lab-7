@@ -7,7 +7,6 @@ import java.nio.channels.Pipe.SinkChannel;
 import java.nio.channels.Pipe.SourceChannel;
 import java.util.LinkedList;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,6 +16,7 @@ import core.event.Event;
 import core.event.EventType;
 import core.handler.ChannelType;
 import core.handler.ComHandler;
+import core.handler.HandlerChannels;
 import core.utils.ChannelNotFoundException;
 import core.utils.NBChannelController;
 
@@ -66,8 +66,8 @@ public class ClientComHandler extends ComHandler<ClientComHandlerState> {
      * @param outputChannels output channels of the handler
      * @param contentManager content manager
      */
-    public ClientComHandler(LinkedList<Pair<ChannelType, SelectableChannel>> inputChannels,
-                            LinkedList<Pair<ChannelType, SelectableChannel>> outputChannels,
+    public ClientComHandler(HandlerChannels inputChannels,
+                            HandlerChannels outputChannels,
                             ContentManager contentManager) {
         super(inputChannels, outputChannels, ClientComHandlerState.Waiting);
 

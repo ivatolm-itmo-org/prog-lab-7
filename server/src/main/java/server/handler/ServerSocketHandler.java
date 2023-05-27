@@ -23,6 +23,8 @@ import org.slf4j.LoggerFactory;
 import core.event.Event;
 import core.event.EventType;
 import core.handler.ChannelType;
+import core.handler.HandlerChannel;
+import core.handler.HandlerChannels;
 import core.handler.SocketHandler;
 import core.net.Com;
 import core.net.packet.Packet;
@@ -76,8 +78,8 @@ public class ServerSocketHandler extends SocketHandler<DatagramChannel, ServerSo
      * @param networkCom network communicator
      * @throws IOException if cannot open a pipe
      */
-    public ServerSocketHandler(LinkedList<Pair<ChannelType, SelectableChannel>> inputChannels,
-                               LinkedList<Pair<ChannelType, SelectableChannel>> outputChannels,
+    public ServerSocketHandler(HandlerChannels inputChannels,
+                               HandlerChannels outputChannels,
                                Com networkCom) throws IOException {
         super(inputChannels, outputChannels, ServerSocketHandlerState.Waiting, networkCom);
 
@@ -86,7 +88,7 @@ public class ServerSocketHandler extends SocketHandler<DatagramChannel, ServerSo
 
         this.disconnectionLock = new ReentrantLock();
         this.disconnectionPipe = Pipe.open();
-        this.inputChannels.add(new ImmutablePair<>(ChannelType.Internal, disconnectionPipe.source()));
+        this.inputChannels.add(new HandlerChannel(ChannelType.Internal, disconnectionPipe.source()));
     }
 
     @Override

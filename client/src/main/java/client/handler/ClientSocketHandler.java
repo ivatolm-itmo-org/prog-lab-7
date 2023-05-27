@@ -20,6 +20,8 @@ import client.net.PingTask;
 import core.event.Event;
 import core.event.EventType;
 import core.handler.ChannelType;
+import core.handler.HandlerChannel;
+import core.handler.HandlerChannels;
 import core.handler.SocketHandler;
 import core.net.Com;
 import core.net.packet.Packet;
@@ -58,8 +60,8 @@ public class ClientSocketHandler extends SocketHandler<DatagramChannel, ClientSo
      * @param networkCom network communicator
      * @throws IOException if cannot open a pipe
      */
-    public ClientSocketHandler(LinkedList<Pair<ChannelType, SelectableChannel>> inputChannels,
-                               LinkedList<Pair<ChannelType, SelectableChannel>> outputChannels,
+    public ClientSocketHandler(HandlerChannels inputChannels,
+                               HandlerChannels outputChannels,
                                Com networkCom) throws IOException {
         super(inputChannels, outputChannels, ClientSocketHandlerState.Waiting, networkCom);
 
@@ -70,7 +72,7 @@ public class ClientSocketHandler extends SocketHandler<DatagramChannel, ClientSo
 
         this.timer.scheduleAtFixedRate(timerTask, 0, PING_DELAY);
 
-        this.inputChannels.add(new ImmutablePair<>(ChannelType.Internal, disconnectionPipe.source()));
+        this.inputChannels.add(new HandlerChannel(ChannelType.Internal, disconnectionPipe.source()));
     }
 
     @Override

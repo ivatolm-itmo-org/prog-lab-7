@@ -1,10 +1,6 @@
 package core.handler;
 
 import java.nio.channels.SelectableChannel;
-import java.util.LinkedList;
-
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
 
 import core.net.Com;
 
@@ -26,14 +22,14 @@ public abstract class SocketHandler<C extends SelectableChannel, S extends Enum<
      * @param initState initial state of FSM
      * @param networkCom network communicator
      */
-    protected SocketHandler(LinkedList<Pair<ChannelType, SelectableChannel>> inputChannels,
-                            LinkedList<Pair<ChannelType, SelectableChannel>> outputChannels,
+    protected SocketHandler(HandlerChannels inputChannels,
+                            HandlerChannels outputChannels,
                             S initState,
                             Com networkCom) {
         super(inputChannels, outputChannels, initState);
 
         this.networkCom = networkCom;
-        this.inputChannels.add(new ImmutablePair<>(ChannelType.Network, this.networkCom.getChannel()));
+        this.inputChannels.add(new HandlerChannel(ChannelType.Network, this.networkCom.getChannel()));
     }
 
 }

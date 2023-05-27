@@ -5,8 +5,6 @@ import java.io.Serializable;
 import java.nio.channels.SelectableChannel;
 import java.util.LinkedList;
 
-import org.apache.commons.lang3.tuple.Pair;
-
 import core.fsm.FSM;
 import core.utils.ChannelNotFoundException;
 
@@ -18,14 +16,14 @@ import core.utils.ChannelNotFoundException;
 public abstract class Handler<E extends Enum<?>, S extends Enum<?>> extends FSM<S> implements Serializable {
 
     /** Input channels */
-    protected LinkedList<Pair<E, SelectableChannel>> inputChannels;
+    protected HandlerChannels inputChannels;
 
     /** Output channels */
-    protected LinkedList<Pair<E, SelectableChannel>> outputChannels;
+    protected HandlerChannels outputChannels;
 
     /** Input channels subscriptions */
-    protected LinkedList<Pair<E, SelectableChannel>> subscriptions;
-    protected LinkedList<Pair<E, SelectableChannel>> subscriptionsBuffer;
+    protected HandlerChannels subscriptions;
+    protected HandlerChannels subscriptionsBuffer;
 
     /** Ready channels */
     protected LinkedList<E> readyChannels;
@@ -40,14 +38,14 @@ public abstract class Handler<E extends Enum<?>, S extends Enum<?>> extends FSM<
      * @param outputChannels output channels of the handler
      * @param initState initial state of FSM
      */
-    protected Handler(LinkedList<Pair<E, SelectableChannel>> inputChannels,
-                      LinkedList<Pair<E, SelectableChannel>> outputChannels,
+    protected Handler(HandlerChannels inputChannels,
+                      HandlerChannels outputChannels,
                       S initState) {
         super(initState);
         this.inputChannels = inputChannels;
         this.outputChannels = outputChannels;
         this.subscriptions = this.inputChannels;
-        this.subscriptionsBuffer = new LinkedList<>();
+        this.subscriptionsBuffer = null;
         this.readyChannels = new LinkedList<>();
         this.running = true;
     }
@@ -66,7 +64,7 @@ public abstract class Handler<E extends Enum<?>, S extends Enum<?>> extends FSM<
      */
     public void preProcessing() {
         this.subscriptionsBuffer = this.subscriptions;
-        this.subscriptions = new LinkedList<>();
+        this.subscriptions = new HandlerChannels();
     }
 
     /**
@@ -74,7 +72,7 @@ public abstract class Handler<E extends Enum<?>, S extends Enum<?>> extends FSM<
      */
     public void postProcessing() {
         this.subscriptions = this.subscriptionsBuffer;
-        this.subscriptionsBuffer = new LinkedList<>();
+        this.subscriptionsBuffer = new HandlerChannels();
     }
 
     /**
@@ -96,9 +94,9 @@ public abstract class Handler<E extends Enum<?>, S extends Enum<?>> extends FSM<
         if (type == null) {
             this.subscriptionsBuffer = this.inputChannels;
         } else {
-            this.subscriptionsBuffer = new LinkedList<>();
+            this.subscriptionsBuffer = new HandlerChannels();
 
-            for (Pair<E, SelectableChannel> ic : this.inputChannels) {
+            for (HandlerChannel ic : this.inputChannels) {
                 if (ic.getKey() == type) {
                     this.subscriptionsBuffer.push(ic);
                 }
@@ -117,9 +115,9 @@ public abstract class Handler<E extends Enum<?>, S extends Enum<?>> extends FSM<
         if (filter == null) {
             this.subscriptionsBuffer = this.inputChannels;
         } else {
-            this.subscriptionsBuffer = new LinkedList<>();
+            this.subscriptionsBuffer = new HandlerChannels();
             for (E type : filter) {
-                for (Pair<E, SelectableChannel> ic : this.inputChannels) {
+                for (HandlerChannel ic : this.inputChannels) {
                     if (ic.getKey() == type) {
                         this.subscriptionsBuffer.push(ic);
                     }
@@ -138,7 +136,7 @@ public abstract class Handler<E extends Enum<?>, S extends Enum<?>> extends FSM<
     protected SelectableChannel getFirstInputChannel(ChannelType type)
         throws ChannelNotFoundException
     {
-        for (Pair<E, SelectableChannel> ic : this.inputChannels) {
+        for (HandlerChannel ic : this.inputChannels) {
             if (ic.getKey() == type) {
                 return ic.getValue();
             }
@@ -157,7 +155,7 @@ public abstract class Handler<E extends Enum<?>, S extends Enum<?>> extends FSM<
     protected SelectableChannel getFirstOutputChannel(ChannelType type)
         throws ChannelNotFoundException
     {
-        for (Pair<E, SelectableChannel> oc : this.outputChannels) {
+        for (HandlerChannel oc : this.outputChannels) {
             if (oc.getKey() == type) {
                 return oc.getValue();
             }
@@ -178,7 +176,7 @@ public abstract class Handler<E extends Enum<?>, S extends Enum<?>> extends FSM<
      *
      * @return input channels of the handler
      */
-    public LinkedList<Pair<E, SelectableChannel>> getInputChannels() {
+    public HandlerChannels getInputChannels() {
         return this.inputChannels;
     }
 
@@ -188,7 +186,7 @@ public abstract class Handler<E extends Enum<?>, S extends Enum<?>> extends FSM<
      *
      * @return subscriptions of the handler
      */
-    public LinkedList<Pair<E, SelectableChannel>> getSubscriptions() {
+    public HandlerChannels getSubscriptions() {
         return this.subscriptions;
     }
 
@@ -197,7 +195,7 @@ public abstract class Handler<E extends Enum<?>, S extends Enum<?>> extends FSM<
      *
      * @param ic channel to add
      */
-    public void addInputChannel(Pair<E, SelectableChannel> ic) {
+    public void addInputChannel(HandlerChannel ic) {
         this.inputChannels.add(ic);
     }
 
@@ -206,7 +204,7 @@ public abstract class Handler<E extends Enum<?>, S extends Enum<?>> extends FSM<
      *
      * @param oc channel to add
      */
-    public void addOutputChannel(Pair<E, SelectableChannel> oc) {
+    public void addOutputChannel(HandlerChannel oc) {
         this.outputChannels.add(oc);
     }
 
