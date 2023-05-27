@@ -5,7 +5,6 @@ import java.nio.channels.SelectableChannel;
 import java.nio.channels.Pipe.SinkChannel;
 import java.nio.channels.Pipe.SourceChannel;
 import java.util.LinkedList;
-import java.util.Optional;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -20,6 +19,7 @@ import core.event.Event;
 import core.event.EventType;
 import core.handler.ChannelType;
 import core.handler.ComHandler;
+import core.utils.ChannelNotFoundException;
 import core.utils.NBChannelController;
 
 enum ServerComHandlerState {
@@ -102,49 +102,54 @@ public class ServerComHandler extends ComHandler<ServerComHandlerState> {
         do {
             ServerComHandlerState stState = this.getState();
 
-            switch (this.getState()) {
-                case Waiting:
-                    this.handleWaitingState();
-                    break;
-                case NewEvent:
-                    this.handleNewEvent();
-                    break;
-                case NewRequest:
-                    this.handleNewRequest();
-                    break;
-                case LVStart:
-                    this.handleLVStart();
-                    break;
-                case IVStart:
-                    this.handleIVStart();
-                    break;
-                case NCStart:
-                    this.handleNCStart();
-                    break;
-                case ExistingRequest:
-                    this.handleExistingRequest();
-                    break;
-                case LVProcessing:
-                    this.handleLVProcessing();
-                    break;
-                case IVProcessing:
-                    this.handleIVProcessing();
-                    break;
-                case NCProcessing:
-                    this.handleNCProcessing();
-                    break;
-                case FinishRequest:
-                    this.handleFinishRequest();
-                    break;
-                case AuthError:
-                    this.handleAuthError();
-                    break;
-                case Error:
-                    this.handleError();
-                    break;
-                case Close:
-                    this.handleClose();
-                    break;
+            try {
+                switch (this.getState()) {
+                    case Waiting:
+                        this.handleWaitingState();
+                        break;
+                    case NewEvent:
+                        this.handleNewEvent();
+                        break;
+                    case NewRequest:
+                        this.handleNewRequest();
+                        break;
+                    case LVStart:
+                        this.handleLVStart();
+                        break;
+                    case IVStart:
+                        this.handleIVStart();
+                        break;
+                    case NCStart:
+                        this.handleNCStart();
+                        break;
+                    case ExistingRequest:
+                        this.handleExistingRequest();
+                        break;
+                    case LVProcessing:
+                        this.handleLVProcessing();
+                        break;
+                    case IVProcessing:
+                        this.handleIVProcessing();
+                        break;
+                    case NCProcessing:
+                        this.handleNCProcessing();
+                        break;
+                    case FinishRequest:
+                        this.handleFinishRequest();
+                        break;
+                    case AuthError:
+                        this.handleAuthError();
+                        break;
+                    case Error:
+                        this.handleError();
+                        break;
+                    case Close:
+                        this.handleClose();
+                        break;
+                }
+            } catch(IOException | ChannelNotFoundException e) {
+                logger.warn(e.getMessage());
+                this.nextState(ServerComHandlerState.Error);
             }
 
             logger.trace("State: " + stState + " -> " + this.getState());
@@ -176,22 +181,12 @@ public class ServerComHandler extends ComHandler<ServerComHandlerState> {
         }
     }
 
-    private void handleNewRequest() {
-        Optional<SelectableChannel> ic = this.getFirstInputChannel(this.channelType);
-        if (!ic.isPresent()) {
-            logger.warn("Input channel " + this.channelType + " was not found.");
-            this.nextState(ServerComHandlerState.Error);
-            return;
-        }
+    private void handleNewRequest()
+        throws IOException, ChannelNotFoundException
+    {
+        SourceChannel ic = (SourceChannel) this.getFirstInputChannel(this.channelType);
 
-        SourceChannel channel = (SourceChannel) ic.get();
-        try {
-            this.event = (Event) NBChannelController.read(channel);
-        } catch (IOException e) {
-            logger.warn("Cannot read from the channel.");
-            this.nextState(ServerComHandlerState.Error);
-            return;
-        }
+        this.event = (Event) NBChannelController.read(ic);
 
         logger.debug("Validating token... (token={})", this.token);
         if (this.event.getType() != EventType.LoginValidation &&
@@ -257,23 +252,12 @@ public class ServerComHandler extends ComHandler<ServerComHandlerState> {
         this.nextState(ServerComHandlerState.NCProcessing);
     }
 
-    private void handleExistingRequest() {
-        Optional<SelectableChannel> ic = this.getFirstInputChannel(this.channelType);
-        if (!ic.isPresent()) {
-            logger.warn("Input channel " + this.channelType + " was not found.");
-            this.nextState(ServerComHandlerState.Error);
-            return;
-        }
+    private void handleExistingRequest()
+        throws IOException, ChannelNotFoundException
+    {
+        SourceChannel ic = (SourceChannel) this.getFirstInputChannel(this.channelType);
 
-        SourceChannel channel = (SourceChannel) ic.get();
-        Event response = null;
-        try {
-            response = (Event) NBChannelController.read(channel);
-        } catch (IOException e) {
-            System.err.println("Cannot read from the channel.");
-            this.nextState(ServerComHandlerState.Error);
-            return;
-        }
+        Event response = (Event) NBChannelController.read(ic);
 
         this.stateData = response;
 
@@ -290,7 +274,9 @@ public class ServerComHandler extends ComHandler<ServerComHandlerState> {
         }
     }
 
-    private void handleLVProcessing() {
+    private void handleLVProcessing()
+        throws IOException, ChannelNotFoundException
+    {
         @SuppressWarnings("unchecked")
         Pair<String, String> credentials = (Pair<String, String>) this.event.getData();
 
@@ -302,26 +288,15 @@ public class ServerComHandler extends ComHandler<ServerComHandlerState> {
 
         Event respIV = new Event(EventType.LoginValidation, this.token);
 
-        Optional<SelectableChannel> oc = this.getFirstOutputChannel(this.channelType);
-        if (!oc.isPresent()) {
-            logger.warn("Output channel " + this.channelType + " was not found.");
-            this.nextState(ServerComHandlerState.Error);
-            return;
-        }
-
-        SinkChannel channel = (SinkChannel) oc.get();
-        try {
-            NBChannelController.write(channel, respIV);
-        } catch (IOException e) {
-            System.err.println("Cannot write to the channel.");
-            this.nextState(ServerComHandlerState.Error);
-            return;
-        }
+        SinkChannel oc = (SinkChannel) this.getFirstOutputChannel(this.channelType);
+        NBChannelController.write(oc, respIV);
 
         this.nextState(ServerComHandlerState.FinishRequest);
     }
 
-    private void handleIVProcessing() {
+    private void handleIVProcessing()
+        throws IOException, ChannelNotFoundException
+    {
         Argument id = (Argument) this.stateData;
 
         boolean result = Interpreter.HasItemWithId(id);
@@ -329,26 +304,15 @@ public class ServerComHandler extends ComHandler<ServerComHandlerState> {
 
         Event respIV = new Event(EventType.IdValidation, result);
 
-        Optional<SelectableChannel> oc = this.getFirstOutputChannel(this.channelType);
-        if (!oc.isPresent()) {
-            logger.warn("Output channel " + this.channelType + " was not found.");
-            this.nextState(ServerComHandlerState.Error);
-            return;
-        }
-
-        SinkChannel channel = (SinkChannel) oc.get();
-        try {
-            NBChannelController.write(channel, respIV);
-        } catch (IOException e) {
-            System.err.println("Cannot write to the channel.");
-            this.nextState(ServerComHandlerState.Error);
-            return;
-        }
+        SinkChannel oc = (SinkChannel) this.getFirstOutputChannel(this.channelType);
+        NBChannelController.write(oc, respIV);
 
         this.nextState(ServerComHandlerState.FinishRequest);
     }
 
-    private void handleNCProcessing() {
+    private void handleNCProcessing()
+        throws IOException, ChannelNotFoundException
+    {
         Event response = (Event) this.stateData;
 
         @SuppressWarnings("unchecked")
@@ -363,21 +327,9 @@ public class ServerComHandler extends ComHandler<ServerComHandlerState> {
 
             Event respNC = new Event(EventType.OutputResponse, programOutput);
 
-            Optional<SelectableChannel> oc = this.getFirstOutputChannel(this.channelType);
-            if (!oc.isPresent()) {
-                logger.warn("Output channel " + this.channelType + " was not found.");
-                this.nextState(ServerComHandlerState.Error);
-                return;
-            }
+            SinkChannel oc = (SinkChannel) this.getFirstOutputChannel(this.channelType);
+            NBChannelController.write(oc, respNC);
 
-            SinkChannel channel = (SinkChannel) oc.get();
-            try {
-                NBChannelController.write(channel, respNC);
-            } catch (IOException e) {
-                System.err.println("Cannot write to the channel.");
-                this.nextState(ServerComHandlerState.Error);
-                return;
-            }
             this.nextState(ServerComHandlerState.FinishRequest);
             return;
         }
@@ -419,21 +371,8 @@ public class ServerComHandler extends ComHandler<ServerComHandlerState> {
             }
         }
 
-        Optional<SelectableChannel> oc = this.getFirstOutputChannel(this.channelType);
-        if (!oc.isPresent()) {
-            logger.warn("Output channel " + this.channelType + " was not found.");
-            this.nextState(ServerComHandlerState.Error);
-            return;
-        }
-
-        SinkChannel channel = (SinkChannel) oc.get();
-        try {
-            NBChannelController.write(channel, respNC);
-        } catch (IOException e) {
-            System.err.println("Cannot write to the channel.");
-            this.nextState(ServerComHandlerState.Error);
-            return;
-        }
+        SinkChannel oc = (SinkChannel) this.getFirstOutputChannel(this.channelType);
+        NBChannelController.write(oc, respNC);
     }
 
     private void handleFinishRequest() {
@@ -453,23 +392,13 @@ public class ServerComHandler extends ComHandler<ServerComHandlerState> {
         this.nextState(ServerComHandlerState.FinishRequest);
     }
 
-    private void handleAuthError() {
-        Optional<SelectableChannel> oc = this.getFirstOutputChannel(this.channelType);
-        if (!oc.isPresent()) {
-            logger.warn("Output channel " + this.channelType + " was not found.");
-            this.nextState(ServerComHandlerState.Error);
-            return;
-        }
+    private void handleAuthError()
+        throws IOException, ChannelNotFoundException
+    {
+        SinkChannel oc = (SinkChannel) this.getFirstOutputChannel(this.channelType);
 
         Event respAE = new Event(EventType.AuthError, null);
-        SinkChannel channel = (SinkChannel) oc.get();
-        try {
-            NBChannelController.write(channel, respAE);
-        } catch (IOException e) {
-            System.err.println("Cannot write to the channel.");
-            this.nextState(ServerComHandlerState.Error);
-            return;
-        }
+        NBChannelController.write(oc, respAE);
 
         this.nextState(ServerComHandlerState.FinishRequest);
     }

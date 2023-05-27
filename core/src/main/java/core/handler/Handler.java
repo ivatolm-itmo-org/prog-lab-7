@@ -4,11 +4,11 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.nio.channels.SelectableChannel;
 import java.util.LinkedList;
-import java.util.Optional;
 
 import org.apache.commons.lang3.tuple.Pair;
 
 import core.fsm.FSM;
+import core.utils.ChannelNotFoundException;
 
 /**
  * Class for handling events.
@@ -133,15 +133,18 @@ public abstract class Handler<E extends Enum<?>, S extends Enum<?>> extends FSM<
      *
      * @param type type of the channel
      * @return input channel
+     * @throws ChannelNotFoundException if channel wasn't found
      */
-    protected Optional<SelectableChannel> getFirstInputChannel(ChannelType type) {
+    protected SelectableChannel getFirstInputChannel(ChannelType type)
+        throws ChannelNotFoundException
+    {
         for (Pair<E, SelectableChannel> ic : this.inputChannels) {
             if (ic.getKey() == type) {
-                return Optional.of(ic.getValue());
+                return ic.getValue();
             }
         }
 
-        return Optional.empty();
+        throw new ChannelNotFoundException("Input channel wasn't found.");
     }
 
     /**
@@ -149,15 +152,18 @@ public abstract class Handler<E extends Enum<?>, S extends Enum<?>> extends FSM<
      *
      * @param type type of the channel
      * @return output channel
+     * @throws ChannelNotFoundException if channel wasn't found
      */
-    protected Optional<SelectableChannel> getFirstOutputChannel(ChannelType type) {
+    protected SelectableChannel getFirstOutputChannel(ChannelType type)
+        throws ChannelNotFoundException
+    {
         for (Pair<E, SelectableChannel> oc : this.outputChannels) {
             if (oc.getKey() == type) {
-                return Optional.of(oc.getValue());
+                return oc.getValue();
             }
         }
 
-        return Optional.empty();
+        throw new ChannelNotFoundException("Output channel wasn't found.");
     }
 
     /**

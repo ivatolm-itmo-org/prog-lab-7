@@ -8,7 +8,6 @@ import java.nio.channels.SelectableChannel;
 import java.nio.channels.Pipe.SinkChannel;
 import java.nio.channels.Pipe.SourceChannel;
 import java.util.LinkedList;
-import java.util.Optional;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -24,6 +23,7 @@ import core.handler.ChannelType;
 import core.handler.SocketHandler;
 import core.net.Com;
 import core.net.packet.Packet;
+import core.utils.ChannelNotFoundException;
 import core.utils.NBChannelController;
 
 enum ClientSocketHandlerState {
@@ -97,25 +97,30 @@ public class ClientSocketHandler extends SocketHandler<DatagramChannel, ClientSo
         do {
             ClientSocketHandlerState stState = this.getState();
 
-            switch (this.getState()) {
-                case Waiting:
-                    this.handleWaitingState();
-                    break;
-                case PingTimeout:
-                    this.handlePingTimeout();
-                    break;
-                case NewComEvent:
-                    this.handleNewComEvent();
-                    break;
-                case NewNetworkEvent:
-                    this.handleNewNetworkEvent();
-                    break;
-                case CompletedMessage:
-                    this.handleCompletedMessage();
-                    break;
-                case Error:
-                    this.handleError();
-                    break;
+            try {
+                switch (this.getState()) {
+                    case Waiting:
+                        this.handleWaitingState();
+                        break;
+                    case PingTimeout:
+                        this.handlePingTimeout();
+                        break;
+                    case NewComEvent:
+                        this.handleNewComEvent();
+                        break;
+                    case NewNetworkEvent:
+                        this.handleNewNetworkEvent();
+                        break;
+                    case CompletedMessage:
+                        this.handleCompletedMessage();
+                        break;
+                    case Error:
+                        this.handleError();
+                        break;
+                }
+            } catch(IOException | ChannelNotFoundException e) {
+                logger.warn(e.getMessage());
+                this.nextState(ClientSocketHandlerState.Error);
             }
 
             logger.trace("State: " + stState + " -> " + this.getState());
@@ -136,26 +141,14 @@ public class ClientSocketHandler extends SocketHandler<DatagramChannel, ClientSo
         }
     }
 
-    private void handlePingTimeout() {
+    private void handlePingTimeout()
+        throws IOException, ChannelNotFoundException
+    {
         ChannelType type = ChannelType.Internal;
-        Optional<SelectableChannel> ic = this.getFirstInputChannel(type);
-        if (!ic.isPresent()) {
-            logger.warn("Input channel " + type + " was not found.");
-            this.nextState(ClientSocketHandlerState.Error);
-            return;
-        }
+        SourceChannel ic = (SourceChannel) this.getFirstInputChannel(type);
 
-        SourceChannel channel = (SourceChannel) ic.get();
-
-        @SuppressWarnings("unused")
-        Event event;
-        try {
-            event = (Event) NBChannelController.read(channel);
-        } catch (IOException e) {
-            System.err.println("Cannot read from the channel.");
-            this.nextState(ClientSocketHandlerState.Waiting);
-            return;
-        }
+        @SuppressWarnings("unused") // dummy event
+        Event event = (Event) NBChannelController.read(ic);
 
         Event reqPG = new Event(EventType.Ping, null);
 
@@ -165,25 +158,13 @@ public class ClientSocketHandler extends SocketHandler<DatagramChannel, ClientSo
         this.nextState(ClientSocketHandlerState.Waiting);
     }
 
-    private void handleNewComEvent() {
+    private void handleNewComEvent()
+        throws IOException, ChannelNotFoundException
+    {
         ChannelType type = ChannelType.Com;
-        Optional<SelectableChannel> ic = this.getFirstInputChannel(type);
-        if (!ic.isPresent()) {
-            logger.warn("Input channel " + type + " was not found.");
-            this.nextState(ClientSocketHandlerState.Error);
-            return;
-        }
+        SourceChannel ic = (SourceChannel) this.getFirstInputChannel(type);
 
-        SourceChannel channel = (SourceChannel) ic.get();
-
-        Event req;
-        try {
-            req = (Event) NBChannelController.read(channel);
-        } catch (IOException e) {
-            System.err.println("Cannot read from the channel.");
-            this.nextState(ClientSocketHandlerState.Waiting);
-            return;
-        }
+        Event req = (Event) NBChannelController.read(ic);
 
         // Packet type of NewCommands doesn't matter
         // TODO: maybe remove?
@@ -214,26 +195,16 @@ public class ClientSocketHandler extends SocketHandler<DatagramChannel, ClientSo
         }
     }
 
-    private void handleCompletedMessage() {
+    private void handleCompletedMessage()
+        throws IOException, ChannelNotFoundException
+    {
         Event event = (Event) this.message.getValue().getLast().getData();
         this.message = null;
 
         ChannelType type = ChannelType.Com;
-        Optional<SelectableChannel> oc = this.getFirstOutputChannel(type);
-        if (!oc.isPresent()) {
-            logger.warn("Output channel " + type + " was not found.");
-            this.nextState(ClientSocketHandlerState.Error);
-            return;
-        }
+        SinkChannel oc = (SinkChannel) this.getFirstOutputChannel(type);
 
-        SinkChannel channel = (SinkChannel) oc.get();
-        try {
-            NBChannelController.write(channel, event);
-        } catch (IOException e) {
-            System.err.println("Cannot write to the channel.");
-            this.nextState(ClientSocketHandlerState.Error);
-            return;
-        }
+        NBChannelController.write(oc, event);
 
         this.nextState(ClientSocketHandlerState.Waiting);
     }
