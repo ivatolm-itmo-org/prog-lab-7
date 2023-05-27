@@ -176,16 +176,19 @@ public class ClientSocketHandler extends SocketHandler<DatagramChannel, ClientSo
 
         SourceChannel channel = (SourceChannel) ic.get();
 
-        Event reqNC;
+        Event req;
         try {
-            reqNC = (Event) NBChannelController.read(channel);
+            req = (Event) NBChannelController.read(channel);
         } catch (IOException e) {
             System.err.println("Cannot read from the channel.");
             this.nextState(ClientSocketHandlerState.Waiting);
             return;
         }
 
-        Packet packet = new Packet(EventType.NewCommands, reqNC);
+        // Packet type of NewCommands doesn't matter
+        // TODO: maybe remove?
+        System.out.println("Event: " + req);
+        Packet packet = new Packet(EventType.NewCommands, req);
         this.networkCom.send(packet, null);
 
         this.nextState(ClientSocketHandlerState.Waiting);

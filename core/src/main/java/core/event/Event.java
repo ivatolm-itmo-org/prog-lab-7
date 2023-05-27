@@ -15,6 +15,9 @@ public class Event implements Serializable {
     // Data of event
     private Object data;
 
+    // Credentials
+    private String token;
+
     /**
      * Constructs new {@code Event} with provided arguments.
      *
@@ -24,6 +27,20 @@ public class Event implements Serializable {
     public Event(EventType type, Object data) {
         this.type = type;
         this.data = data;
+        this.token = null;
+    }
+
+    /**
+     * Constructs new {@code Event} with provided arguments.
+     *
+     * @param type type of the event
+     * @param data data of the event
+     * @param token access credentials
+     */
+    public Event(EventType type, Object data, String token) {
+        this.type = type;
+        this.data = data;
+        this.token = token;
     }
 
     /**
@@ -38,6 +55,21 @@ public class Event implements Serializable {
      */
     public Object getData() {
         return this.data;
+    }
+
+    /**
+     * @return access credentials
+     */
+    public Object getToken() {
+        return this.token;
+    }
+
+    @Override
+    public String toString() {
+        return String.format(
+            "(type: %s, data: %s, token: %s)",
+            this.type, this.data.hashCode(), this.token
+        );
     }
 
 }

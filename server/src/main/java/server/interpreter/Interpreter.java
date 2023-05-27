@@ -143,6 +143,9 @@ public class Interpreter {
             case PRINT_FIELD_DESCENDING_MINUTES_OF_WAITING:
                 return this.printFieldDescendingMinutesOfWaiting(args);
 
+            case LOGIN:
+                return this.login(args);
+
             default:
                 System.err.println("Unknown command.");
         }
@@ -535,6 +538,18 @@ public class Interpreter {
         }
 
         this.commandOutput = result;
+
+        return null;
+    }
+
+    /**
+     * LOGIN command, description is provided in {@code Command}.
+     *
+     * @param args arguments for the command
+     * @return list of commands for later interpretation or null
+     */
+    private String[] login(LinkedList<Argument> args) {
+        System.err.println("Logging in...");
 
         return null;
     }

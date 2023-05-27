@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Optional;
 
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +31,10 @@ enum ClientShellHandlerState {
     ComIdValidationWaiting(true),
     ComIdValidationFinish(false),
     ComReceiveOutput(false),
+    ComLgValidationStart(false),
+    ComLgValidationWaiting(true),
+    ComLgValidationFinish(false),
+    AuthError(false),
     Close(true)
     ;
 
@@ -62,6 +67,9 @@ public class ClientShellHandler extends ShellHandler<ClientShellHandlerState> {
 
     // Should close flag
     private boolean shouldClose;
+
+    // State data
+    private Object stateData;
 
     /**
      * Constructs new {@code ClientShellHandler} with provided arguments.
@@ -125,8 +133,20 @@ public class ClientShellHandler extends ShellHandler<ClientShellHandlerState> {
                 case ComIdValidationFinish:
                     this.handleComIdValidationFinish();
                     break;
+                case ComLgValidationStart:
+                    this.handleComLgValidationStart();
+                    break;
+                case ComLgValidationWaiting:
+                    this.handleComLgValidationWaiting();
+                    break;
+                case ComLgValidationFinish:
+                    this.handleComLgValidationFinish();
+                    break;
                 case ComReceiveOutput:
                     this.handleComReceiveOutput();
+                    break;
+                case AuthError:
+                    this.handleAuthError();
                     break;
                 case Close:
                     this.handleClose();
@@ -199,6 +219,12 @@ public class ClientShellHandler extends ShellHandler<ClientShellHandlerState> {
             SinkChannel channel = (SinkChannel) oc.get();
             LinkedList<Command> commands = this.getParsingResult();
             for (Command cmd : commands) {
+                if (cmd.getType() == CommandType.LOGIN) {
+                    this.stateData = cmd.getArgsValues();
+                    this.nextState(ClientShellHandlerState.ComLgValidationStart);
+                    return;
+                }
+
                 if (cmd.getType() == CommandType.EXIT) {
                     this.nextState(ClientShellHandlerState.Close);
                     return;
@@ -284,11 +310,94 @@ public class ClientShellHandler extends ShellHandler<ClientShellHandlerState> {
             this.setArgIdValidationResult(result);
 
             this.filterSubscriptions();
-        } else {
+            this.nextState(ClientShellHandlerState.InputParsingProcessing);
+        } else if (event.getType() == EventType.AuthError) {
+            this.nextState(ClientShellHandlerState.AuthError);
+        }
+    }
+
+    private void handleComLgValidationStart() {
+        @SuppressWarnings("unchecked")
+        LinkedList<Argument> arguments = (LinkedList<Argument>) this.stateData;
+        Pair<String, String> credentials = new ImmutablePair<>(
+            (String) arguments.get(0).getValue(),
+            (String) arguments.get(1).getValue()
+        );
+
+        ChannelType type = ChannelType.Com;
+        Optional<SelectableChannel> oc = this.getFirstOutputChannel(type);
+        if (!oc.isPresent()) {
+            logger.warn("Output channel " + type + " was not found.");
             return;
         }
 
-        this.nextState(ClientShellHandlerState.InputParsingProcessing);
+        SinkChannel channel = (SinkChannel) oc.get();
+        Event event = new Event(EventType.LoginValidation, credentials);
+
+        try {
+            NBChannelController.write(channel, event);
+        } catch (IOException e) {
+            System.err.println("Cannot write to the channel.");
+            this.nextState(ClientShellHandlerState.Waiting);
+            return;
+        }
+
+        try {
+            this.filterSubscriptions(ChannelType.Com);
+        } catch (IOException e) {
+            logger.warn(e.getMessage());
+        }
+
+        this.nextState(ClientShellHandlerState.ComLgValidationWaiting);
+    }
+
+    private void handleComLgValidationWaiting() {
+        if (this.readyChannels.isEmpty()) {
+            return;
+        }
+
+        if (this.readyChannels.contains(ChannelType.Com)) {
+            this.nextState(ClientShellHandlerState.ComLgValidationFinish);
+        }
+    }
+
+    private void handleComLgValidationFinish() {
+        ChannelType type = ChannelType.Com;
+        Optional<SelectableChannel> ic = this.getFirstInputChannel(type);
+        if (!ic.isPresent()) {
+            logger.warn("Input channel " + type + " was not found.");
+            return;
+        }
+
+        SourceChannel channel = (SourceChannel) ic.get();
+        Event event;
+        try {
+            event = (Event) NBChannelController.read(channel);
+        } catch (IOException e) {
+            System.err.println("Cannot read from the channel.");
+            this.nextState(ClientShellHandlerState.Waiting);
+            return;
+        }
+
+        if (event.getType() == EventType.LoginValidation) {
+            boolean result = (boolean) event.getData();
+            if (result) {
+                System.out.println("Logged in.");
+            } else {
+                System.out.println("Invalid credentials.");
+            }
+
+            this.showInputGreeting();
+
+            this.filterSubscriptions();
+        } else if (event.getType() == EventType.AuthError) {
+            this.nextState(ClientShellHandlerState.AuthError);
+            return;
+        }
+
+        this.stateData = null;
+
+        this.nextState(ClientShellHandlerState.Waiting);
     }
 
     private void handleComReceiveOutput() {
@@ -320,9 +429,18 @@ public class ClientShellHandler extends ShellHandler<ClientShellHandlerState> {
             this.showInputGreeting();
 
             this.nextState(ClientShellHandlerState.Waiting);
+        } else if (event.getType() == EventType.AuthError) {
+            this.nextState(ClientShellHandlerState.AuthError);
         } else {
             this.nextState(ClientShellHandlerState.Waiting);
         }
+    }
+
+    private void handleAuthError() {
+        System.out.println("Invalid credentials.");
+        this.showInputGreeting();
+
+        this.nextState(ClientShellHandlerState.Waiting);
     }
 
     private void handleClose() {

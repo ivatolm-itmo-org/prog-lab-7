@@ -25,12 +25,15 @@ enum ClientComHandlerState {
     NewEvent,
     NewRequest,
     IVStart,
+    LVStart,
     NCStart,
     ExistingRequest,
     IVProcessing,
+    LVProcessing,
     NCProcessingSR,
     NCProcessingOR,
     FinishRequest,
+    AuthError,
     Error
 }
 
@@ -52,6 +55,9 @@ public class ClientComHandler extends ComHandler<ClientComHandlerState> {
 
     // Currently processed event
     private Event event;
+
+    // Session token
+    private String token;
 
     /**
      * Constructs new {@code ClientComHandler} with provided arguments.
@@ -104,6 +110,9 @@ public class ClientComHandler extends ComHandler<ClientComHandlerState> {
                 case IVStart:
                     this.handleIVStart();
                     break;
+                case LVStart:
+                    this.handleLVStart();
+                    break;
                 case NCStart:
                     this.handleNCStart();
                     break;
@@ -113,6 +122,9 @@ public class ClientComHandler extends ComHandler<ClientComHandlerState> {
                 case IVProcessing:
                     this.handleIVProcessing();
                     break;
+                case LVProcessing:
+                    this.handleLVProcessing();
+                    break;
                 case NCProcessingSR:
                     this.handleNCProcessingSR();
                     break;
@@ -121,6 +133,9 @@ public class ClientComHandler extends ComHandler<ClientComHandlerState> {
                     break;
                 case FinishRequest:
                     this.handleFinishRequest();
+                    break;
+                case AuthError:
+                    this.handleAuthError();
                     break;
                 case Error:
                     this.handleError();
@@ -177,11 +192,17 @@ public class ClientComHandler extends ComHandler<ClientComHandlerState> {
         }
 
         switch (this.event.getType()) {
+            case LoginValidation:
+                this.nextState(ClientComHandlerState.LVStart);
+                break;
             case IdValidation:
                 this.nextState(ClientComHandlerState.IVStart);
                 break;
             case NewCommands:
                 this.nextState(ClientComHandlerState.NCStart);
+                break;
+            case AuthError:
+                this.nextState(ClientComHandlerState.AuthError);
                 break;
             default:
                 this.nextState(ClientComHandlerState.Error);
@@ -190,7 +211,7 @@ public class ClientComHandler extends ComHandler<ClientComHandlerState> {
     }
 
     private void handleIVStart() {
-        Event reqIV = new Event(EventType.IdValidation, this.event.getData());
+        Event reqIV = new Event(EventType.IdValidation, this.event.getData(), this.token);
 
         ChannelType type = ChannelType.Network;
         Optional<SelectableChannel> oc = this.getFirstOutputChannel(type);
@@ -212,8 +233,31 @@ public class ClientComHandler extends ComHandler<ClientComHandlerState> {
         this.nextState(ClientComHandlerState.Waiting);
     }
 
+    private void handleLVStart() {
+        Event reqLV = new Event(EventType.LoginValidation, this.event.getData(), this.token);
+
+        ChannelType type = ChannelType.Network;
+        Optional<SelectableChannel> oc = this.getFirstOutputChannel(type);
+        if (!oc.isPresent()) {
+            logger.warn("Output channel " + type + " was not found.");
+            this.nextState(ClientComHandlerState.Error);
+            return;
+        }
+
+        SinkChannel channel = (SinkChannel) oc.get();
+        try {
+            NBChannelController.write(channel, reqLV);
+        } catch (IOException e) {
+            System.err.println("Cannot write to the channel.");
+            this.nextState(ClientComHandlerState.Error);
+            return;
+        }
+
+        this.nextState(ClientComHandlerState.Waiting);
+    }
+
     private void handleNCStart() {
-        Event reqNC = new Event(EventType.NewCommands, this.event.getData());
+        Event reqNC = new Event(EventType.NewCommands, this.event.getData(), this.token);
 
         ChannelType type = ChannelType.Network;
         Optional<SelectableChannel> oc = this.getFirstOutputChannel(type);
@@ -256,8 +300,10 @@ public class ClientComHandler extends ComHandler<ClientComHandlerState> {
 
         this.stateData = response;
 
-        // logger.info(""+response.getType());
         switch (response.getType()) {
+            case LoginValidation:
+                this.nextState(ClientComHandlerState.LVProcessing);
+                break;
             case IdValidation:
                 this.nextState(ClientComHandlerState.IVProcessing);
                 break;
@@ -266,6 +312,9 @@ public class ClientComHandler extends ComHandler<ClientComHandlerState> {
                 break;
             case OutputResponse:
                 this.nextState(ClientComHandlerState.NCProcessingOR);
+                break;
+            case AuthError:
+                this.nextState(ClientComHandlerState.AuthError);
                 break;
             default:
                 this.nextState(ClientComHandlerState.Error);
@@ -290,6 +339,38 @@ public class ClientComHandler extends ComHandler<ClientComHandlerState> {
         SinkChannel channel = (SinkChannel) oc.get();
         try {
             NBChannelController.write(channel, respIV);
+        } catch (IOException e) {
+            System.err.println("Cannot write to the channel.");
+            this.nextState(ClientComHandlerState.Error);
+            return;
+        }
+
+        this.nextState(ClientComHandlerState.FinishRequest);
+    }
+
+    private void handleLVProcessing() {
+        Event data = (Event) this.stateData;
+        String response = (String) data.getData();
+
+        boolean result = response != null;
+        if (result) {
+            this.token = response;
+            logger.debug("Logged in. Token: {}", this.token);
+        }
+
+        Event respLV = new Event(this.event.getType(), result);
+
+        ChannelType type = ChannelType.Shell;
+        Optional<SelectableChannel> oc = this.getFirstOutputChannel(type);
+        if (!oc.isPresent()) {
+            logger.warn("Output channel " + type + " was not found.");
+            this.nextState(ClientComHandlerState.Error);
+            return;
+        }
+
+        SinkChannel channel = (SinkChannel) oc.get();
+        try {
+            NBChannelController.write(channel, respLV);
         } catch (IOException e) {
             System.err.println("Cannot write to the channel.");
             this.nextState(ClientComHandlerState.Error);
@@ -367,6 +448,31 @@ public class ClientComHandler extends ComHandler<ClientComHandlerState> {
         this.filterSubscriptions();
 
         this.nextState(ClientComHandlerState.Waiting);
+    }
+
+    private void handleAuthError() {
+        logger.debug("Authentication error.");
+
+        Event respLV = new Event(EventType.AuthError, null);
+
+        ChannelType type = ChannelType.Shell;
+        Optional<SelectableChannel> oc = this.getFirstOutputChannel(type);
+        if (!oc.isPresent()) {
+            logger.warn("Output channel " + type + " was not found.");
+            this.nextState(ClientComHandlerState.Error);
+            return;
+        }
+
+        SinkChannel channel = (SinkChannel) oc.get();
+        try {
+            NBChannelController.write(channel, respLV);
+        } catch (IOException e) {
+            System.err.println("Cannot write to the channel.");
+            this.nextState(ClientComHandlerState.Error);
+            return;
+        }
+
+        this.nextState(ClientComHandlerState.FinishRequest);
     }
 
     private void handleError() {

@@ -6,6 +6,7 @@ package core.event;
  * @author ivatolm
  */
 public enum EventType {
+    LoginValidation,
     IdValidation,
     NewCommands,
     ScriptRequest,
@@ -13,5 +14,6 @@ public enum EventType {
     ConnectionTimeout,
     PingTimeout,
     Ping,
+    AuthError,
     Close
 }

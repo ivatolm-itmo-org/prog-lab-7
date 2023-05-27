@@ -66,7 +66,7 @@ public class LoadBalancer {
         Integer id = this.nextWorkerId();
         this.workers.get(id).addRequest(handler, channelType, channel);
 
-        logger.debug("Sent request to worker " + id);
+        logger.trace("Sent request to worker " + id);
     }
 
     /**

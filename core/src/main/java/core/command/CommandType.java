@@ -261,6 +261,24 @@ public enum CommandType {
             "print elements sorted by 'minutesOfWaiting' property in the descending order"
         ),
         null
+    ),
+    LOGIN(
+        new CommandInfo(
+            "login",
+            "login into account on the server"
+        ),
+        new Argument[] {
+            new StringArgument(
+                "username",
+                (x) -> x != null && !x.isBlank(),
+                "username (string, cannot be empty)",
+                "This argument cannot be empty"),
+            new StringArgument(
+                "password",
+                (x) -> x != null && !x.isBlank(),
+                "password (string, cannot be empty)",
+                "This argument cannot be empty"),
+        }
     )
     ;
 
