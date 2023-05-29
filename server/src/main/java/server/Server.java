@@ -9,13 +9,13 @@ import core.handler.HandlerChannels;
 import core.handler.InputHandler;
 import core.models.humanBeing.HumanBeing;
 import core.net.Com;
+import server.balancer.Balancer;
 import server.database.CSVDatabase;
 import server.handler.ServerComHandler;
 import server.handler.ServerEventHandler;
 import server.handler.ServerShellHandler;
 import server.handler.ServerSocketHandler;
 import server.interpreter.Interpreter;
-import server.load.LoadBalancer;
 import server.net.ServerComUDP;
 import server.runner.Runner;
 
@@ -62,7 +62,7 @@ public class Server
         CSVDatabase<HumanBeing> database = new CSVDatabase<>(databaseFilename);
         Interpreter interpreter = new Interpreter(database);
         Runner runner = new Runner(interpreter);
-        LoadBalancer loadBalancer = new LoadBalancer(4);
+        Balancer loadBalancer = new Balancer(4);
 
         Com com;
         try {

@@ -18,7 +18,8 @@ import core.handler.ChannelType;
 import core.handler.Handler;
 import core.handler.HandlerChannel;
 import core.handler.HandlerChannels;
-import server.load.LoadBalancer;
+import server.balancer.Balancer;
+import server.balancer.BalancerTask;
 import server.runner.Runner;
 
 /**
@@ -47,7 +48,7 @@ public class ServerEventHandler extends EventHandler<ChannelType> {
     private Runner runner;
 
     // Load balancer
-    private LoadBalancer loadBalancer;
+    private Balancer loadBalancer;
 
     /**
      * Constructs new {@code EventHandler} with provided arguments.
@@ -59,7 +60,7 @@ public class ServerEventHandler extends EventHandler<ChannelType> {
                             ServerComHandler shellComHandler,
                             ServerSocketHandler socketHandler,
                             Runner runner,
-                            LoadBalancer loadBalancer) throws IOException {
+                            Balancer loadBalancer) throws IOException {
         super();
 
         this.shellHandler = shellHandler;
@@ -173,7 +174,8 @@ public class ServerEventHandler extends EventHandler<ChannelType> {
                     this.updateSubscriptions();
 
                     logger.trace("Sending to load balancer...");
-                    this.loadBalancer.process(handler, channelType, channel);
+                    BalancerTask task = new BalancerTask(handler, channelType, channel);
+                    this.loadBalancer.process(task);
                 }
 
                 selectedKeys.clear();
