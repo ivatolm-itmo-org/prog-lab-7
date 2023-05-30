@@ -10,6 +10,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import server.auth.AuthManager;
 import server.interpreter.Interpreter;
 import server.runner.RecursionFoundException;
 import server.runner.Runner;
@@ -189,21 +190,9 @@ public class ServerComHandler extends ComHandler<ServerComHandlerState> {
 
         this.event = (Event) NBChannelController.read(ic);
 
-        logger.debug("Validating token... (token={})", this.token);
-        if (this.event.getType() != EventType.LoginValidation &&
-            this.event.getType() != EventType.Close)
-        {
-            if (this.event.getToken() == null ||
-                !this.event.getToken().equals(this.token))
-            {
-                logger.debug("Authentication failed.");
-                this.nextState(ServerComHandlerState.AuthError);
-                return;
-            } else {
-                logger.debug("Authentication succeded.");
-            }
-        } else {
-            logger.debug("Authentication skipped.");
+        if (!AuthManager.auth(this.event, this.token)) {
+            this.nextState(ServerComHandlerState.AuthError);
+            return;
         }
 
         logger.debug("Request type: {}", this.event.getType());
@@ -281,10 +270,10 @@ public class ServerComHandler extends ComHandler<ServerComHandlerState> {
         @SuppressWarnings("unchecked")
         Pair<String, String> credentials = (Pair<String, String>) this.event.getData();
 
-        if (credentials.getLeft().equals("ivatolm") && credentials.getRight().equals("passwd")) {
-            this.token = "-t-o-k-e-n-";
-        } else {
-            this.token = null;
+        this.token = AuthManager.login(credentials.getLeft(), credentials.getRight());
+        if (this.token.equals("")) {
+            this.nextState(ServerComHandlerState.AuthError);
+            return;
         }
 
         Event respIV = new Event(EventType.LoginValidation, this.token);

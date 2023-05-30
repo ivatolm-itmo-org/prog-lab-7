@@ -60,7 +60,7 @@ public class Event implements Serializable {
     /**
      * @return access credentials
      */
-    public Object getToken() {
+    public String getToken() {
         return this.token;
     }
 

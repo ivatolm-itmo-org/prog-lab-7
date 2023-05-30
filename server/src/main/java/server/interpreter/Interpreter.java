@@ -146,6 +146,9 @@ public class Interpreter {
             case LOGIN:
                 return this.login(args);
 
+            case REGISTER:
+                return this.register(args);
+
             default:
                 System.err.println("Unknown command.");
         }
@@ -549,6 +552,21 @@ public class Interpreter {
      * @return list of commands for later interpretation or null
      */
     private String[] login(LinkedList<Argument> args) {
+        System.out.println("Args: " + args);
+
+        return null;
+    }
+
+    /**
+     * LOGIN command, description is provided in {@code Command}.
+     *
+     * @param args arguments for the command
+     * @return list of commands for later interpretation or null
+     */
+    private String[] register(LinkedList<Argument> args) {
+        System.out.println("registering...");
+        System.out.println("Args: " + args);
+
         return null;
     }
 

@@ -279,6 +279,24 @@ public enum CommandType {
                 "password (string, cannot be empty)",
                 "This argument cannot be empty"),
         }
+    ),
+    REGISTER(
+        new CommandInfo(
+            "register",
+            "register a new account on the server"
+        ),
+        new Argument[] {
+            new StringArgument(
+                "username",
+                (x) -> x != null && !x.isBlank(),
+                "username (string, cannot be empty)",
+                "This argument cannot be empty"),
+            new StringArgument(
+                "password",
+                (x) -> x != null && !x.isBlank(),
+                "password (string, cannot be empty)",
+                "This argument cannot be empty"),
+        }
     )
     ;
 
