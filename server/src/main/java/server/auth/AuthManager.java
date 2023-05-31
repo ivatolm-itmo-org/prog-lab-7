@@ -15,34 +15,36 @@ import core.event.EventType;
 public class AuthManager {
 
     public static boolean auth(Event event, String token) {
-        if (event.getType() == EventType.LoginValidation ||
-            event.getType() == EventType.Close)
-        {
-            return true;
-        }
+        return true;
 
-        if (event.getToken() != null &&
-            event.getToken().equals(token))
-        {
-            return true;
-        }
+        // if (event.getType() == EventType.LoginValidation ||
+        //     event.getType() == EventType.Close)
+        // {
+        //     return true;
+        // }
 
-        if (event.getType() == EventType.NewCommands) {
-            @SuppressWarnings("unchecked")
-            LinkedList<Command> commands = (LinkedList<Command>) event.getData();
-            if (commands.size() != 1) {
-                return false;
-            }
+        // if (event.getToken() != null &&
+        //     event.getToken().equals(token))
+        // {
+        //     return true;
+        // }
 
-            Command cmd = commands.getFirst();
-            if (cmd.getType() == CommandType.HELP ||
-                cmd.getType() == CommandType.REGISTER)
-            {
-                return true;
-            }
-        }
+        // if (event.getType() == EventType.NewCommands) {
+        //     @SuppressWarnings("unchecked")
+        //     LinkedList<Command> commands = (LinkedList<Command>) event.getData();
+        //     if (commands.size() != 1) {
+        //         return false;
+        //     }
 
-        return false;
+        //     Command cmd = commands.getFirst();
+        //     if (cmd.getType() == CommandType.HELP ||
+        //         cmd.getType() == CommandType.REGISTER)
+        //     {
+        //         return true;
+        //     }
+        // }
+
+        // return false;
     }
 
     public static String login(String username, String password) {

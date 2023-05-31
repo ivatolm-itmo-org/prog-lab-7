@@ -1,3 +1,5 @@
+#!/bin/bash
+
 ./scripts/build.sh
 
 cd client

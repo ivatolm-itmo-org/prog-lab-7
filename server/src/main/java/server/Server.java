@@ -11,6 +11,7 @@ import core.models.humanBeing.HumanBeing;
 import core.net.Com;
 import server.balancer.Balancer;
 import server.database.CSVDatabase;
+import server.database.HibernateUtil;
 import server.handler.ServerComHandler;
 import server.handler.ServerEventHandler;
 import server.handler.ServerShellHandler;
@@ -141,6 +142,7 @@ public class Server
 
         inputHandler.close();
         loadBalancer.close();
+        HibernateUtil.getSessionFactory().close();
 
         try {
             inputHandlerThread.join();

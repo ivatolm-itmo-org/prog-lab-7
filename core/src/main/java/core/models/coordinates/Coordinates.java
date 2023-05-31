@@ -4,6 +4,8 @@ import core.database.StrSerializable;
 import core.models.Validatable;
 import core.models.Validator;
 import core.utils.SimpleParseException;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * Data structure for Coordinates described in the task.
@@ -12,11 +14,20 @@ import core.utils.SimpleParseException;
  */
 public class Coordinates implements StrSerializable, Validatable {
 
+    /** id field */
+    @Setter
+    @Getter
+    private Long id;
+
     /** x field */
+    @Setter
+    @Getter
     @Validator(validator = CoordinatesXValidator.class)
     private Integer x;
 
     /** y field */
+    @Setter
+    @Getter
     @Validator(validator = CoordinatesYValidator.class)
     private Float y;
 
@@ -83,20 +94,6 @@ public class Coordinates implements StrSerializable, Validatable {
     @Override
     public String toString() {
         return "(" + "x: " + this.x + ", " + "y: " + this.y + ")";
-    }
-
-    /**
-     * @return 'x' field of the object
-     */
-    public Integer getX() {
-        return this.x;
-    }
-
-    /**
-     * @return 'y' field of the object
-     */
-    public Float getY() {
-        return this.y;
     }
 
 }

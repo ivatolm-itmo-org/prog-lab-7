@@ -63,7 +63,10 @@ public interface Validatable {
                     Long f = (Long) field.get(obj);
                     LongArgument arg = new LongArgument();
                     arg.setValue(f);
-                    return idValidator.check(arg);
+                    boolean result = idValidator.check(arg);
+                    if (!result) {
+                        return false;
+                    }
 
                 } catch (IllegalArgumentException | IllegalAccessException e) {
                     System.err.println(e);

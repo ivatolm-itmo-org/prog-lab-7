@@ -1,6 +1,5 @@
 package core.models.humanBeing;
 
-import java.time.LocalDate;
 import java.util.LinkedList;
 
 import core.database.DataBaseObject;
@@ -15,6 +14,8 @@ import core.models.coordinates.CoordinatesValidator;
 import core.models.mood.Mood;
 import core.models.mood.MoodValidator;
 import core.utils.SimpleParseException;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * Data structure for HumanBeing described in the task.
@@ -24,47 +25,69 @@ import core.utils.SimpleParseException;
 public class HumanBeing implements StrSerializable, DataBaseObject, Comparable<HumanBeing>, Validatable {
 
     /** Id field */
+    @Setter
+    @Getter
     @ValidateAsId
     @Validator(validator = HumanBeingIdValidator.class)
     private Long id;
 
     /** Name field */
+    @Setter
+    @Getter
     @Validator(validator = HumanBeingNameValidator.class)
     private String name;
 
     /** Coordinates field */
+    @Setter
+    @Getter
     @Validator(validator = CoordinatesValidator.class)
     private Coordinates coordinates;
 
     /** Creation date field */
+    @Setter
+    @Getter
     @Validator(validator = HumanBeingCreationDateValidator.class)
-    private LocalDate creationDate;
+    private Long creationDate;
 
     /** Real hero field */
+    @Setter
+    @Getter
     @Validator(validator = HumanBeingRealHeroValidator.class)
     private Boolean realHero;
 
     /** Has toothpick field */
+    @Setter
+    @Getter
     @Validator(validator = HumanBeingHasToothpickValidator.class)
     private Boolean hasToothpick;
 
     /** Impact speed field */
+    @Setter
+    @Getter
     @Validator(validator = HumanBeingImpactSpeedValidator.class)
     private Long impactSpeed;
 
     /** Soundtrack name field */
+    @Setter
+    @Getter
     @Validator(validator = HumanBeingSoundtrackNameValidator.class)
     private String soundtrackName;
 
     /** Minutes of waiting field */
+    @Setter
+    @Getter
     @Validator(validator = HumanBeingMinutesOfWaitingValidator.class)
     private Integer minutesOfWaiting;
 
     /** Mood field */
+    @Setter
+    @Getter
     @Validator(validator = MoodValidator.class)
     private Mood mood;
 
     /** Car field */
+    @Setter
+    @Getter
     @Validator(validator = CarValidator.class)
     private Car car;
 
@@ -85,7 +108,7 @@ public class HumanBeing implements StrSerializable, DataBaseObject, Comparable<H
         this.id               = (Long) args.get(0);
         this.name             = (String) args.get(1);
         this.coordinates      = (Coordinates) args.get(2);
-        this.creationDate     = (LocalDate) args.get(3);
+        this.creationDate     = (Long) args.get(3);
         this.realHero         = (Boolean) args.get(4);
         this.hasToothpick     = (Boolean) args.get(5);
         this.impactSpeed      = (Long) args.get(6);
@@ -136,7 +159,7 @@ public class HumanBeing implements StrSerializable, DataBaseObject, Comparable<H
         this.name             = value[1] == "" ? null : value[1];
         this.coordinates      = new Coordinates();
         this.coordinates.deserialize(new String[] { value[2] });
-        this.creationDate     = value[3] == "" ? null : java.time.LocalDate.parse(value[3]);
+        this.creationDate     = value[3] == "" ? null : Long.parseLong(value[3]);
         this.realHero         = value[4] == "" ? null : Boolean.parseBoolean(value[4]);
         this.hasToothpick     = value[5] == "" ? null : Boolean.parseBoolean(value[5]);
         this.impactSpeed      = value[6] == "" ? null : Long.parseLong(value[6]);
@@ -190,83 +213,6 @@ public class HumanBeing implements StrSerializable, DataBaseObject, Comparable<H
         result += "car: "              + this.car;
 
         return result;
-    }
-
-    /**
-     * @return 'id' field of the object
-     */
-    public Long getId() {
-        return id;
-    }
-
-    /**
-     * @return {@code name} field of the object
-     */
-    public String getName() {
-        return name;
-    }
-
-    /**
-     * @return {@code coordinates} field of the object
-     */
-    public Coordinates getCoordinates() {
-        return coordinates;
-    }
-
-    /**
-     * @return {@code creationDate} field of the object
-     */
-    public LocalDate getCreationDate() {
-        return creationDate;
-    }
-
-    /**
-     * @return {@code realHero} field of the object
-     */
-    public Boolean isRealHero() {
-        return realHero;
-    }
-
-    /**
-     * @return {@code hasToothpick} field of the object
-     */
-    public Boolean getHasToothpick() {
-        return hasToothpick;
-    }
-
-    /**
-     * @return {@code impactSpeed} field of the object
-     */
-    public Long getImpactSpeed() {
-        return impactSpeed;
-    }
-
-    /**
-     * @return {@code soundtrackName} field of the object
-     */
-    public String getSoundtrackName() {
-        return soundtrackName;
-    }
-
-    /**
-     * @return {@code minutesOfWaiting} field of the object
-     */
-    public Integer getMinutesOfWaiting() {
-        return minutesOfWaiting;
-    }
-
-    /**
-     * @return {@code mood} field of the object
-     */
-    public Mood getMood() {
-        return mood;
-    }
-
-    /**
-     * @return {@code car} field of the object
-     */
-    public Car getCar() {
-        return car;
     }
 
     /**

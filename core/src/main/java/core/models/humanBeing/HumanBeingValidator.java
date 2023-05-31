@@ -40,7 +40,7 @@ public class HumanBeingValidator implements ArgCheck {
                creationDateValidator.check("" + hb.getCreationDate()) &&
                nameValidator.check("" + hb.getName()) &&
                coordinateValidator.check(hb.getCoordinates().serialize()[0]) &&
-               realHeroValidator.check("" + hb.isRealHero()) &&
+               realHeroValidator.check("" + hb.getRealHero()) &&
                hasToothpickValidator.check("" + hb.getHasToothpick()) &&
                impactSpeedValidator.check("" + hb.getImpactSpeed()) &&
                minutesOfWaitingValidator.check("" + hb.getMinutesOfWaiting()) &&

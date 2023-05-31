@@ -4,6 +4,8 @@ import core.database.StrSerializable;
 import core.models.Validatable;
 import core.models.Validator;
 import core.utils.SimpleParseException;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * Data structure for Car described in the task.
@@ -12,11 +14,19 @@ import core.utils.SimpleParseException;
  */
 public class Car implements StrSerializable, Validatable {
 
+    @Setter
+    @Getter
+    private Long id;
+
     /** Name field */
+    @Setter
+    @Getter
     @Validator(validator = CarNameValidator.class)
     private String name;
 
     /** Cool field */
+    @Setter
+    @Getter
     @Validator(validator = CarCoolValidator.class)
     private Boolean cool;
 
@@ -83,20 +93,6 @@ public class Car implements StrSerializable, Validatable {
     @Override
     public String toString() {
         return "(" + "name: " + this.name + ", " + "cool: " + this.cool + ")";
-    }
-
-    /**
-     * @return 'name' field of the object
-     */
-    public String getName() {
-        return this.name;
-    }
-
-    /**
-     * @return 'cool' field of the object
-     */
-    public Boolean getCool() {
-        return this.cool;
     }
 
 }

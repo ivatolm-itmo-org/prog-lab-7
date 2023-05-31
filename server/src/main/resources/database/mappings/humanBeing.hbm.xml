@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"https://hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+
+<hibernate-mapping>
+	<class name="core.models.humanBeing.HumanBeing" table="HumanBeing">
+        <id name="id" type="java.lang.Long">
+            <column name="id" />
+            <generator class="increment" />
+        </id>
+        <property name="name" type="java.lang.String">
+            <column name="name" />
+        </property>
+        <many-to-one name="coordinates" class="core.models.coordinates.Coordinates" cascade="all">
+            <column name="coordinates_id" />
+        </many-to-one>
+        <property name="creationDate" type="java.lang.Long">
+        	<column name="creation_date" />
+        </property>
+        <property name="realHero" type="java.lang.Boolean">
+        	<column name="real_hero" />
+        </property>
+        <property name="hasToothpick" type="java.lang.Boolean">
+        	<column name="has_toothpick" />
+        </property>
+        <property name="impactSpeed" type="java.lang.Long">
+        	<column name="impact_speed" />
+        </property>
+        <property name="soundtrackName" type="java.lang.String">
+        	<column name="soundtrack_name" />
+        </property>
+        <property name="minutesOfWaiting" type="java.lang.Integer">
+        	<column name="minutes_of_waiting" />
+        </property>
+        <property name="mood" column="mood_id" not-null="true">
+            <type name="org.hibernate.type.EnumType">
+                <param name="enumClass">core.models.mood.Mood</param>
+                <param name="useNamed">true</param>
+            </type>
+        </property>
+        <many-to-one name="car" class="core.models.car.Car" cascade="all">
+            <column name="car_id" />
+        </many-to-one>
+    </class>
+</hibernate-mapping>

@@ -1,10 +1,12 @@
 package server.interpreter;
 
-import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.stream.Collectors;
+
+import org.hibernate.HibernateException;
+import org.hibernate.Session;
 
 import core.command.Command;
 import core.command.CommandInfo;
@@ -16,6 +18,8 @@ import core.models.Validatable;
 import core.models.car.Car;
 import core.models.coordinates.Coordinates;
 import core.models.humanBeing.HumanBeing;
+import core.models.mood.Mood;
+import server.database.HibernateUtil;
 
 /**
  * Standalone class for interpreting commands.
@@ -48,6 +52,9 @@ public class Interpreter {
     /** Id validator */
     private IdValidator idValidator;
 
+    /** Id validator dummy */
+    private IdValidator IdValidatorDummy;
+
     /**
      * Constructs instance of the class.
      *
@@ -70,6 +77,10 @@ public class Interpreter {
 
         this.idValidator = (Argument arg) -> {
             return Interpreter.HasItemWithId(arg);
+        };
+
+        this.IdValidatorDummy = (Argument arg) -> {
+            return true;
         };
     }
 
@@ -251,28 +262,46 @@ public class Interpreter {
      * @return list of commands for later interpretation or null
      */
     private String[] add(LinkedList<Argument> args) {
-        LinkedList<Object> res = new LinkedList<>();
+        Coordinates coordinates = new Coordinates();
+        coordinates.setX((Integer) args.get(1).getValue());
+        coordinates.setY((Float) args.get(2).getValue());
 
-        res.add(System.currentTimeMillis());                // id
-        res.add(args.get(0).getValue());                    // name
-        res.add(new Coordinates(args.get(1).getValue(),
-                                args.get(2).getValue()));   // coordinates
-        res.add(LocalDate.now());                           // creationDate
-        res.add(args.get(3).getValue());                    // realHero
-        res.add(args.get(4).getValue());                    // hasToothpick
-        res.add(args.get(5).getValue());                    // impactSpeed
-        res.add(args.get(6).getValue());                    // soundtrackName
-        res.add(args.get(7).getValue());                    // minutesOfWaiting
-        res.add(args.get(8).getValue());                    // mood
-        res.add(new Car(args.get(9).getValue(),
-                        args.get(10).getValue()));          // car
+        Car car = new Car();
+        car.setName((String) args.get(9).getValue());
+        car.setCool((Boolean) args.get(10).getValue());
 
-        HumanBeing instance = new HumanBeing(res);
-        Interpreter.collection.add(instance);
-        if (!Validatable.validate(instance, this.idValidator)) {
-            Interpreter.collection.remove(instance);
+        HumanBeing instance = new HumanBeing();
+        instance.setId(-1L); // Will be replaced by db
+        instance.setName((String) args.get(0).getValue());
+        instance.setCoordinates(coordinates);
+        instance.setCreationDate(System.currentTimeMillis());
+        instance.setRealHero((Boolean) args.get(3).getValue());
+        instance.setHasToothpick((Boolean) args.get(4).getValue());
+        instance.setImpactSpeed((Long) args.get(5).getValue());
+        instance.setSoundtrackName((String) args.get(6).getValue());
+        instance.setMinutesOfWaiting((Integer) args.get(7).getValue());
+        instance.setMood((Mood) args.get(8).getValue());
+        instance.setCar(car);
+
+        if (!Validatable.validate(instance, this.IdValidatorDummy)) {
             System.err.println("Instance validation failed.");
+            return null;
         }
+
+        // Adding item to database
+        System.out.println("Using hibernate...");
+        try {
+            Session session = HibernateUtil.getSessionFactory().getCurrentSession();
+            session.beginTransaction();
+            session.save(instance);
+            session.getTransaction().commit();
+            HibernateUtil.getSessionFactory().close();
+        } catch (HibernateException e) {
+            System.err.println("Error occured while committing transaction: " + e);
+            return null;
+        }
+
+        Interpreter.collection.add(instance);
 
         return null;
     }
@@ -552,20 +581,20 @@ public class Interpreter {
      * @return list of commands for later interpretation or null
      */
     private String[] login(LinkedList<Argument> args) {
-        System.out.println("Args: " + args);
-
         return null;
     }
 
     /**
-     * LOGIN command, description is provided in {@code Command}.
+     * REGISTER command, description is provided in {@code Command}.
      *
      * @param args arguments for the command
      * @return list of commands for later interpretation or null
      */
     private String[] register(LinkedList<Argument> args) {
-        System.out.println("registering...");
-        System.out.println("Args: " + args);
+        String username = (String) args.get(0).getValue();
+        String password = (String) args.get(1).getValue();
+
+        // this.database.
 
         return null;
     }
