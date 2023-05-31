@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import org.hibernate.HibernateException;
 import org.hibernate.Session;
+import org.hibernate.SessionFactory;
 
 import core.command.Command;
 import core.command.CommandInfo;
@@ -288,14 +289,13 @@ public class Interpreter {
             return null;
         }
 
-        // Adding item to database
-        System.out.println("Using hibernate...");
         try {
-            Session session = HibernateUtil.getSessionFactory().getCurrentSession();
+            SessionFactory factory = HibernateUtil.getSessionFactory();
+            Session session = factory.openSession();
             session.beginTransaction();
             session.save(instance);
             session.getTransaction().commit();
-            HibernateUtil.getSessionFactory().close();
+            session.close();
         } catch (HibernateException e) {
             System.err.println("Error occured while committing transaction: " + e);
             return null;
@@ -328,29 +328,44 @@ public class Interpreter {
             return null;
         }
 
-        LinkedList<Object> res = new LinkedList<>();
+        Coordinates coordinates = new Coordinates();
+        coordinates.setX((Integer) args.get(2).getValue());
+        coordinates.setY((Float) args.get(3).getValue());
 
-        HumanBeing prevInstance = Interpreter.collection.get(index);
-        res.add(prevInstance.getId());                      // id
-        res.add(args.get(1).getValue());                    // name
-        res.add(new Coordinates(args.get(2).getValue(),
-                                args.get(3).getValue()));   // coordinates
-        res.add(prevInstance.getCreationDate());            // creationDate
-        res.add(args.get(4).getValue());                    // realHero
-        res.add(args.get(5).getValue());                    // hasToothpick
-        res.add(args.get(6).getValue());                    // impactSpeed
-        res.add(args.get(7).getValue());                    // soundtrackName
-        res.add(args.get(8).getValue());                    // minutesOfWaiting
-        res.add(args.get(9).getValue());                    // mood
-        res.add(new Car(args.get(10).getValue(),
-                        args.get(11).getValue()));          // car
+        Car car = new Car();
+        car.setName((String) args.get(10).getValue());
+        car.setCool((Boolean) args.get(11).getValue());
 
-        HumanBeing instance = new HumanBeing(res);
-        if (Validatable.validate(instance, this.idValidator)) {
-            Interpreter.collection.set(index, instance);
-        } else {
+        HumanBeing instance = new HumanBeing();
+        instance.setId(id);
+        instance.setName((String) args.get(1).getValue());
+        instance.setCoordinates(coordinates);
+        instance.setCreationDate(System.currentTimeMillis());
+        instance.setRealHero((Boolean) args.get(4).getValue());
+        instance.setHasToothpick((Boolean) args.get(5).getValue());
+        instance.setImpactSpeed((Long) args.get(6).getValue());
+        instance.setSoundtrackName((String) args.get(7).getValue());
+        instance.setMinutesOfWaiting((Integer) args.get(8).getValue());
+        instance.setMood((Mood) args.get(9).getValue());
+        instance.setCar(car);
+
+        if (!Validatable.validate(instance, this.idValidator)) {
             System.err.println("Instance validation failed.");
         }
+
+        try {
+            SessionFactory factory = HibernateUtil.getSessionFactory();
+            Session session = factory.openSession();
+            session.beginTransaction();
+            session.update(instance);
+            session.getTransaction().commit();
+            session.close();
+        } catch (HibernateException e) {
+            System.err.println("Error occured while committing transaction: " + e);
+            return null;
+        }
+
+        Interpreter.collection.set(index, instance);
 
         return null;
     }
@@ -377,6 +392,20 @@ public class Interpreter {
             return null;
         }
 
+        HumanBeing instance = Interpreter.collection.get(index);
+
+        try {
+            SessionFactory factory = HibernateUtil.getSessionFactory();
+            Session session = factory.openSession();
+            session.beginTransaction();
+            session.delete(instance);
+            session.getTransaction().commit();
+            session.close();
+        } catch (HibernateException e) {
+            System.err.println("Error occured while committing transaction: " + e);
+            return null;
+        }
+
         Interpreter.collection.remove(index);
 
         return null;
@@ -389,6 +418,22 @@ public class Interpreter {
      * @return list of commands for later interpretation or null
      */
     private String[] clear(LinkedList<Argument> args) {
+        try {
+            SessionFactory factory = HibernateUtil.getSessionFactory();
+            Session session = factory.openSession();
+            session.beginTransaction();
+
+            for (HumanBeing hb : Interpreter.collection) {
+                session.delete(hb);
+            }
+
+            session.getTransaction().commit();
+            session.close();
+        } catch (HibernateException e) {
+            System.err.println("Error occured while committing transaction: " + e);
+            return null;
+        }
+
         Interpreter.collection.clear();
 
         return null;
@@ -441,6 +486,20 @@ public class Interpreter {
     private String[] removeFirst(LinkedList<Argument> args) {
         if (Interpreter.collection.isEmpty()) {
             System.err.println("Cannot remove first element, collection is empty.");
+            return null;
+        }
+
+        HumanBeing instance = Interpreter.collection.getFirst();
+
+        try {
+            SessionFactory factory = HibernateUtil.getSessionFactory();
+            Session session = factory.openSession();
+            session.beginTransaction();
+            session.delete(instance);
+            session.getTransaction().commit();
+            session.close();
+        } catch (HibernateException e) {
+            System.err.println("Error occured while committing transaction: " + e);
             return null;
         }
 

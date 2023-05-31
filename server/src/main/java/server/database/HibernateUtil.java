@@ -26,8 +26,11 @@ public class HibernateUtil {
     // XML based configuration
     private static SessionFactory sessionFactory;
 
+    // Flag controlling whether port forwarding is done
+    private static boolean portForwardingFlag;
+
     // Connecting to server by ssh and setting up port forwarding
-    private static void setupPortForwarding() {
+    public static void setupPortForwarding() {
         logger.debug("Setting up port forwarding for db access...");
 
         logger.trace("Pulling environment variables...");
@@ -61,6 +64,7 @@ public class HibernateUtil {
         }
 
         logger.debug("Port forwarding was set up.");
+        portForwardingFlag = true;
     }
 
     // Creates session factory from XML configuration
@@ -96,9 +100,12 @@ public class HibernateUtil {
 	public static SessionFactory getSessionFactory() {
 		logger.debug("Session factory requested.");
 
-        if (sessionFactory == null) {
+        if (!portForwardingFlag) {
+            logger.error("Port forwarding must be done first.");
+            return null;
+        }
 
-            setupPortForwarding();
+        if (sessionFactory == null) {
             sessionFactory = buildSessionFactory();
         }
 

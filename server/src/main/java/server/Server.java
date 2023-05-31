@@ -49,6 +49,8 @@ public class Server
             return;
         }
 
+        HibernateUtil.setupPortForwarding();
+
         String databaseFilename = args[0];
 
         String ip = args[1];
