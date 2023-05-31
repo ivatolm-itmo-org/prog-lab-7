@@ -13,6 +13,7 @@ import core.models.coordinates.Coordinates;
 import core.models.coordinates.CoordinatesValidator;
 import core.models.mood.Mood;
 import core.models.mood.MoodValidator;
+import core.models.user.User;
 import core.utils.SimpleParseException;
 import lombok.Getter;
 import lombok.Setter;
@@ -91,6 +92,11 @@ public class HumanBeing implements StrSerializable, DataBaseObject, Comparable<H
     @Validator(validator = CarValidator.class)
     private Car car;
 
+    /** Owner */
+    @Setter
+    @Getter
+    private User owner;
+
     /**
      * Constructs dummy-instance of the class.
      * Used to create dummy-instances of the class that will be instantly overriden.
@@ -116,6 +122,7 @@ public class HumanBeing implements StrSerializable, DataBaseObject, Comparable<H
         this.minutesOfWaiting = (Integer) args.get(8);
         this.mood             = (Mood) args.get(9);
         this.car              = (Car) args.get(10);
+        this.owner            = (User) args.get(11);
     }
 
     /**
@@ -210,7 +217,8 @@ public class HumanBeing implements StrSerializable, DataBaseObject, Comparable<H
         result += "soundtrackName: "   + this.soundtrackName   + "\n";
         result += "minutesOfWaiting: " + this.minutesOfWaiting + "\n";
         result += "mood: "             + this.mood             + "\n";
-        result += "car: "              + this.car;
+        result += "car: "              + this.car              + "\n";
+        result += "owner: "            + this.owner.getUsername();
 
         return result;
     }

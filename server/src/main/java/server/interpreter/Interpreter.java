@@ -9,6 +9,7 @@ import org.hibernate.Criteria;
 import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.hibernate.criterion.Restrictions;
 
 import core.command.Command;
 import core.command.CommandInfo;
@@ -100,6 +101,7 @@ public class Interpreter {
      */
     public String[] exec(Command cmd) {
         LinkedList<Argument> args = cmd.getArgsValues();
+        String signature = cmd.getSignature();
 
         if (this.history.size() > 12) {
             this.history.removeFirst();
@@ -109,61 +111,61 @@ public class Interpreter {
 
         switch (cmd.getType()) {
             case NOOP:
-                return this.noop(args);
+                return this.noop(args, signature);
 
             case HELP:
-                return this.help(args);
+                return this.help(args, signature);
 
             case INFO:
-                return this.info(args);
+                return this.info(args, signature);
 
             case SHOW:
-                return this.show(args);
+                return this.show(args, signature);
 
             case ADD:
-                return this.add(args);
+                return this.add(args, signature);
 
             case UPDATE:
-                return this.update(args);
+                return this.update(args, signature);
 
             case REMOVE_BY_ID:
-                return this.removeById(args);
+                return this.removeById(args, signature);
 
             case CLEAR:
-                return this.clear(args);
+                return this.clear(args, signature);
 
             case SAVE:
-                return this.save(args);
+                return this.save(args, signature);
 
             case EXECUTE_SCRIPT:
-                return this.executeScript(args);
+                return this.executeScript(args, signature);
 
             case EXIT:
-                return this.exit(args);
+                return this.exit(args, signature);
 
             case REMOVE_FIRST:
-                return this.removeFirst(args);
+                return this.removeFirst(args, signature);
 
             case HEAD:
-                return this.head(args);
+                return this.head(args, signature);
 
             case HISTORY:
-                return this.history(args);
+                return this.history(args, signature);
 
             case COUNT_GREATER_THAN_MINUTES_OF_WAITING:
-                return this.countGreaterThanMinutesOfWaiting(args);
+                return this.countGreaterThanMinutesOfWaiting(args, signature);
 
             case FILTER_STARTS_WITH_NAME:
-                return this.filterStartsWithName(args);
+                return this.filterStartsWithName(args, signature);
 
             case PRINT_FIELD_DESCENDING_MINUTES_OF_WAITING:
-                return this.printFieldDescendingMinutesOfWaiting(args);
+                return this.printFieldDescendingMinutesOfWaiting(args, signature);
 
             case LOGIN:
-                return this.login(args);
+                return this.login(args, signature);
 
             case REGISTER:
-                return this.register(args);
+                return this.register(args, signature);
 
             default:
                 System.err.println("Unknown command.");
@@ -176,9 +178,10 @@ public class Interpreter {
      * NOOP command, description is provided in {@code Command}.
      *
      * @param args arguments for the command
+     * @param signature signature of the user
      * @return list of commands for later interpretation or null
      */
-    private String[] noop(LinkedList<Argument> args) {
+    private String[] noop(LinkedList<Argument> args, String signature) {
         return null;
     }
 
@@ -186,9 +189,10 @@ public class Interpreter {
      * HELP command, description is provided in {@code Command}.
      *
      * @param args arguments for the command
+     * @param signature signature of the user
      * @return list of commands for later interpretation or null
      */
-    private String[] help(LinkedList<Argument> args) {
+    private String[] help(LinkedList<Argument> args, String signature) {
         String result = "";
 
         // Finding length of the longest name-description
@@ -225,9 +229,10 @@ public class Interpreter {
      * INFO command, description is provided in {@code Command}.
      *
      * @param args arguments for the command
+     * @param signature signature of the user
      * @return list of commands for later interpretation or null
      */
-    private String[] info(LinkedList<Argument> args) {
+    private String[] info(LinkedList<Argument> args, String signature) {
         String result = "";
         result += "Type: " + Interpreter.collection.getClass() + "\n";
         result += "Creation date: " + (this.wasRead ? "unknown" : "recently") + "\n";
@@ -242,9 +247,10 @@ public class Interpreter {
      * SHOW command, description is provided in {@code Command}.
      *
      * @param args arguments for the command
+     * @param signature signature of the user
      * @return list of commands for later interpretation or null
      */
-    private String[] show(LinkedList<Argument> args) {
+    private String[] show(LinkedList<Argument> args, String signature) {
         String result = "";
 
         result = Interpreter.collection.stream()
@@ -264,9 +270,10 @@ public class Interpreter {
      * ADD command, description is provided in {@code Command}.
      *
      * @param args arguments for the command
+     * @param signature signature of the user
      * @return list of commands for later interpretation or null
      */
-    private String[] add(LinkedList<Argument> args) {
+    private String[] add(LinkedList<Argument> args, String signature) {
         Coordinates coordinates = new Coordinates();
         coordinates.setX((Integer) args.get(1).getValue());
         coordinates.setY((Float) args.get(2).getValue());
@@ -274,6 +281,21 @@ public class Interpreter {
         Car car = new Car();
         car.setName((String) args.get(9).getValue());
         car.setCool((Boolean) args.get(10).getValue());
+
+        User user;
+        try {
+            SessionFactory factory = HibernateUtil.getSessionFactory();
+            Session session = factory.openSession();
+            Criteria criteria = session.createCriteria(User.class)
+                .add(Restrictions.idEq(signature));
+
+            user = (User) criteria.uniqueResult();
+
+            session.close();
+        } catch (HibernateException e) {
+            System.err.println("Error occured while committing transaction: " + e);
+            return null;
+        }
 
         HumanBeing instance = new HumanBeing();
         instance.setId(-1L); // Will be replaced by db
@@ -287,6 +309,7 @@ public class Interpreter {
         instance.setMinutesOfWaiting((Integer) args.get(7).getValue());
         instance.setMood((Mood) args.get(8).getValue());
         instance.setCar(car);
+        instance.setOwner(user);
 
         if (!Validatable.validate(instance, this.IdValidatorDummy)) {
             System.err.println("Instance validation failed.");
@@ -314,9 +337,10 @@ public class Interpreter {
      * UPDATE command, description is provided in {@code Command}.
      *
      * @param args arguments for the command
+     * @param signature signature of the user
      * @return list of commands for later interpretation or null
      */
-    public String[] update(LinkedList<Argument> args) {
+    public String[] update(LinkedList<Argument> args, String signature) {
         // Checking if object with given id exists
         Long id = (Long) args.get(0).getValue();
         int index = -1;
@@ -329,6 +353,13 @@ public class Interpreter {
 
         if (index == -1) {
             System.err.println("There is no element with given id: " + id);
+            return null;
+        }
+
+        HumanBeing prevInstance = Interpreter.collection.get(index);
+
+        if (!prevInstance.getOwner().getUsername().equals(signature)) {
+            this.commandOutput = "Permisson denied.";
             return null;
         }
 
@@ -352,6 +383,7 @@ public class Interpreter {
         instance.setMinutesOfWaiting((Integer) args.get(8).getValue());
         instance.setMood((Mood) args.get(9).getValue());
         instance.setCar(car);
+        instance.setOwner(prevInstance.getOwner());
 
         if (!Validatable.validate(instance, this.idValidator)) {
             System.err.println("Instance validation failed.");
@@ -378,9 +410,10 @@ public class Interpreter {
      * REMOVE_BY_ID command, description is provided in {@code Command}.
      *
      * @param args arguments for the command
+     * @param signature signature of the user
      * @return list of commands for later interpretation or null
      */
-    private String[] removeById(LinkedList<Argument> args) {
+    private String[] removeById(LinkedList<Argument> args, String signature) {
         // Checking if object with given id exists
         Long id = (Long) args.get(0).getValue();
         int index = -1;
@@ -419,9 +452,10 @@ public class Interpreter {
      * CLEAR command, description is provided in {@code Command}.
      *
      * @param args arguments for the command
+     * @param signature signature of the user
      * @return list of commands for later interpretation or null
      */
-    private String[] clear(LinkedList<Argument> args) {
+    private String[] clear(LinkedList<Argument> args, String signature) {
         try {
             SessionFactory factory = HibernateUtil.getSessionFactory();
             Session session = factory.openSession();
@@ -447,9 +481,10 @@ public class Interpreter {
      * SAVE command, description is provided in {@code Command}.
      *
      * @param args arguments for the command
+     * @param signature signature of the user
      * @return list of commands for later interpretation or null
      */
-    private String[] save(LinkedList<Argument> args) {
+    private String[] save(LinkedList<Argument> args, String signature) {
         // this.database.write(Interpreter.collection);
 
         return null;
@@ -459,9 +494,10 @@ public class Interpreter {
      * EXECUTE_SCRIPT command, description is provided in {@code Command}.
      *
      * @param args arguments for the command
+     * @param signature signature of the user
      * @return list of commands for later interpretation or null
      */
-    private String[] executeScript(LinkedList<Argument> args) {
+    private String[] executeScript(LinkedList<Argument> args, String signature) {
         String filename = (String) args.get(0).getValue();
 
         this.commandResult = filename;
@@ -473,9 +509,10 @@ public class Interpreter {
      * EXIT command, description is provided in {@code Command}.
      *
      * @param args arguments for the command
+     * @param signature signature of the user
      * @return list of commands for later interpretation or null
      */
-    private String[] exit(LinkedList<Argument> args) {
+    private String[] exit(LinkedList<Argument> args, String signature) {
         this.isRunning = false;
 
         return null;
@@ -485,9 +522,10 @@ public class Interpreter {
      * REMOVE_FIRST command, description is provided in {@code Command}.
      *
      * @param args arguments for the command
+     * @param signature signature of the user
      * @return list of commands for later interpretation or null
      */
-    private String[] removeFirst(LinkedList<Argument> args) {
+    private String[] removeFirst(LinkedList<Argument> args, String signature) {
         if (Interpreter.collection.isEmpty()) {
             System.err.println("Cannot remove first element, collection is empty.");
             return null;
@@ -515,9 +553,10 @@ public class Interpreter {
      * HEAD command, description is provided in {@code Command}.
      *
      * @param args arguments for the command
+     * @param signature signature of the user
      * @return list of commands for later interpretation or null
      */
-    private String[] head(LinkedList<Argument> args) {
+    private String[] head(LinkedList<Argument> args, String signature) {
         String result = "";
 
         if (Interpreter.collection.isEmpty()) {
@@ -535,9 +574,10 @@ public class Interpreter {
      * HISTORY command, description is provided in {@code Command}.
      *
      * @param args arguments for the command
+     * @param signature signature of the user
      * @return list of commands for later interpretation or null
      */
-    private String[] history(LinkedList<Argument> args) {
+    private String[] history(LinkedList<Argument> args, String signature) {
         String result = "";
 
         // for (int i = 0; i < Math.min(12, this.history.size()); i++) {
@@ -559,9 +599,10 @@ public class Interpreter {
      * COUNT_GREATER_THAN_MINUTES_OF_WAITING command, description is provided in {@code Command}.
      *
      * @param args arguments for the command
+     * @param signature signature of the user
      * @return list of commands for later interpretation or null
      */
-    private String[] countGreaterThanMinutesOfWaiting(LinkedList<Argument> args) {
+    private String[] countGreaterThanMinutesOfWaiting(LinkedList<Argument> args, String signature) {
         String result = "";
 
         Integer minutesOfWaiting = (Integer) args.get(0).getValue();
@@ -588,9 +629,10 @@ public class Interpreter {
      * FILTER_STARTS_WITH_NAME command, description is provided in {@code Command}.
      *
      * @param args arguments for the command
+     * @param signature signature of the user
      * @return list of commands for later interpretation or null
      */
-    private String[] filterStartsWithName(LinkedList<Argument> args) {
+    private String[] filterStartsWithName(LinkedList<Argument> args, String signature) {
         String result = "";
 
         String substring = (String) args.get(0).getValue();
@@ -609,9 +651,10 @@ public class Interpreter {
      * PRINT_FIELD_DESCENDING_MINUTES_OF_WAITING command, description is provided in {@code Command}.
      *
      * @param args arguments for the command
+     * @param signature signature of the user
      * @return list of commands for later interpretation or null
      */
-    private String[] printFieldDescendingMinutesOfWaiting(LinkedList<Argument> args) {
+    private String[] printFieldDescendingMinutesOfWaiting(LinkedList<Argument> args, String signature) {
         String result = "";
 
         class SortByMinutesOfWaiting implements Comparator<HumanBeing> {
@@ -641,9 +684,10 @@ public class Interpreter {
      * LOGIN command, description is provided in {@code Command}.
      *
      * @param args arguments for the command
+     * @param signature signature of the user
      * @return list of commands for later interpretation or null
      */
-    private String[] login(LinkedList<Argument> args) {
+    private String[] login(LinkedList<Argument> args, String signature) {
         return null;
     }
 
@@ -651,9 +695,10 @@ public class Interpreter {
      * REGISTER command, description is provided in {@code Command}.
      *
      * @param args arguments for the command
+     * @param signature signature of the user
      * @return list of commands for later interpretation or null
      */
-    private String[] register(LinkedList<Argument> args) {
+    private String[] register(LinkedList<Argument> args, String signature) {
         String username = (String) args.get(0).getValue();
         String password = (String) args.get(1).getValue();
 

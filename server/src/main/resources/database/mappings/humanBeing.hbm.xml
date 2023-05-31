@@ -41,5 +41,8 @@
         <many-to-one name="car" class="core.models.car.Car" cascade="all">
             <column name="car_id" />
         </many-to-one>
+        <many-to-one name="owner" class="core.models.user.User" cascade="all">
+            <column name="owner_username" />
+        </many-to-one>
     </class>
 </hibernate-mapping>

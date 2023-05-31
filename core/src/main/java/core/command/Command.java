@@ -18,6 +18,9 @@ public class Command implements Serializable {
     /** Values of the arguments */
     private LinkedList<Argument> argsValues;
 
+    /** Signature */
+    private String signature;
+
     /**
      * Constructs new command with provided arguments.
      *
@@ -27,6 +30,13 @@ public class Command implements Serializable {
     public Command(CommandType type, LinkedList<Argument> argsValues) {
         this.type = type;
         this.argsValues = argsValues;
+    }
+
+    /**
+     * Sets signature of the command to {@code signature}.
+     */
+    public void setSignature(String signature) {
+        this.signature = signature;
     }
 
     /**
@@ -48,6 +58,13 @@ public class Command implements Serializable {
      */
     public Argument getArgValue(int index) {
         return this.argsValues.get(index);
+    }
+
+    /**
+     * @return {@code signature} field of the object
+     */
+    public String getSignature() {
+        return this.signature;
     }
 
     /**

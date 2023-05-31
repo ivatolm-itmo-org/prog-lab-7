@@ -66,6 +66,9 @@ public class ServerComHandler extends ComHandler<ServerComHandlerState> {
     // Session token
     private String token;
 
+    // Sesssion username
+    private String username;
+
     /**
      * Constructs new {@code ServerComHandler} with provided arguments.
      *
@@ -236,6 +239,11 @@ public class ServerComHandler extends ComHandler<ServerComHandlerState> {
         @SuppressWarnings("unchecked")
         LinkedList<Command> commands = (LinkedList<Command>) this.event.getData();
 
+        // Signing commands with the username
+        for (Command cmd : commands) {
+            cmd.setSignature(username);
+        }
+
         // Sending commands to server as it was response to the script request
         this.stateData = new Event(EventType.ScriptRequest, commands);
 
@@ -270,8 +278,11 @@ public class ServerComHandler extends ComHandler<ServerComHandlerState> {
         @SuppressWarnings("unchecked")
         Pair<String, String> credentials = (Pair<String, String>) this.event.getData();
 
+        this.username = credentials.getLeft();
         this.token = AuthManager.login(credentials.getLeft(), credentials.getRight());
         if (this.token.equals("")) {
+            this.username = null;
+            this.token = null;
             this.nextState(ServerComHandlerState.AuthError);
             return;
         }
