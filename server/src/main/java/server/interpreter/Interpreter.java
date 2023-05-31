@@ -1,8 +1,10 @@
 package server.interpreter;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import org.hibernate.Criteria;
@@ -33,7 +35,7 @@ import server.database.HibernateUtil;
 public class Interpreter {
 
     /** Collection of objects (described in the task) */
-    static private LinkedList<HumanBeing> collection;
+    static private List<HumanBeing> collection;
 
     /** Was database read or it was created? */
     private final boolean wasRead;
@@ -71,7 +73,7 @@ public class Interpreter {
 
             @SuppressWarnings("unchecked")
             LinkedList<HumanBeing> tmp = new LinkedList<HumanBeing>(criteria.list());
-            Interpreter.collection = tmp;
+            Interpreter.collection = Collections.synchronizedList(tmp);
 
             session.close();
         } catch (HibernateException e) {
@@ -531,7 +533,7 @@ public class Interpreter {
             return null;
         }
 
-        HumanBeing instance = Interpreter.collection.getFirst();
+        HumanBeing instance = Interpreter.collection.get(0);
 
         try {
             SessionFactory factory = HibernateUtil.getSessionFactory();
@@ -545,7 +547,7 @@ public class Interpreter {
             return null;
         }
 
-        Interpreter.collection.removeFirst();
+        Interpreter.collection.remove(instance);
         return null;
     }
 
@@ -564,7 +566,7 @@ public class Interpreter {
             return null;
         }
 
-        result += Interpreter.collection.getFirst().toString() + '\n';
+        result += Interpreter.collection.get(0).toString() + '\n';
         this.commandOutput = result;
 
         return null;
