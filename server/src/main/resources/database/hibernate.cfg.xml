@@ -19,5 +19,6 @@
 		<mapping resource="database/mappings/car.hbm.xml" />
 		<mapping resource="database/mappings/coordinates.hbm.xml" />
 		<mapping resource="database/mappings/humanBeing.hbm.xml" />
+		<mapping resource="database/mappings/user.hbm.xml" />
 	</session-factory>
 </hibernate-configuration>

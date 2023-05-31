@@ -20,6 +20,8 @@ import core.models.car.Car;
 import core.models.coordinates.Coordinates;
 import core.models.humanBeing.HumanBeing;
 import core.models.mood.Mood;
+import core.models.user.User;
+import server.auth.AuthManager;
 import server.database.HibernateUtil;
 
 /**
@@ -655,7 +657,25 @@ public class Interpreter {
         String username = (String) args.get(0).getValue();
         String password = (String) args.get(1).getValue();
 
-        // this.database.
+        String passwordHash = AuthManager.getCryptoHash(password);
+
+        User instance = new User();
+        instance.setUsername(username);
+        instance.setPassword(passwordHash);
+
+        try {
+            SessionFactory factory = HibernateUtil.getSessionFactory();
+            Session session = factory.openSession();
+            session.beginTransaction();
+            session.save(instance);
+            session.getTransaction().commit();
+            session.close();
+            this.commandOutput = "Successfully registered";
+        } catch (HibernateException e) {
+            this.commandOutput = "Failed to register.";
+            System.err.println("Error occured while committing transaction: " + e);
+            return null;
+        }
 
         return null;
     }
