@@ -5,6 +5,7 @@ import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.stream.Collectors;
 
+import org.hibernate.Criteria;
 import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -65,13 +66,21 @@ public class Interpreter {
         this.database = database;
         this.database.setDummyObject(new HumanBeing());
 
-        LinkedList<HumanBeing> data = this.database.read();
-        if (data != null) {
-            Interpreter.collection = data;
-            this.wasRead = true;
-        } else {
-            Interpreter.collection = new LinkedList<>();
-            this.wasRead = false;
+        this.wasRead = true;
+
+        try {
+            SessionFactory factory = HibernateUtil.getSessionFactory();
+            Session session = factory.openSession();
+            Criteria criteria = session.createCriteria(HumanBeing.class);
+
+            @SuppressWarnings("unchecked")
+            LinkedList<HumanBeing> tmp = new LinkedList<HumanBeing>(criteria.list());
+            Interpreter.collection = tmp;
+
+            session.close();
+        } catch (HibernateException e) {
+            System.err.println("Error occured while committing transaction: " + e);
+            return;
         }
 
         this.history = new LinkedList<>();
