@@ -7,10 +7,8 @@ import core.handler.ChannelType;
 import core.handler.HandlerChannel;
 import core.handler.HandlerChannels;
 import core.handler.InputHandler;
-import core.models.humanBeing.HumanBeing;
 import core.net.Com;
 import server.balancer.Balancer;
-import server.database.CSVDatabase;
 import server.database.HibernateUtil;
 import server.handler.ServerComHandler;
 import server.handler.ServerEventHandler;
@@ -44,26 +42,23 @@ public class Server
     public static void main(String[] args) {
         Thread.currentThread().setName("server");
 
-        if (args.length != 3) {
+        if (args.length != 2) {
             System.out.println("Wrong number of input arguments.");
             return;
         }
 
         HibernateUtil.setupPortForwarding();
 
-        String databaseFilename = args[0];
-
-        String ip = args[1];
+        String ip = args[0];
         Integer port = null;
         try {
-            port = Integer.parseInt(args[2]);
+            port = Integer.parseInt(args[1]);
         } catch (NumberFormatException e) {
-            System.out.println("Cannot parse port from argument: " + args[2]);
+            System.out.println("Cannot parse port from argument: " + args[1]);
             return;
         }
 
-        CSVDatabase<HumanBeing> database = new CSVDatabase<>(databaseFilename);
-        Interpreter interpreter = new Interpreter(database);
+        Interpreter interpreter = new Interpreter();
         Runner runner = new Runner(interpreter);
         Balancer loadBalancer = new Balancer(4);
 

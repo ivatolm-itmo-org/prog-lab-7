@@ -14,7 +14,6 @@ import core.command.Command;
 import core.command.CommandInfo;
 import core.command.CommandType;
 import core.command.arguments.Argument;
-import core.database.DataBase;
 import core.models.IdValidator;
 import core.models.Validatable;
 import core.models.car.Car;
@@ -29,9 +28,6 @@ import server.database.HibernateUtil;
  * @author ivatolm
  */
 public class Interpreter {
-
-    /** Link to database */
-    private DataBase<HumanBeing> database;
 
     /** Collection of objects (described in the task) */
     static private LinkedList<HumanBeing> collection;
@@ -62,10 +58,7 @@ public class Interpreter {
      *
      * @param database link to database
      */
-    public Interpreter(DataBase<HumanBeing> database) {
-        this.database = database;
-        this.database.setDummyObject(new HumanBeing());
-
+    public Interpreter() {
         this.wasRead = true;
 
         try {
@@ -455,7 +448,7 @@ public class Interpreter {
      * @return list of commands for later interpretation or null
      */
     private String[] save(LinkedList<Argument> args) {
-        this.database.write(Interpreter.collection);
+        // this.database.write(Interpreter.collection);
 
         return null;
     }
