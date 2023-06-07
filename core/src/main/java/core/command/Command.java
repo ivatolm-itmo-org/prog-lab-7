@@ -1,6 +1,7 @@
 package core.command;
 
 import java.io.Serializable;
+import java.util.Iterator;
 import java.util.LinkedList;
 
 import core.command.arguments.Argument;
@@ -76,9 +77,16 @@ public class Command implements Serializable {
     public String toString() {
         String result = "";
 
-        result += this.type.name() + "\n";
-        for (Argument arg : this.getArgsValues()) {
-            result += arg.getValue() + "\n";
+        result += this.type.name() + ":";
+
+        LinkedList<Argument> argValues = this.getArgsValues();
+        Iterator<Argument> iter = argValues.iterator();
+
+        while (iter.hasNext()) {
+            result += iter.next().getValue();
+            if (iter.hasNext()) {
+                result += ",";
+            }
         }
 
         return result;

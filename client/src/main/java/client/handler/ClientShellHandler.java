@@ -212,6 +212,8 @@ public class ClientShellHandler extends ShellHandler<ClientShellHandlerState> {
             SinkChannel oc = (SinkChannel) this.getFirstOutputChannel(type);
 
             LinkedList<Command> commands = this.getParsingResult();
+            logger.debug("Parsed commands: {}", commands);
+
             for (Command cmd : commands) {
                 if (cmd.getType() == CommandType.LOGIN) {
                     this.stateData = cmd.getArgsValues();
@@ -368,6 +370,10 @@ public class ClientShellHandler extends ShellHandler<ClientShellHandlerState> {
     private void handleAuthError() {
         System.out.println("Invalid credentials.");
         this.showInputGreeting();
+
+        this.setArgIdValidationResult(false);
+        this.idArgForValidation = null;
+        this.reset();
 
         this.nextState(ClientShellHandlerState.Waiting);
     }

@@ -138,6 +138,16 @@ public abstract class ShellHandler<S extends Enum<?>> extends Handler<ChannelTyp
     }
 
     /**
+     * Resets internal parsing state.
+     */
+    protected void reset() {
+        this.parser.reset();
+        this.parsingResult = null;
+        this.argForIdValidation = null;
+        this.argIdValidationResult = null;
+    }
+
+    /**
      * Sets argument id validation result.
      *
      * @param result of argument id validation

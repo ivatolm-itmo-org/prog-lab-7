@@ -257,6 +257,17 @@ public class Parser {
     }
 
     /**
+     * Resets internal state of the parser.
+     */
+    public void reset() {
+        this.cmdType = null;
+        this.args = null;
+        this.result = new LinkedList<>();
+        this.argForIdValidation = null;
+        this.remainingSlices = null;
+    }
+
+    /**
      * Sets {@code idValidationResult} to {@code status}.
      * If check passed, then adds argument to the list of parsed.
      *
